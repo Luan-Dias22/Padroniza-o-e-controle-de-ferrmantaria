@@ -5,13 +5,17 @@ export default function ConfirmModal({
   title,
   message,
   onConfirm,
-  onCancel
+  onCancel,
+  confirmText = 'Excluir',
+  confirmColor = 'bg-red-600 hover:bg-red-700'
 }: {
   isOpen: boolean;
   title: string;
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirmText?: string;
+  confirmColor?: string;
 }) {
   if (!isOpen) return null;
 
@@ -39,9 +43,9 @@ export default function ConfirmModal({
               onConfirm();
               onCancel();
             }}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${confirmColor}`}
           >
-            Excluir
+            {confirmText}
           </button>
         </div>
       </div>
