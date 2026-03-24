@@ -252,30 +252,6 @@ export default function Employees({
                 {employees.map(emp => {
                   const dept = departments.find(d => d.id === emp.departmentId);
                   
-                  const empAssignments = assignments.filter(a => a.employeeId === emp.id);
-                  const missingTools: { deptName: string, toolName: string, missingQty: number }[] = [];
-                  
-                  empAssignments.forEach(assignment => {
-                    const dept = departments.find(d => d.id === assignment.departmentId);
-                    if (!dept || !dept.standardListId) return;
-                    
-                    const standardList = standardLists.find(s => s.id === dept.standardListId);
-                    if (!standardList) return;
-                
-                    standardList.tools.forEach(stdTool => {
-                      const assignedTool = assignment.assignedTools?.find(t => t.toolId === stdTool.toolId);
-                      const assignedQty = assignedTool ? assignedTool.quantity : 0;
-                      if (assignedQty < stdTool.quantity) {
-                        const tool = tools.find(t => t.id === stdTool.toolId);
-                        missingTools.push({
-                          deptName: dept.name,
-                          toolName: tool ? tool.name : 'Desconhecida',
-                          missingQty: stdTool.quantity - assignedQty
-                        });
-                      }
-                    });
-                  });
-
                   return (
                     <div 
                       key={emp.id}
@@ -285,22 +261,6 @@ export default function Employees({
                         <p className="font-medium text-sm text-slate-800">{emp.name}</p>
                         <p className="text-xs text-slate-500">Matrícula: {emp.employeeId}</p>
                         <p className="text-xs text-blue-600 mt-1">{dept?.name || 'Sem departamento'}</p>
-                        
-                        {missingTools.length > 0 && (
-                          <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
-                            <div className="flex items-center gap-1 font-semibold mb-1">
-                              <AlertTriangle className="w-3 h-3" />
-                              Faltam ferramentas (Lista Padrão):
-                            </div>
-                            <ul className="list-disc pl-4 space-y-0.5">
-                              {missingTools.map((mt, idx) => (
-                                <li key={idx}>
-                                  {mt.toolName} (Falta: {mt.missingQty}) - {mt.deptName}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
                         <button onClick={() => handleEditEmployee(emp)} className="p-1 text-slate-400 hover:text-blue-600">

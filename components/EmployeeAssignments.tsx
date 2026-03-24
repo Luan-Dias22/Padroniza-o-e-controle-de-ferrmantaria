@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Employee, Assignment, Department, Tool, StandardToolList } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function EmployeeAssignments({
   employees, setEmployees, departments, tools, standardLists, assignments, setAssignments
@@ -12,6 +14,7 @@ export default function EmployeeAssignments({
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
+  const [viewingAssignment, setViewingAssignment] = useState<Assignment | null>(null);
   
   // Form state
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
@@ -80,11 +83,121 @@ export default function EmployeeAssignments({
     setCustomTools([]);
   };
 
+  const getMissingTools = (assignment: Assignment) => {
+    const dept = departments.find(d => d.id === assignment.departmentId);
+    const missingTools: { toolName: string, missingQty: number }[] = [];
+    
+    if (dept && dept.standardListId) {
+      const standardList = standardLists.find(s => s.id === dept.standardListId);
+      if (standardList) {
+        standardList.tools.forEach(stdTool => {
+          const assignedTool = assignment.assignedTools?.find(t => t.toolId === stdTool.toolId);
+          const assignedQty = assignedTool ? assignedTool.quantity : 0;
+          if (assignedQty < stdTool.quantity) {
+            const tool = tools.find(t => t.id === stdTool.toolId);
+            missingTools.push({
+              toolName: tool ? tool.name : 'Desconhecida',
+              missingQty: stdTool.quantity - assignedQty
+            });
+          }
+        });
+      }
+    }
+    return missingTools;
+  };
+
   const handleEditAssignment = (assignment: Assignment) => {
     setIsAssigning(true);
     setEditingAssignmentId(assignment.id);
     setSelectedEmployeeId(assignment.employeeId);
     setCustomTools([...(assignment.assignedTools || [])]);
+  };
+
+  const handleViewAssignment = (assignment: Assignment) => {
+    setViewingAssignment(assignment);
+  };
+
+  const exportToPDF = (assignment: Assignment) => {
+    const emp = employees.find(e => e.id === assignment.employeeId);
+    const dept = departments.find(d => d.id === assignment.departmentId);
+    const date = new Date(assignment.dateAssigned).toLocaleDateString();
+
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.text('TERMO DE RESPONSABILIDADE E ENTREGA', 105, 20, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text('VOLGA - CONTROLE DE FERRAMENTAS', 105, 30, { align: 'center' });
+    
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(14, 35, 196, 35);
+    
+    // Employee Info
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.text(`Colaborador: ${emp?.name || 'Desconhecido'}`, 14, 45);
+    doc.text(`Matrícula: ${emp?.employeeId || 'N/A'}`, 14, 52);
+    doc.text(`Departamento: ${dept?.name || 'Desconhecido'}`, 105, 45);
+    doc.text(`Data de Entrega: ${date}`, 105, 52);
+    
+    // Agreement Text
+    const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa Volga, estou de acordo que recebi as ferramentas individuais abaixo relacionadas. A contar desta data, comprometo-me a devolvê-la em perfeito estado. Em caso de extravio e danos por mau uso que acarretem a perda total ou parcial do bem, fica obrigatório o ressarcimento ao proprietário dos prejuízos experimentados, no entanto o valor a ser pago é fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(30, 41, 59);
+    const splitText = doc.splitTextToSize(agreementText, 182);
+    doc.text(splitText, 14, 65);
+    
+    // Table
+    const tableData = (assignment.assignedTools || []).map(at => {
+      const tool = tools.find(t => t.id === at.toolId);
+      return [
+        tool?.brand || 'N/A',
+        tool?.name || 'N/A',
+        tool?.category || 'N/A',
+        at.quantity.toString()
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 65 + (splitText.length * 5) + 5,
+      head: [['Marca', 'Ferramenta', 'Categoria', 'Quantidade']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [30, 41, 59], 
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: {
+        fontSize: 9,
+        halign: 'left'
+      },
+      columnStyles: {
+        3: { halign: 'center' }
+      }
+    });
+
+    // Footer
+    const finalY = (doc as any).lastAutoTable.finalY || 100;
+    
+    // Signature lines
+    doc.setDrawColor(30, 41, 59);
+    doc.line(14, finalY + 40, 90, finalY + 40);
+    doc.text('Assinatura do Colaborador', 14, finalY + 45);
+    
+    doc.line(120, finalY + 40, 196, finalY + 40);
+    doc.text('Assinatura Responsável Volga', 120, finalY + 45);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text(`Documento gerado em ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
+
+    doc.save(`termo_ferramentas_${emp?.name.replace(/\s+/g, '_')}.pdf`);
   };
 
   const handleDeleteAssignment = (id: string) => {
@@ -253,29 +366,18 @@ export default function EmployeeAssignments({
                     const dept = departments.find(d => d.id === assignment.departmentId);
                     const date = new Date(assignment.dateAssigned).toLocaleDateString();
                     
-                    const missingTools: { toolName: string, missingQty: number }[] = [];
-                    if (dept && dept.standardListId) {
-                      const standardList = standardLists.find(s => s.id === dept.standardListId);
-                      if (standardList) {
-                        standardList.tools.forEach(stdTool => {
-                          const assignedTool = assignment.assignedTools?.find(t => t.toolId === stdTool.toolId);
-                          const assignedQty = assignedTool ? assignedTool.quantity : 0;
-                          if (assignedQty < stdTool.quantity) {
-                            const tool = tools.find(t => t.id === stdTool.toolId);
-                            missingTools.push({
-                              toolName: tool ? tool.name : 'Desconhecida',
-                              missingQty: stdTool.quantity - assignedQty
-                            });
-                          }
-                        });
-                      }
-                    }
+                    const missingTools = getMissingTools(assignment);
                     
                     return (
                       <tr key={assignment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td className="p-4">
-                          <p className="font-medium text-slate-800">{emp?.name || 'Desconhecido'}</p>
-                          <p className="text-xs text-slate-500">{emp?.employeeId}</p>
+                          <button 
+                            onClick={() => handleViewAssignment(assignment)}
+                            className="text-left hover:text-blue-600 transition-colors group"
+                          >
+                            <p className="font-medium text-slate-800 group-hover:text-blue-600">{emp?.name || 'Desconhecido'}</p>
+                            <p className="text-xs text-slate-500">{emp?.employeeId}</p>
+                          </button>
                         </td>
                         <td className="p-4 text-slate-600">{dept?.name || 'Desconhecido'}</td>
                         <td className="p-4">
@@ -284,28 +386,25 @@ export default function EmployeeAssignments({
                               {(assignment.assignedTools || []).reduce((acc, t) => acc + t.quantity, 0)} itens ({(assignment.assignedTools || []).length} tipos)
                             </span>
                             {missingTools.length > 0 && (
-                              <div className="text-xs text-amber-600 bg-amber-50 p-1.5 rounded border border-amber-200">
-                                <div className="flex items-center gap-1 font-semibold mb-1">
-                                  <AlertTriangle className="w-3 h-3" />
-                                  Faltam ferramentas:
-                                </div>
-                                <ul className="list-disc pl-4 space-y-0.5">
-                                  {missingTools.map((mt, idx) => (
-                                    <li key={idx}>
-                                      {mt.toolName} (Falta: {mt.missingQty})
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
+                              <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-200">
+                                <AlertTriangle className="w-3 h-3" />
+                                Pendente
+                              </span>
                             )}
                           </div>
                         </td>
                         <td className="p-4 text-slate-600 text-sm">{date}</td>
                         <td className="p-4 flex justify-end gap-2">
-                          <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <button onClick={() => handleViewAssignment(assignment)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Ver Detalhes">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => exportToPDF(assignment)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Exportar PDF">
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
@@ -318,6 +417,121 @@ export default function EmployeeAssignments({
           </div>
         </div>
       )}
+      {/* Details Modal */}
+      {viewingAssignment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Detalhes da Atribuição</h2>
+                <p className="text-sm text-slate-500">
+                  {employees.find(e => e.id === viewingAssignment.employeeId)?.name} • {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}
+                </p>
+              </div>
+              <button 
+                onClick={() => setViewingAssignment(null)}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6 text-slate-500" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Colaborador</p>
+                  <p className="font-bold text-slate-800">{employees.find(e => e.id === viewingAssignment.employeeId)?.name}</p>
+                  <p className="text-sm text-slate-600">ID: {employees.find(e => e.id === viewingAssignment.employeeId)?.employeeId}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Departamento</p>
+                  <p className="font-bold text-slate-800">{departments.find(d => d.id === viewingAssignment.departmentId)?.name}</p>
+                  <p className="text-sm text-slate-600">Data: {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                Ferramentas Atribuídas
+              </h3>
+              
+              <div className="border border-slate-100 rounded-xl overflow-hidden">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+                      <th className="p-3 font-semibold">Marca</th>
+                      <th className="p-3 font-semibold">Ferramenta</th>
+                      <th className="p-3 font-semibold text-center">Qtd</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(viewingAssignment.assignedTools || []).map((at, idx) => {
+                      const tool = tools.find(t => t.id === at.toolId);
+                      return (
+                        <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                          <td className="p-3 text-slate-600">{tool?.brand}</td>
+                          <td className="p-3">
+                            <p className="font-medium text-slate-800">{tool?.name}</p>
+                            <p className="text-[10px] text-slate-400">{tool?.category}</p>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded text-sm">
+                              {at.quantity}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {getMissingTools(viewingAssignment).length > 0 && (
+                <div className="mt-6">
+                  <h3 className="font-bold text-amber-800 mb-3 flex items-center gap-2 text-sm">
+                    <AlertTriangle className="w-4 h-4" />
+                    Ferramentas Pendentes (Faltando)
+                  </h3>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <ul className="space-y-2">
+                      {getMissingTools(viewingAssignment).map((mt, idx) => (
+                        <li key={idx} className="flex justify-between items-center text-sm text-amber-900">
+                          <span>{mt.toolName}</span>
+                          <span className="font-bold bg-amber-200 px-2 py-0.5 rounded">Falta: {mt.missingQty}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+              <button 
+                onClick={() => setViewingAssignment(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                Fechar
+              </button>
+              <button 
+                onClick={() => exportToPDF(viewingAssignment)}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Exportar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal 
+        isOpen={deleteModal.isOpen}
+        title={deleteModal.title}
+        message={deleteModal.message}
+        onConfirm={deleteModal.onConfirm}
+        onCancel={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+      />
     </div>
   );
 }
