@@ -83,6 +83,8 @@ export default function App() {
             tools={tools} 
             departments={departments} 
             assignments={assignments} 
+            employees={employees}
+            standardLists={standardLists}
             onNavigate={setActiveTab} 
           />
         )}
