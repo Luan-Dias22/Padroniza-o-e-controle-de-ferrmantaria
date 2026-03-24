@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Employee, Assignment, AssemblyLine, Tool, StandardToolList } from '@/lib/data';
+import { Employee, Assignment, Department, Tool, StandardToolList } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, X, AlertTriangle } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 export default function EmployeeAssignments({
-  employees, setEmployees, lines, tools, standardLists, assignments, setAssignments
+  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
-  lines: AssemblyLine[], tools: Tool[], standardLists: StandardToolList[],
+  departments: Department[], tools: Tool[], standardLists: StandardToolList[],
   assignments: Assignment[], setAssignments: (a: Assignment[]) => void
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -15,7 +15,6 @@ export default function EmployeeAssignments({
   
   // Form state
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [selectedLineId, setSelectedLineId] = useState('');
   const [customTools, setCustomTools] = useState<{ toolId: string, quantity: number }[]>([]);
 
   const [deleteModal, setDeleteModal] = useState<{
@@ -30,10 +29,15 @@ export default function EmployeeAssignments({
     onConfirm: () => {}
   });
 
-  const handleLineSelect = (lineId: string) => {
-    setSelectedLineId(lineId);
-    const line = lines.find(l => l.id === lineId);
-    const standardList = standardLists.find(s => s.id === line?.standardListId);
+  const handleEmployeeSelect = (empId: string) => {
+    setSelectedEmployeeId(empId);
+    if (!empId) {
+      setCustomTools([]);
+      return;
+    }
+    const emp = employees.find(e => e.id === empId);
+    const dept = departments.find(d => d.id === emp?.departmentId);
+    const standardList = standardLists.find(s => s.id === dept?.standardListId);
     setCustomTools(standardList ? [...standardList.tools] : []);
   };
 
@@ -51,17 +55,20 @@ export default function EmployeeAssignments({
   };
 
   const handleSaveAssignment = () => {
-    if (!selectedEmployeeId || !selectedLineId) return;
+    if (!selectedEmployeeId) return;
     
+    const emp = employees.find(e => e.id === selectedEmployeeId);
+    if (!emp) return;
+
     if (editingAssignmentId) {
       setAssignments(assignments.map(a => a.id === editingAssignmentId ? {
-        ...a, employeeId: selectedEmployeeId, lineId: selectedLineId, assignedTools: customTools
+        ...a, employeeId: selectedEmployeeId, departmentId: emp.departmentId, assignedTools: customTools
       } : a));
     } else {
       setAssignments([...assignments, {
         id: crypto.randomUUID(),
         employeeId: selectedEmployeeId,
-        lineId: selectedLineId,
+        departmentId: emp.departmentId,
         assignedTools: customTools,
         dateAssigned: new Date().toISOString()
       }]);
@@ -70,7 +77,6 @@ export default function EmployeeAssignments({
     setIsAssigning(false);
     setEditingAssignmentId(null);
     setSelectedEmployeeId('');
-    setSelectedLineId('');
     setCustomTools([]);
   };
 
@@ -78,7 +84,6 @@ export default function EmployeeAssignments({
     setIsAssigning(true);
     setEditingAssignmentId(assignment.id);
     setSelectedEmployeeId(assignment.employeeId);
-    setSelectedLineId(assignment.lineId);
     setCustomTools([...(assignment.assignedTools || [])]);
   };
 
@@ -106,7 +111,7 @@ export default function EmployeeAssignments({
         <h1 className="text-2xl font-bold text-slate-800">Atribuições de Funcionários</h1>
         {!isAssigning && (
           <button 
-            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setSelectedLineId(''); setCustomTools([]); }}
+            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setCustomTools([]); }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Nova Atribuição
@@ -129,7 +134,7 @@ export default function EmployeeAssignments({
                 <label className="block text-sm font-medium text-slate-700 mb-1">Selecionar Funcionário</label>
                 <select 
                   value={selectedEmployeeId}
-                  onChange={e => setSelectedEmployeeId(e.target.value)}
+                  onChange={e => handleEmployeeSelect(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">-- Selecionar Funcionário --</option>
@@ -137,23 +142,9 @@ export default function EmployeeAssignments({
                     <option key={e.id} value={e.id}>{e.name} ({e.employeeId})</option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Selecionar Linha de Montagem</label>
-                <select 
-                  value={selectedLineId}
-                  onChange={e => handleLineSelect(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="">-- Selecionar Linha --</option>
-                  {lines.map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
-                {selectedLineId && (
+                {selectedEmployeeId && (
                   <p className="text-xs text-slate-500 mt-1">
-                    As ferramentas padrão para esta linha foram carregadas. Você pode modificá-las abaixo.
+                    As ferramentas padrão para o departamento deste funcionário foram carregadas. Você pode modificá-las abaixo.
                   </p>
                 )}
               </div>
@@ -162,9 +153,9 @@ export default function EmployeeAssignments({
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Ferramentas Atribuídas ({customTools.length})</label>
               <div className="border border-slate-200 rounded-lg p-3 h-64 overflow-y-auto bg-slate-50">
-                {!selectedLineId ? (
+                {!selectedEmployeeId ? (
                   <div className="h-full flex items-center justify-center text-slate-400 text-sm text-center">
-                    Selecione uma linha de montagem primeiro para carregar as ferramentas padrão.
+                    Selecione um funcionário primeiro para carregar as ferramentas padrão.
                   </div>
                 ) : tools.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-slate-400 text-sm">Nenhuma ferramenta disponível.</div>
@@ -172,8 +163,9 @@ export default function EmployeeAssignments({
                   <div className="space-y-2">
                     {tools.map(tool => {
                       const isSelected = customTools.some(t => t.toolId === tool.id);
-                      const line = lines.find(l => l.id === selectedLineId);
-                      const isStandard = standardLists.find(s => s.id === line?.standardListId)?.tools?.some(t => t.toolId === tool.id);
+                      const emp = employees.find(e => e.id === selectedEmployeeId);
+                      const dept = departments.find(d => d.id === emp?.departmentId);
+                      const isStandard = standardLists.find(s => s.id === dept?.standardListId)?.tools?.some(t => t.toolId === tool.id);
                       
                       return (
                         <div 
@@ -225,7 +217,7 @@ export default function EmployeeAssignments({
             </button>
             <button 
               onClick={handleSaveAssignment}
-              disabled={!selectedEmployeeId || !selectedLineId}
+              disabled={!selectedEmployeeId}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Salvar Atribuição
@@ -244,7 +236,7 @@ export default function EmployeeAssignments({
               <thead>
                 <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
                   <th className="p-4 font-medium">Funcionário</th>
-                  <th className="p-4 font-medium">Linha de Montagem</th>
+                  <th className="p-4 font-medium">Departamento</th>
                   <th className="p-4 font-medium">Ferramentas Atribuídas</th>
                   <th className="p-4 font-medium">Data</th>
                   <th className="p-4 font-medium text-right">Ações</th>
@@ -258,12 +250,12 @@ export default function EmployeeAssignments({
                 ) : (
                   assignments.map(assignment => {
                     const emp = employees.find(e => e.id === assignment.employeeId);
-                    const line = lines.find(l => l.id === assignment.lineId);
+                    const dept = departments.find(d => d.id === assignment.departmentId);
                     const date = new Date(assignment.dateAssigned).toLocaleDateString();
                     
                     const missingTools: { toolName: string, missingQty: number }[] = [];
-                    if (line && line.standardListId) {
-                      const standardList = standardLists.find(s => s.id === line.standardListId);
+                    if (dept && dept.standardListId) {
+                      const standardList = standardLists.find(s => s.id === dept.standardListId);
                       if (standardList) {
                         standardList.tools.forEach(stdTool => {
                           const assignedTool = assignment.assignedTools?.find(t => t.toolId === stdTool.toolId);
@@ -285,7 +277,7 @@ export default function EmployeeAssignments({
                           <p className="font-medium text-slate-800">{emp?.name || 'Desconhecido'}</p>
                           <p className="text-xs text-slate-500">{emp?.employeeId}</p>
                         </td>
-                        <td className="p-4 text-slate-600">{line?.name || 'Desconhecido'}</td>
+                        <td className="p-4 text-slate-600">{dept?.name || 'Desconhecido'}</td>
                         <td className="p-4">
                           <div className="flex flex-col items-start gap-2">
                             <span className="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Employee, Department, Assignment, AssemblyLine, Tool, StandardToolList } from '@/lib/data';
+import { Employee, Department, Assignment, Tool, StandardToolList } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, Users, Building2, AlertTriangle } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
@@ -7,12 +7,12 @@ export default function Employees({
   employees, setEmployees,
   departments, setDepartments,
   assignments, setAssignments,
-  lines, tools, standardLists
+  tools, standardLists
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], setDepartments: (d: Department[]) => void,
   assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
-  lines: AssemblyLine[], tools: Tool[], standardLists: StandardToolList[]
+  tools: Tool[], standardLists: StandardToolList[]
 }) {
   const [newEmpName, setNewEmpName] = useState('');
   const [newEmpId, setNewEmpId] = useState('');
@@ -253,13 +253,13 @@ export default function Employees({
                   const dept = departments.find(d => d.id === emp.departmentId);
                   
                   const empAssignments = assignments.filter(a => a.employeeId === emp.id);
-                  const missingTools: { lineName: string, toolName: string, missingQty: number }[] = [];
+                  const missingTools: { deptName: string, toolName: string, missingQty: number }[] = [];
                   
                   empAssignments.forEach(assignment => {
-                    const line = lines.find(l => l.id === assignment.lineId);
-                    if (!line || !line.standardListId) return;
+                    const dept = departments.find(d => d.id === assignment.departmentId);
+                    if (!dept || !dept.standardListId) return;
                     
-                    const standardList = standardLists.find(s => s.id === line.standardListId);
+                    const standardList = standardLists.find(s => s.id === dept.standardListId);
                     if (!standardList) return;
                 
                     standardList.tools.forEach(stdTool => {
@@ -268,7 +268,7 @@ export default function Employees({
                       if (assignedQty < stdTool.quantity) {
                         const tool = tools.find(t => t.id === stdTool.toolId);
                         missingTools.push({
-                          lineName: line.name,
+                          deptName: dept.name,
                           toolName: tool ? tool.name : 'Desconhecida',
                           missingQty: stdTool.quantity - assignedQty
                         });
@@ -295,7 +295,7 @@ export default function Employees({
                             <ul className="list-disc pl-4 space-y-0.5">
                               {missingTools.map((mt, idx) => (
                                 <li key={idx}>
-                                  {mt.toolName} (Falta: {mt.missingQty}) - {mt.lineName}
+                                  {mt.toolName} (Falta: {mt.missingQty}) - {mt.deptName}
                                 </li>
                               ))}
                             </ul>

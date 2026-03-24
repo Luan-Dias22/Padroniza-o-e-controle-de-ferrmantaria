@@ -1,23 +1,23 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Tool, AssemblyLine, Assignment } from '@/lib/data';
+import { Tool, Department, Assignment } from '@/lib/data';
 import { Wrench, Users, LayoutList, ClipboardCheck } from 'lucide-react';
 
-export default function Dashboard({ tools, lines, assignments, onNavigate }: { 
-  tools: Tool[], lines: AssemblyLine[], assignments: Assignment[], onNavigate: (tab: string) => void 
+export default function Dashboard({ tools, departments, assignments, onNavigate }: { 
+  tools: Tool[], departments: Department[], assignments: Assignment[], onNavigate: (tab: string) => void 
 }) {
-  const chartData = lines.map(line => {
+  const chartData = departments.map(dept => {
     const assignedToolsCount = assignments
-      .filter(a => a.lineId === line.id)
+      .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
     return {
-      name: line.name,
+      name: dept.name,
       tools: assignedToolsCount
     };
   });
 
   const stats = [
     { label: 'Total de Ferramentas', value: tools.length, icon: Wrench, color: 'bg-blue-500', tab: 'tools' },
-    { label: 'Linhas de Montagem', value: lines.length, icon: LayoutList, color: 'bg-purple-500', tab: 'standard' },
+    { label: 'Departamentos', value: departments.length, icon: Users, color: 'bg-purple-500', tab: 'employees' },
     { label: 'Atribuições Ativas', value: assignments.length, icon: ClipboardCheck, color: 'bg-green-500', tab: 'assignments' },
   ];
 
@@ -47,7 +47,7 @@ export default function Dashboard({ tools, lines, assignments, onNavigate }: {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
-        <h2 className="text-lg font-bold text-slate-800 mb-6">Ferramentas Atribuídas por Linha de Montagem</h2>
+        <h2 className="text-lg font-bold text-slate-800 mb-6">Ferramentas Atribuídas por Departamento</h2>
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>

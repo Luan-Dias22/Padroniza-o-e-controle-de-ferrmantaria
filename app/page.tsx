@@ -8,20 +8,19 @@ import StandardToolLists from '@/components/StandardToolLists';
 import EmployeeAssignments from '@/components/EmployeeAssignments';
 import Employees from '@/components/Employees';
 import { useLocalStorage } from '@/lib/useLocalStorage';
-import { mockTools, mockLines, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, AssemblyLine, StandardToolList, Employee, Assignment, Department } from '@/lib/data';
+import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department } from '@/lib/data';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [tools, setTools, toolsInit] = useLocalStorage<Tool[]>('tools', mockTools);
-  const [lines, setLines, linesInit] = useLocalStorage<AssemblyLine[]>('assemblyLines', mockLines);
   const [standardLists, setStandardLists, listsInit] = useLocalStorage<StandardToolList[]>('standardToolLists', mockStandardLists);
   const [employees, setEmployees, empInit] = useLocalStorage<Employee[]>('employees', mockEmployees);
   const [departments, setDepartments, deptInit] = useLocalStorage<Department[]>('departments', mockDepartments);
   const [assignments, setAssignments, assignInit] = useLocalStorage<Assignment[]>('assignments', mockAssignments);
 
-  const isReady = toolsInit && linesInit && listsInit && empInit && assignInit && deptInit;
+  const isReady = toolsInit && listsInit && empInit && assignInit && deptInit;
 
   const tabs = [
     { id: 'dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -82,7 +81,7 @@ export default function App() {
         {activeTab === 'dashboard' && (
           <Dashboard 
             tools={tools} 
-            lines={lines} 
+            departments={departments} 
             assignments={assignments} 
             onNavigate={setActiveTab} 
           />
@@ -99,8 +98,8 @@ export default function App() {
         )}
         {activeTab === 'standard' && (
           <StandardToolLists 
-            lines={lines} 
-            setLines={setLines}
+            departments={departments} 
+            setDepartments={setDepartments}
             tools={tools}
             standardLists={standardLists}
             setStandardLists={setStandardLists}
@@ -114,7 +113,6 @@ export default function App() {
             setDepartments={setDepartments}
             assignments={assignments}
             setAssignments={setAssignments}
-            lines={lines}
             tools={tools}
             standardLists={standardLists}
           />
@@ -123,7 +121,7 @@ export default function App() {
           <EmployeeAssignments 
             employees={employees}
             setEmployees={setEmployees}
-            lines={lines}
+            departments={departments}
             tools={tools}
             standardLists={standardLists}
             assignments={assignments}

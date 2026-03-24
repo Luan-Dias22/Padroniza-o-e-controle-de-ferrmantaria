@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { AssemblyLine, StandardToolList, Tool } from '@/lib/data';
+import { Department, StandardToolList, Tool } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, Link as LinkIcon } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 export default function StandardToolLists({ 
-  lines, setLines, tools, standardLists, setStandardLists 
+  departments, setDepartments, tools, standardLists, setStandardLists 
 }: { 
-  lines: AssemblyLine[], setLines: (l: AssemblyLine[]) => void, 
+  departments: Department[], setDepartments: (d: Department[]) => void, 
   tools: Tool[], 
   standardLists: StandardToolList[], setStandardLists: (s: StandardToolList[]) => void 
 }) {
@@ -14,9 +14,6 @@ export default function StandardToolLists({
   const [selectedKitId, setSelectedKitId] = useState<string>(standardLists[0]?.id || '');
   const [editingKitId, setEditingKitId] = useState<string | null>(null);
   const [editKitName, setEditKitName] = useState('');
-
-  const [editingLineId, setEditingLineId] = useState<string | null>(null);
-  const [editLineName, setEditLineName] = useState('');
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -43,11 +40,11 @@ export default function StandardToolLists({
     setDeleteModal({
       isOpen: true,
       title: 'Excluir Kit Padrão',
-      message: 'Excluir este kit padrão? As linhas vinculadas a ele ficarão sem kit.',
+      message: 'Excluir este kit padrão? Os departamentos vinculados a ele ficarão sem kit.',
       onConfirm: () => {
         setStandardLists(standardLists.filter(s => s.id !== id));
-        // Remove link from lines
-        setLines(lines.map(l => l.standardListId === id ? { ...l, standardListId: undefined } : l));
+        // Remove link from departments
+        setDepartments(departments.map(d => d.standardListId === id ? { ...d, standardListId: undefined } : d));
         if (selectedKitId === id) setSelectedKitId(standardLists[0]?.id || '');
       }
     });
@@ -57,12 +54,6 @@ export default function StandardToolLists({
     if (!editKitName.trim() || !editingKitId) return;
     setStandardLists(standardLists.map(s => s.id === editingKitId ? { ...s, name: editKitName } : s));
     setEditingKitId(null);
-  };
-
-  const handleUpdateLine = () => {
-    if (!editLineName.trim() || !editingLineId) return;
-    setLines(lines.map(l => l.id === editingLineId ? { ...l, name: editLineName } : l));
-    setEditingLineId(null);
   };
 
   const currentKit = standardLists.find(s => s.id === selectedKitId);
@@ -92,8 +83,8 @@ export default function StandardToolLists({
     } : s));
   };
 
-  const handleLinkKitToLine = (lineId: string, kitId: string) => {
-    setLines(lines.map(l => l.id === lineId ? { ...l, standardListId: kitId || undefined } : l));
+  const handleLinkKitToDepartment = (deptId: string, kitId: string) => {
+    setDepartments(departments.map(d => d.id === deptId ? { ...d, standardListId: kitId || undefined } : d));
   };
 
   return (
@@ -235,84 +226,27 @@ export default function StandardToolLists({
         </div>
       </div>
 
-      {/* Assembly Lines Linkage */}
+      {/* Departments Linkage */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <LinkIcon className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-800">Linhas de Montagem e Kits</h2>
+            <h2 className="text-lg font-semibold text-slate-800">Departamentos e Kits</h2>
           </div>
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target as HTMLFormElement;
-              const input = form.elements.namedItem('newLine') as HTMLInputElement;
-              if (input.value.trim()) {
-                setLines([...lines, { id: crypto.randomUUID(), name: input.value.trim() }]);
-                input.value = '';
-              }
-            }}
-            className="flex gap-2"
-          >
-            <input 
-              name="newLine"
-              type="text" 
-              placeholder="Nova linha de montagem..."
-              className="p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64"
-            />
-            <button type="submit" className="p-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
-              <Plus className="w-5 h-5" />
-            </button>
-          </form>
         </div>
         <div className="p-4">
-          {lines.length === 0 ? (
-            <p className="text-slate-500 text-sm">Nenhuma linha de montagem registrada.</p>
+          {departments.length === 0 ? (
+            <p className="text-slate-500 text-sm">Nenhum departamento registrado. Crie departamentos na aba Colaboradores.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {lines.map(line => (
-                <div key={line.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col gap-3">
+              {departments.map(dept => (
+                <div key={dept.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col gap-3">
                   <div className="flex justify-between items-start">
-                    {editingLineId === line.id ? (
-                      <div className="flex items-center gap-2 w-full">
-                        <input 
-                          autoFocus
-                          value={editLineName} 
-                          onChange={e => setEditLineName(e.target.value)}
-                          className="flex-1 p-1 border border-slate-300 rounded text-sm"
-                        />
-                        <button onClick={handleUpdateLine} className="text-green-600 p-1"><Check className="w-4 h-4" /></button>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="font-medium text-slate-800">{line.name}</p>
-                        <div className="flex gap-1">
-                          <button 
-                            onClick={() => { setEditingLineId(line.id); setEditLineName(line.name); }}
-                            className="text-slate-400 hover:text-blue-600 p-1"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setDeleteModal({
-                                isOpen: true,
-                                title: 'Excluir Linha de Montagem',
-                                message: 'Excluir esta linha de montagem?',
-                                onConfirm: () => setLines(lines.filter(l => l.id !== line.id))
-                              });
-                            }}
-                            className="text-slate-400 hover:text-red-600 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
+                    <p className="font-medium text-slate-800">{dept.name}</p>
                   </div>
                   <select
-                    value={line.standardListId || ''}
-                    onChange={e => handleLinkKitToLine(line.id, e.target.value)}
+                    value={dept.standardListId || ''}
+                    onChange={e => handleLinkKitToDepartment(dept.id, e.target.value)}
                     className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
                     <option value="">-- Sem kit padrão --</option>
