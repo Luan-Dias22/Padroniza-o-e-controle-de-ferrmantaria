@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Employee, Assignment, Department, Tool, StandardToolList } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -19,6 +19,7 @@ export default function EmployeeAssignments({
   // Form state
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [customTools, setCustomTools] = useState<{ toolId: string, quantity: number }[]>([]);
+  const [filterType, setFilterType] = useState<'all' | 'pending' | 'completed'>('all');
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -182,8 +183,41 @@ export default function EmployeeAssignments({
       }
     });
 
+    let currentY = (doc as any).lastAutoTable.finalY || 100;
+
+    const missingTools = getMissingTools(assignment);
+    if (missingTools.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(180, 83, 9); // amber-700
+      doc.text('FERRAMENTAS PENDENTES (A ENTREGAR)', 14, currentY + 15);
+      
+      const missingTableData = missingTools.map(mt => [mt.toolName, mt.missingQty.toString()]);
+      
+      autoTable(doc, {
+        startY: currentY + 20,
+        head: [['Ferramenta', 'Quantidade Faltante']],
+        body: missingTableData,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [251, 191, 36], // amber-400
+          textColor: [30, 41, 59],
+          fontSize: 10,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          halign: 'left'
+        },
+        columnStyles: {
+          1: { halign: 'center' }
+        }
+      });
+      currentY = (doc as any).lastAutoTable.finalY || currentY + 40;
+    }
+
     // Footer
-    const finalY = (doc as any).lastAutoTable.finalY || 100;
+    const finalY = currentY;
     
     // Signature lines
     doc.setDrawColor(30, 41, 59);
@@ -210,6 +244,14 @@ export default function EmployeeAssignments({
       }
     });
   };
+
+  const filteredAssignments = assignments.filter(a => {
+    if (filterType === 'all') return true;
+    const missingTools = getMissingTools(a);
+    if (filterType === 'pending') return missingTools.length > 0;
+    if (filterType === 'completed') return missingTools.length === 0;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -341,8 +383,22 @@ export default function EmployeeAssignments({
 
       {!isAssigning && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50">
+          <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-slate-800">Atribuições Atuais</h2>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-slate-500 flex items-center gap-1">
+                <Filter className="w-4 h-4" /> Filtrar:
+              </label>
+              <select 
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as any)}
+                className="text-sm p-1.5 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">Todas</option>
+                <option value="pending">Pendentes</option>
+                <option value="completed">Entregues</option>
+              </select>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -356,12 +412,12 @@ export default function EmployeeAssignments({
                 </tr>
               </thead>
               <tbody>
-                {assignments.length === 0 ? (
+                {filteredAssignments.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-slate-500">Nenhuma atribuição encontrada.</td>
                   </tr>
                 ) : (
-                  assignments.map(assignment => {
+                  filteredAssignments.map(assignment => {
                     const emp = employees.find(e => e.id === assignment.employeeId);
                     const dept = departments.find(d => d.id === assignment.departmentId);
                     const date = new Date(assignment.dateAssigned).toLocaleDateString();
