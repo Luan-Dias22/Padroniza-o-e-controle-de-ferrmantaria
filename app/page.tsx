@@ -18,6 +18,8 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -35,11 +37,25 @@ export default function App() {
 
   const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit));
 
-  const handleMigrateLocalData = () => {
-    if (!window.confirm('Isso vai transferir os dados salvos no seu navegador para a nuvem. Deseja continuar?')) {
-      return;
+  const handleLogin = async () => {
+    setLoginError(null);
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        setLoginError('O pop-up foi fechado antes de concluir o login. Tente novamente.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setLoginError('Este domínio não está autorizado no Firebase. Por favor, verifique as configurações.');
+      } else {
+        setLoginError(`Erro ao fazer login: ${error.message}. Se você estiver usando Safari, modo anônimo ou bloqueadores de rastreamento, tente desativá-los ou usar outro navegador.`);
+      }
     }
+  };
 
+  const handleMigrateLocalData = () => {
+    // Custom confirmation instead of window.confirm
+    setMigrationStatus('migrating');
     try {
       const localTools = JSON.parse(localStorage.getItem('tools') || 'null');
       if (localTools && Array.isArray(localTools) && localTools.length > 0) {
@@ -66,10 +82,12 @@ export default function App() {
         setAssignments(localAssigns);
       }
 
-      alert('Dados migrados com sucesso!');
+      setMigrationStatus('success');
+      setTimeout(() => setMigrationStatus(null), 3000);
     } catch (e) {
       console.error('Erro ao migrar dados locais', e);
-      alert('Ocorreu um erro ao migrar os dados.');
+      setMigrationStatus('error');
+      setTimeout(() => setMigrationStatus(null), 3000);
     }
   };
 
@@ -94,8 +112,15 @@ export default function App() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800 mb-2">ToolManager</h1>
           <p className="text-slate-500 mb-8">Faça login para gerenciar o inventário de ferramentas da sua equipe.</p>
+          
+          {loginError && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 text-left">
+              {loginError}
+            </div>
+          )}
+
           <button
-            onClick={signInWithGoogle}
+            onClick={handleLogin}
             className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors"
           >
             <LogIn className="w-5 h-5" />
@@ -167,10 +192,16 @@ export default function App() {
           </div>
           <button
             onClick={handleMigrateLocalData}
-            className="w-full flex items-center gap-3 px-4 py-2 mb-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-blue-400 transition-colors"
+            disabled={migrationStatus === 'migrating'}
+            className="w-full flex items-center gap-3 px-4 py-2 mb-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-blue-400 transition-colors disabled:opacity-50"
           >
             <Database className="w-4 h-4" />
-            <span className="text-sm font-medium">Migrar Dados Locais</span>
+            <span className="text-sm font-medium">
+              {migrationStatus === 'migrating' ? 'Migrando...' : 
+               migrationStatus === 'success' ? 'Sucesso!' : 
+               migrationStatus === 'error' ? 'Erro ao migrar' : 
+               'Migrar Dados Locais'}
+            </span>
           </button>
           <button
             onClick={logOut}
