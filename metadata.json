@@ -1,5 +1,5 @@
 {
-  "name": "Gerenciador de Ferramentas de Manufatura",
+  "name": "Padronização e controle de ferramentas",
   "description": "Um aplicativo web completo e independente para gerenciar ferramentas atribuídas a funcionários em um ambiente de manufatura.",
   "requestFramePermissions": []
 }

@@ -123,6 +123,7 @@ export default function ToolRegistration({
             >
               <option value="ferramenta manual">Ferramenta Manual</option>
               <option value="ferramenta elétrica">Ferramenta Elétrica</option>
+              <option value="ferramenta pneumática">Ferramenta Pneumática</option>
               <option value="medição">Medição</option>
               <option value="segurança">Segurança</option>
               <option value="outro">Outro</option>
