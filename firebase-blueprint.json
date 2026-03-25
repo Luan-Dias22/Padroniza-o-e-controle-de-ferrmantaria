@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "Tool": {
+      "title": "Tool",
+      "description": "A tool in the inventory",
+      "type": "object",
+      "properties": {
+        "brand": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["brand", "name", "category", "description", "uid"]
+    },
+    "StandardToolList": {
+      "title": "StandardToolList",
+      "description": "A predefined list of tools",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "toolId": { "type": "string" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["toolId", "quantity"]
+          }
+        },
+        "isLocked": { "type": "boolean" },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "tools", "uid"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "A department in the company",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "standardListId": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "uid"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "An employee",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "name": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["employeeId", "name", "departmentId", "uid"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "A tool assignment to an employee",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "departmentId": { "type": "string" },
+        "assignedTools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "toolId": { "type": "string" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["toolId", "quantity"]
+          }
+        },
+        "dateAssigned": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["employeeId", "departmentId", "assignedTools", "dateAssigned", "uid"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/tools/{toolId}": {
+      "schema": { "$ref": "#/entities/Tool" },
+      "description": "Tools owned by the user"
+    },
+    "users/{userId}/standardToolLists/{listId}": {
+      "schema": { "$ref": "#/entities/StandardToolList" },
+      "description": "Standard tool lists owned by the user"
+    },
+    "users/{userId}/departments/{deptId}": {
+      "schema": { "$ref": "#/entities/Department" },
+      "description": "Departments owned by the user"
+    },
+    "users/{userId}/employees/{empId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Employees owned by the user"
+    },
+    "users/{userId}/assignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/Assignment" },
+      "description": "Assignments owned by the user"
+    }
+  }
+}
