@@ -20,6 +20,8 @@ export default function EmployeeAssignments({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [customTools, setCustomTools] = useState<{ toolId: string, quantity: number }[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'pending' | 'completed'>('all');
+  const [assignmentSearch, setAssignmentSearch] = useState('');
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'selected' | 'unselected'>('all');
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -82,6 +84,8 @@ export default function EmployeeAssignments({
     setEditingAssignmentId(null);
     setSelectedEmployeeId('');
     setCustomTools([]);
+    setAssignmentSearch('');
+    setAssignmentFilter('all');
   };
 
   const getMissingTools = (assignment: Assignment) => {
@@ -112,6 +116,8 @@ export default function EmployeeAssignments({
     setEditingAssignmentId(assignment.id);
     setSelectedEmployeeId(assignment.employeeId);
     setCustomTools([...(assignment.assignedTools || [])]);
+    setAssignmentSearch('');
+    setAssignmentFilter('all');
   };
 
   const handleViewAssignment = (assignment: Assignment) => {
@@ -306,7 +312,27 @@ export default function EmployeeAssignments({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Ferramentas Atribuídas ({customTools.length})</label>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-slate-700">Ferramentas Atribuídas ({customTools.length})</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Buscar ferramenta..." 
+                    value={assignmentSearch}
+                    onChange={e => setAssignmentSearch(e.target.value)}
+                    className="text-sm p-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-40"
+                  />
+                  <select 
+                    value={assignmentFilter}
+                    onChange={e => setAssignmentFilter(e.target.value as any)}
+                    className="text-sm p-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="all">Todas</option>
+                    <option value="selected">Atribuídas</option>
+                    <option value="unselected">Não Atribuídas</option>
+                  </select>
+                </div>
+              </div>
               <div className="border border-slate-200 rounded-lg p-3 h-64 overflow-y-auto bg-slate-50">
                 {!selectedEmployeeId ? (
                   <div className="h-full flex items-center justify-center text-slate-400 text-sm text-center">
@@ -316,13 +342,33 @@ export default function EmployeeAssignments({
                   <div className="h-full flex items-center justify-center text-slate-400 text-sm">Nenhuma ferramenta disponível.</div>
                 ) : (
                   <div className="space-y-2">
-                    {tools.map(tool => {
-                      const isSelected = customTools.some(t => t.toolId === tool.id);
-                      const emp = employees.find(e => e.id === selectedEmployeeId);
-                      const dept = departments.find(d => d.id === emp?.departmentId);
-                      const isStandard = standardLists.find(s => s.id === dept?.standardListId)?.tools?.some(t => t.toolId === tool.id);
-                      
-                      return (
+                    {tools
+                      .filter(tool => {
+                        const isSelected = customTools.some(t => t.toolId === tool.id);
+                        if (assignmentFilter === 'selected' && !isSelected) return false;
+                        if (assignmentFilter === 'unselected' && isSelected) return false;
+                        
+                        if (assignmentSearch) {
+                          const searchLower = assignmentSearch.toLowerCase();
+                          return tool.name.toLowerCase().includes(searchLower) || tool.brand.toLowerCase().includes(searchLower);
+                        }
+                        return true;
+                      })
+                      .sort((a, b) => {
+                        // Sort selected tools to top
+                        const aSelected = customTools.some(t => t.toolId === a.id);
+                        const bSelected = customTools.some(t => t.toolId === b.id);
+                        if (aSelected && !bSelected) return -1;
+                        if (!aSelected && bSelected) return 1;
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map(tool => {
+                        const isSelected = customTools.some(t => t.toolId === tool.id);
+                        const emp = employees.find(e => e.id === selectedEmployeeId);
+                        const dept = departments.find(d => d.id === emp?.departmentId);
+                        const isStandard = standardLists.find(s => s.id === dept?.standardListId)?.tools?.some(t => t.toolId === tool.id);
+                        
+                        return (
                         <div 
                           key={tool.id}
                           className={`p-2 border rounded flex items-center gap-3 bg-white transition-colors ${
