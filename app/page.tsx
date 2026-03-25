@@ -7,18 +7,18 @@ import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
 import EmployeeAssignments from '@/components/EmployeeAssignments';
 import Employees from '@/components/Employees';
-import { useLocalStorage } from '@/lib/useLocalStorage';
+import { useBlobStorage } from '@/lib/useBlobStorage';
 import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department } from '@/lib/data';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [tools, setTools, toolsInit] = useLocalStorage<Tool[]>('tools', mockTools);
-  const [standardLists, setStandardLists, listsInit] = useLocalStorage<StandardToolList[]>('standardToolLists', mockStandardLists);
-  const [employees, setEmployees, empInit] = useLocalStorage<Employee[]>('employees', mockEmployees);
-  const [departments, setDepartments, deptInit] = useLocalStorage<Department[]>('departments', mockDepartments);
-  const [assignments, setAssignments, assignInit] = useLocalStorage<Assignment[]>('assignments', mockAssignments);
+  const [tools, setTools, toolsInit] = useBlobStorage<Tool[]>('tools', mockTools);
+  const [standardLists, setStandardLists, listsInit] = useBlobStorage<StandardToolList[]>('standardToolLists', mockStandardLists);
+  const [employees, setEmployees, empInit] = useBlobStorage<Employee[]>('employees', mockEmployees);
+  const [departments, setDepartments, deptInit] = useBlobStorage<Department[]>('departments', mockDepartments);
+  const [assignments, setAssignments, assignInit] = useBlobStorage<Assignment[]>('assignments', mockAssignments);
 
   const isReady = toolsInit && listsInit && empInit && assignInit && deptInit;
 
