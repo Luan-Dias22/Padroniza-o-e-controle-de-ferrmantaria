@@ -23,6 +23,9 @@ export default function Employees({
   const [editingDeptId, setEditingDeptId] = useState<string | null>(null);
   const [editDeptName, setEditDeptName] = useState('');
 
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [sortByMatricula, setSortByMatricula] = useState(false);
+
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -195,9 +198,31 @@ export default function Employees({
 
         {/* Employees Management */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col h-[500px]">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-            <Users className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-800">{editingEmpId ? 'Editar Colaborador' : 'Colaboradores'}</h2>
+          <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-slate-500" />
+              <h2 className="text-lg font-semibold text-slate-800">{editingEmpId ? 'Editar Colaborador' : 'Colaboradores'}</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Buscar por nome ou matrícula..."
+                value={employeeSearch}
+                onChange={e => setEmployeeSearch(e.target.value)}
+                className="text-sm p-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-48"
+              />
+              <button
+                onClick={() => setSortByMatricula(!sortByMatricula)}
+                className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
+                  sortByMatricula 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Ordenar por Matrícula"
+              >
+                Ordenar por Matrícula {sortByMatricula ? '(Ativo)' : ''}
+              </button>
+            </div>
           </div>
           <div className="p-4 border-b border-slate-100">
             <form onSubmit={handleSubmitEmployee} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -249,7 +274,19 @@ export default function Employees({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {employees.map(emp => {
+                {employees
+                  .filter(emp => {
+                    if (!employeeSearch) return true;
+                    const searchLower = employeeSearch.toLowerCase();
+                    return emp.name.toLowerCase().includes(searchLower) || emp.employeeId.toLowerCase().includes(searchLower);
+                  })
+                  .sort((a, b) => {
+                    if (sortByMatricula) {
+                      return a.employeeId.localeCompare(b.employeeId);
+                    }
+                    return 0; // Keep original order or sort by name if preferred
+                  })
+                  .map(emp => {
                   const dept = departments.find(d => d.id === emp.departmentId);
                   
                   return (

@@ -2,12 +2,13 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, Database } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
 import EmployeeAssignments from '@/components/EmployeeAssignments';
 import Employees from '@/components/Employees';
+import Reports from '@/components/Reports';
 import { useFirestore } from '@/lib/useFirestore';
 import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
@@ -19,7 +20,6 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [migrationStatus, setMigrationStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -53,50 +53,13 @@ export default function App() {
     }
   };
 
-  const handleMigrateLocalData = () => {
-    // Custom confirmation instead of window.confirm
-    setMigrationStatus('migrating');
-    try {
-      const localTools = JSON.parse(localStorage.getItem('tools') || 'null');
-      if (localTools && Array.isArray(localTools) && localTools.length > 0) {
-        setTools(localTools);
-      }
-
-      const localLists = JSON.parse(localStorage.getItem('standardToolLists') || 'null');
-      if (localLists && Array.isArray(localLists) && localLists.length > 0) {
-        setStandardLists(localLists);
-      }
-
-      const localEmps = JSON.parse(localStorage.getItem('employees') || 'null');
-      if (localEmps && Array.isArray(localEmps) && localEmps.length > 0) {
-        setEmployees(localEmps);
-      }
-
-      const localDepts = JSON.parse(localStorage.getItem('departments') || 'null');
-      if (localDepts && Array.isArray(localDepts) && localDepts.length > 0) {
-        setDepartments(localDepts);
-      }
-
-      const localAssigns = JSON.parse(localStorage.getItem('assignments') || 'null');
-      if (localAssigns && Array.isArray(localAssigns) && localAssigns.length > 0) {
-        setAssignments(localAssigns);
-      }
-
-      setMigrationStatus('success');
-      setTimeout(() => setMigrationStatus(null), 3000);
-    } catch (e) {
-      console.error('Erro ao migrar dados locais', e);
-      setMigrationStatus('error');
-      setTimeout(() => setMigrationStatus(null), 3000);
-    }
-  };
-
   const tabs = [
     { id: 'dashboard', label: 'Painel', icon: LayoutDashboard },
     { id: 'tools', label: 'Registro de Ferramentas', icon: Wrench },
     { id: 'standard', label: 'Listas Padrão', icon: ListChecks },
     { id: 'employees', label: 'Colaboradores', icon: Building2 },
     { id: 'assignments', label: 'Atribuições', icon: Users },
+    { id: 'reports', label: 'Relatórios', icon: FileText },
   ];
 
   if (!isReady) {
@@ -191,19 +154,6 @@ export default function App() {
             </div>
           </div>
           <button
-            onClick={handleMigrateLocalData}
-            disabled={migrationStatus === 'migrating'}
-            className="w-full flex items-center gap-3 px-4 py-2 mb-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-blue-400 transition-colors disabled:opacity-50"
-          >
-            <Database className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {migrationStatus === 'migrating' ? 'Migrando...' : 
-               migrationStatus === 'success' ? 'Sucesso!' : 
-               migrationStatus === 'error' ? 'Erro ao migrar' : 
-               'Migrar Dados Locais'}
-            </span>
-          </button>
-          <button
             onClick={logOut}
             className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors"
           >
@@ -265,6 +215,14 @@ export default function App() {
             standardLists={standardLists}
             assignments={assignments}
             setAssignments={setAssignments}
+          />
+        )}
+        {activeTab === 'reports' && (
+          <Reports 
+            tools={tools}
+            departments={departments}
+            assignments={assignments}
+            employees={employees}
           />
         )}
       </main>

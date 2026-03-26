@@ -18,10 +18,15 @@ export default function EmployeeAssignments({
   
   // Form state
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeSortByMatricula, setEmployeeSortByMatricula] = useState(false);
   const [customTools, setCustomTools] = useState<{ toolId: string, quantity: number }[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'pending' | 'completed'>('all');
   const [assignmentSearch, setAssignmentSearch] = useState('');
   const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'selected' | 'unselected'>('all');
+  const [assignmentEmployeeSearch, setAssignmentEmployeeSearch] = useState('');
+  const [assignmentDepartmentFilter, setAssignmentDepartmentFilter] = useState('');
+  const [sortByMatricula, setSortByMatricula] = useState(false);
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -83,9 +88,13 @@ export default function EmployeeAssignments({
     setIsAssigning(false);
     setEditingAssignmentId(null);
     setSelectedEmployeeId('');
+    setEmployeeSearch('');
+    setEmployeeSortByMatricula(false);
     setCustomTools([]);
     setAssignmentSearch('');
     setAssignmentFilter('all');
+    setAssignmentEmployeeSearch('');
+    setAssignmentDepartmentFilter('');
   };
 
   const getMissingTools = (assignment: Assignment) => {
@@ -115,9 +124,13 @@ export default function EmployeeAssignments({
     setIsAssigning(true);
     setEditingAssignmentId(assignment.id);
     setSelectedEmployeeId(assignment.employeeId);
+    setEmployeeSearch('');
+    setEmployeeSortByMatricula(false);
     setCustomTools([...(assignment.assignedTools || [])]);
     setAssignmentSearch('');
     setAssignmentFilter('all');
+    setAssignmentEmployeeSearch('');
+    setAssignmentDepartmentFilter('');
   };
 
   const handleViewAssignment = (assignment: Assignment) => {
@@ -252,11 +265,34 @@ export default function EmployeeAssignments({
   };
 
   const filteredAssignments = assignments.filter(a => {
-    if (filterType === 'all') return true;
-    const missingTools = getMissingTools(a);
-    if (filterType === 'pending') return missingTools.length > 0;
-    if (filterType === 'completed') return missingTools.length === 0;
+    if (assignmentDepartmentFilter && a.departmentId !== assignmentDepartmentFilter) {
+      return false;
+    }
+
+    if (filterType !== 'all') {
+      const missingTools = getMissingTools(a);
+      if (filterType === 'pending' && missingTools.length === 0) return false;
+      if (filterType === 'completed' && missingTools.length > 0) return false;
+    }
+    
+    if (assignmentEmployeeSearch) {
+      const emp = employees.find(e => e.id === a.employeeId);
+      if (!emp) return false;
+      const searchLower = assignmentEmployeeSearch.toLowerCase();
+      return emp.name.toLowerCase().includes(searchLower) || emp.employeeId.toLowerCase().includes(searchLower);
+    }
+    
     return true;
+  }).sort((a, b) => {
+    if (sortByMatricula) {
+      const empA = employees.find(e => e.id === a.employeeId);
+      const empB = employees.find(e => e.id === b.employeeId);
+      if (empA && empB) {
+        return empA.employeeId.localeCompare(empB.employeeId);
+      }
+    }
+    // Default sort by date assigned (newest first)
+    return new Date(b.dateAssigned).getTime() - new Date(a.dateAssigned).getTime();
   });
 
   return (
@@ -272,7 +308,7 @@ export default function EmployeeAssignments({
         <h1 className="text-2xl font-bold text-slate-800">Atribuições de Funcionários</h1>
         {!isAssigning && (
           <button 
-            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setCustomTools([]); }}
+            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setEmployeeSortByMatricula(false); setCustomTools([]); }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Nova Atribuição
@@ -293,13 +329,45 @@ export default function EmployeeAssignments({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Selecionar Funcionário</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="Buscar funcionário por nome ou matrícula..."
+                    value={employeeSearch}
+                    onChange={e => setEmployeeSearch(e.target.value)}
+                    className="flex-1 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                  <button
+                    onClick={() => setEmployeeSortByMatricula(!employeeSortByMatricula)}
+                    className={`text-sm p-2 border rounded-lg outline-none transition-colors ${
+                      employeeSortByMatricula 
+                        ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                        : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title="Ordenar por Matrícula"
+                  >
+                    Ordenar por Matrícula {employeeSortByMatricula ? '(Ativo)' : ''}
+                  </button>
+                </div>
                 <select 
                   value={selectedEmployeeId}
                   onChange={e => handleEmployeeSelect(e.target.value)}
                   className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="">-- Selecionar Funcionário --</option>
-                  {employees.map(e => (
+                  {employees
+                    .filter(e => {
+                      if (!employeeSearch) return true;
+                      const searchLower = employeeSearch.toLowerCase();
+                      return e.name.toLowerCase().includes(searchLower) || e.employeeId.toLowerCase().includes(searchLower);
+                    })
+                    .sort((a, b) => {
+                      if (employeeSortByMatricula) {
+                        return a.employeeId.localeCompare(b.employeeId);
+                      }
+                      return a.name.localeCompare(b.name);
+                    })
+                    .map(e => (
                     <option key={e.id} value={e.id}>{e.name} ({e.employeeId})</option>
                   ))}
                 </select>
@@ -431,19 +499,49 @@ export default function EmployeeAssignments({
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-slate-800">Atribuições Atuais</h2>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-500 flex items-center gap-1">
-                <Filter className="w-4 h-4" /> Filtrar:
-              </label>
-              <select 
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="text-sm p-1.5 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500"
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <input
+                type="text"
+                placeholder="Buscar por nome ou matrícula..."
+                value={assignmentEmployeeSearch}
+                onChange={e => setAssignmentEmployeeSearch(e.target.value)}
+                className="text-sm p-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-48"
+              />
+              <select
+                value={assignmentDepartmentFilter}
+                onChange={(e) => setAssignmentDepartmentFilter(e.target.value)}
+                className="text-sm p-1.5 border border-slate-300 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-auto"
               >
-                <option value="all">Todas</option>
-                <option value="pending">Pendentes</option>
-                <option value="completed">Entregues</option>
+                <option value="">Todos os Departamentos</option>
+                {departments.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
               </select>
+              <button
+                onClick={() => setSortByMatricula(!sortByMatricula)}
+                className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
+                  sortByMatricula 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Ordenar por Matrícula"
+              >
+                Ordenar por Matrícula {sortByMatricula ? '(Ativo)' : ''}
+              </button>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-slate-500 flex items-center gap-1">
+                  <Filter className="w-4 h-4" /> Filtrar:
+                </label>
+                <select 
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as any)}
+                  className="text-sm p-1.5 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">Todas</option>
+                  <option value="pending">Pendentes</option>
+                  <option value="completed">Entregues</option>
+                </select>
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto">
