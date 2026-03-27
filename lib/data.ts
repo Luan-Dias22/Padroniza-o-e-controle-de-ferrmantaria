@@ -3,6 +3,7 @@ export type StandardToolList = { id: string, name: string, tools: { toolId: stri
 export type Department = { id: string, name: string, standardListId?: string };
 export type Employee = { id: string, employeeId: string, name: string, departmentId: string };
 export type Assignment = { id: string, employeeId: string, departmentId: string, assignedTools: { toolId: string, quantity: number }[], dateAssigned: string };
+export type CollectiveAssignment = { id: string, departmentId: string, assignedTools: { toolId: string, quantity: number }[], dateAssigned: string };
 
 export const mockTools: Tool[] = [
   { id: 't1', brand: 'Bosch', name: 'Furadeira Elétrica', category: 'ferramenta elétrica', description: 'Furadeira sem fio 20V' },
@@ -30,4 +31,8 @@ export const mockEmployees: Employee[] = [
 
 export const mockAssignments: Assignment[] = [
   { id: 'a1', employeeId: 'e1', departmentId: 'd1', assignedTools: [{ toolId: 't1', quantity: 1 }, { toolId: 't2', quantity: 1 }, { toolId: 't3', quantity: 1 }], dateAssigned: new Date().toISOString() },
+];
+
+export const mockCollectiveAssignments: CollectiveAssignment[] = [
+  { id: 'ca1', departmentId: 'd1', assignedTools: [{ toolId: 't2', quantity: 5 }], dateAssigned: new Date().toISOString() },
 ];

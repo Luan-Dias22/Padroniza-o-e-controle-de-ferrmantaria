@@ -1,9 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Tool, Department, Assignment, Employee, StandardToolList } from '@/lib/data';
-import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2 } from 'lucide-react';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveAssignment } from '@/lib/data';
+import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package } from 'lucide-react';
 
-export default function Dashboard({ tools, departments, assignments, employees, standardLists, onNavigate }: { 
-  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], onNavigate: (tab: string) => void 
+export default function Dashboard({ tools, departments, assignments, employees, standardLists, collectiveAssignments, onNavigate }: { 
+  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveAssignments: CollectiveAssignment[], onNavigate: (tab: string) => void 
 }) {
   // Helper to check for missing tools
   const getMissingToolsCount = (assignment: Assignment) => {
@@ -27,20 +27,28 @@ export default function Dashboard({ tools, departments, assignments, employees, 
 
   const pendingAssignments = assignments.filter(a => getMissingToolsCount(a) > 0);
   const totalToolsAssigned = assignments.reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+  const totalCollectiveTools = collectiveAssignments.reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
   const chartData = departments.map(dept => {
-    const assignedToolsCount = assignments
+    const individualCount = assignments
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+    
+    const collectiveCount = collectiveAssignments
+      .filter(a => a.departmentId === dept.id)
+      .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+
     return {
       name: dept.name,
-      tools: assignedToolsCount
+      individual: individualCount,
+      collective: collectiveCount,
+      total: individualCount + collectiveCount
     };
-  }).filter(d => d.tools > 0);
+  }).filter(d => d.total > 0);
 
   const stats = [
     { label: 'Total de Ferramentas', value: tools.length, icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-50', tab: 'tools' },
-    { label: 'Colaboradores', value: employees.length, icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-50', tab: 'employees' },
+    { label: 'Uso Coletivo (Linhas)', value: collectiveAssignments.length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
     { label: 'Atribuições Ativas', value: assignments.length, icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50', tab: 'assignments' },
     { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50', tab: 'assignments' },
   ];
@@ -127,11 +135,8 @@ export default function Dashboard({ tools, departments, assignments, employees, 
                         padding: '12px'
                       }}
                     />
-                    <Bar dataKey="tools" radius={[6, 6, 0, 0]} barSize={45}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
+                    <Bar dataKey="individual" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={45} name="Individual" />
+                    <Bar dataKey="collective" stackId="a" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={45} name="Coletivo" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -144,7 +149,7 @@ export default function Dashboard({ tools, departments, assignments, employees, 
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <button 
               onClick={() => onNavigate('tools')}
               className="p-4 bg-white border border-slate-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all flex flex-col items-center text-center gap-2 group"
@@ -158,6 +163,13 @@ export default function Dashboard({ tools, departments, assignments, employees, 
             >
               <ListChecks className="w-6 h-6 text-purple-500 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-semibold text-slate-700">Gerenciar Listas</span>
+            </button>
+            <button 
+              onClick={() => onNavigate('collective')}
+              className="p-4 bg-white border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50 transition-all flex flex-col items-center text-center gap-2 group"
+            >
+              <Package className="w-6 h-6 text-indigo-500 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-semibold text-slate-700">Uso Coletivo</span>
             </button>
             <button 
               onClick={() => onNavigate('employees')}

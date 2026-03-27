@@ -80,6 +80,28 @@
         "uid": { "type": "string" }
       },
       "required": ["employeeId", "departmentId", "assignedTools", "dateAssigned", "uid"]
+    },
+    "CollectiveAssignment": {
+      "title": "CollectiveAssignment",
+      "description": "A tool assignment to a department",
+      "type": "object",
+      "properties": {
+        "departmentId": { "type": "string" },
+        "assignedTools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "toolId": { "type": "string" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["toolId", "quantity"]
+          }
+        },
+        "dateAssigned": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["departmentId", "assignedTools", "dateAssigned", "uid"]
     }
   },
   "firestore": {
@@ -102,6 +124,10 @@
     "users/{userId}/assignments/{assignmentId}": {
       "schema": { "$ref": "#/entities/Assignment" },
       "description": "Assignments owned by the user"
+    },
+    "users/{userId}/collectiveAssignments/{assignmentId}": {
+      "schema": { "$ref": "#/entities/CollectiveAssignment" },
+      "description": "Collective assignments owned by the user"
     }
   }
 }
