@@ -46,14 +46,6 @@ service cloud.firestore {
     //   - dateAssigned: string (required)
     //   - uid: string (required, immutable)
     //
-    // Collection: users/{userId}/collectiveAssignments
-    // Document ID: auto-generated
-    // Fields:
-    //   - departmentId: string (required)
-    //   - assignedTools: list of objects (required)
-    //   - dateAssigned: string (required)
-    //   - uid: string (required, immutable)
-    //
     // ===============================================================
 
     // ===============================================================
@@ -131,14 +123,6 @@ service cloud.firestore {
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
-    function isValidCollectiveAssignment(data) {
-      return hasOnlyAllowedFields(['departmentId', 'assignedTools', 'dateAssigned', 'uid']) &&
-             data.departmentId is string && data.departmentId.size() < 100 &&
-             data.assignedTools is list && data.assignedTools.size() <= 100 &&
-             data.dateAssigned is string && data.dateAssigned.size() > 0 && data.dateAssigned.size() < 50 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
-    }
-
     // ===============================================================
     // Rules
     // ===============================================================
@@ -175,13 +159,6 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && hasRequiredFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid']) && isValidAssignment(request.resource.data) && uidUnchanged();
         allow update: if isOwner(userId) && isDocOwner() && isValidAssignment(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
-      }
-
-      match /collectiveAssignments/{assignmentId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['departmentId', 'assignedTools', 'dateAssigned', 'uid']) && isValidCollectiveAssignment(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveAssignment(request.resource.data) && uidNotModified();
         allow delete: if isOwner(userId) && isDocOwner();
       }
     }

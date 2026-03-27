@@ -118,10 +118,6 @@ export default function StandardToolLists({
     setDepartments(departments.map(d => d.id === deptId ? { ...d, standardListId: kitId || undefined } : d));
   };
 
-  const handleLinkCollectiveKitToDepartment = (deptId: string, kitId: string) => {
-    setDepartments(departments.map(d => d.id === deptId ? { ...d, collectiveListId: kitId || undefined } : d));
-  };
-
   return (
     <div className="space-y-6">
       <ConfirmModal 
@@ -335,34 +331,16 @@ export default function StandardToolLists({
                   <div className="flex justify-between items-start">
                     <p className="font-medium text-slate-800">{dept.name}</p>
                   </div>
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Kit Individual</label>
-                      <select
-                        value={dept.standardListId || ''}
-                        onChange={e => handleLinkKitToDepartment(dept.id, e.target.value)}
-                        className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                      >
-                        <option value="">-- Sem kit individual --</option>
-                        {standardLists.map(kit => (
-                          <option key={kit.id} value={kit.id}>{kit.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Kit Coletivo</label>
-                      <select
-                        value={dept.collectiveListId || ''}
-                        onChange={e => handleLinkCollectiveKitToDepartment(dept.id, e.target.value)}
-                        className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                      >
-                        <option value="">-- Sem kit coletivo --</option>
-                        {standardLists.map(kit => (
-                          <option key={kit.id} value={kit.id}>{kit.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                  <select
+                    value={dept.standardListId || ''}
+                    onChange={e => handleLinkKitToDepartment(dept.id, e.target.value)}
+                    className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="">-- Sem kit padrão --</option>
+                    {standardLists.map(kit => (
+                      <option key={kit.id} value={kit.id}>{kit.name}</option>
+                    ))}
+                  </select>
                 </div>
               ))}
             </div>

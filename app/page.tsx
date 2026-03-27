@@ -2,16 +2,15 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, Package } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
 import EmployeeAssignments from '@/components/EmployeeAssignments';
 import Employees from '@/components/Employees';
 import Reports from '@/components/Reports';
-import CollectiveTools from '@/components/CollectiveTools';
 import { useFirestore } from '@/lib/useFirestore';
-import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, mockCollectiveAssignments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveAssignment } from '@/lib/data';
+import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
@@ -35,9 +34,8 @@ export default function App() {
   const [employees, setEmployees, empInit] = useFirestore<Employee>('employees', mockEmployees);
   const [departments, setDepartments, deptInit] = useFirestore<Department>('departments', mockDepartments);
   const [assignments, setAssignments, assignInit] = useFirestore<Assignment>('assignments', mockAssignments);
-  const [collectiveAssignments, setCollectiveAssignments, collectiveInit] = useFirestore<CollectiveAssignment>('collectiveAssignments', mockCollectiveAssignments);
 
-  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && collectiveInit));
+  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit));
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -61,7 +59,6 @@ export default function App() {
     { id: 'standard', label: 'Listas Padrão', icon: ListChecks },
     { id: 'employees', label: 'Colaboradores', icon: Building2 },
     { id: 'assignments', label: 'Atribuições', icon: Users },
-    { id: 'collective', label: 'Uso Coletivo', icon: Package },
     { id: 'reports', label: 'Relatórios', icon: FileText },
   ];
 
@@ -175,7 +172,6 @@ export default function App() {
             assignments={assignments} 
             employees={employees}
             standardLists={standardLists}
-            collectiveAssignments={collectiveAssignments}
             onNavigate={setActiveTab} 
           />
         )}
@@ -221,22 +217,12 @@ export default function App() {
             setAssignments={setAssignments}
           />
         )}
-        {activeTab === 'collective' && (
-          <CollectiveTools 
-            departments={departments}
-            tools={tools}
-            collectiveAssignments={collectiveAssignments}
-            setCollectiveAssignments={setCollectiveAssignments}
-          />
-        )}
         {activeTab === 'reports' && (
           <Reports 
             tools={tools}
             departments={departments}
             assignments={assignments}
             employees={employees}
-            standardLists={standardLists}
-            collectiveAssignments={collectiveAssignments}
           />
         )}
       </main>

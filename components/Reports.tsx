@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveAssignment } from '@/lib/data';
-import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
+import { Tool, Department, Assignment, Employee } from '@/lib/data';
+import { FileText, Search, Download, Filter } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -9,65 +9,38 @@ interface ReportsProps {
   departments: Department[];
   assignments: Assignment[];
   employees: Employee[];
-  standardLists: StandardToolList[];
-  collectiveAssignments: CollectiveAssignment[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, standardLists, collectiveAssignments }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
 
   // Calculate tool quantities per department
   const reportData = useMemo(() => {
-    const data: Record<string, { 
-      individual: Record<string, number>, 
-      collective: Record<string, number>,
-      total: Record<string, number> 
-    }> = {};
+    const data: Record<string, Record<string, number>> = {};
 
     // Initialize data structure for all departments
-    (departments || []).forEach(dept => {
-      data[dept.id] = {
-        individual: {},
-        collective: {},
-        total: {}
-      };
-      
-      // Add collective tools from standard lists if any (legacy method)
-      if (dept.collectiveListId) {
-        const collectiveKit = (standardLists || []).find(s => s.id === dept.collectiveListId);
-        if (collectiveKit) {
-          (collectiveKit.tools || []).forEach(tool => {
-            data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
-            data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
-          });
-        }
-      }
-
-      // Add tools from new collectiveAssignments collection
-      (collectiveAssignments || [])
-        .filter(ca => ca.departmentId === dept.id)
-        .forEach(ca => {
-          (ca.assignedTools || []).forEach(tool => {
-            data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
-            data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
-          });
-        });
+    departments.forEach(dept => {
+      data[dept.id] = {};
     });
 
-    // Aggregate tool quantities from individual assignments
-    (assignments || []).forEach(assignment => {
+    // Aggregate tool quantities from assignments
+    assignments.forEach(assignment => {
       const deptId = assignment.departmentId;
-      if (!data[deptId]) return;
+      if (!data[deptId]) {
+        data[deptId] = {};
+      }
 
-      (assignment.assignedTools || []).forEach(assignedTool => {
-        data[deptId].individual[assignedTool.toolId] = (data[deptId].individual[assignedTool.toolId] || 0) + assignedTool.quantity;
-        data[deptId].total[assignedTool.toolId] = (data[deptId].total[assignedTool.toolId] || 0) + assignedTool.quantity;
+      assignment.assignedTools.forEach(assignedTool => {
+        if (!data[deptId][assignedTool.toolId]) {
+          data[deptId][assignedTool.toolId] = 0;
+        }
+        data[deptId][assignedTool.toolId] += assignedTool.quantity;
       });
     });
 
     return data;
-  }, [assignments, departments, standardLists, collectiveAssignments]);
+  }, [assignments, departments]);
 
   const filteredDepartments = departments.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
@@ -89,8 +62,8 @@ export default function Reports({ tools, departments, assignments, employees, st
     let currentY = 40;
 
     filteredDepartments.forEach((dept, index) => {
-      const deptData = reportData[dept.id];
-      const toolIds = Object.keys(deptData?.total || {});
+      const deptTools = reportData[dept.id] || {};
+      const toolIds = Object.keys(deptTools);
       
       if (toolIds.length === 0) return; // Skip empty departments
 
@@ -109,15 +82,14 @@ export default function Reports({ tools, departments, assignments, employees, st
         return [
           tool?.name || 'Ferramenta Desconhecida',
           tool?.brand || '-',
-          deptData.individual[toolId] || 0,
-          deptData.collective[toolId] || 0,
-          deptData.total[toolId]
+          tool?.category || '-',
+          deptTools[toolId].toString()
         ];
       });
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Ferramenta', 'Marca', 'Indiv.', 'Colet.', 'Total']],
+        head: [['Ferramenta', 'Marca', 'Categoria', 'Quantidade Total']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [59, 130, 246] },
@@ -178,24 +150,17 @@ export default function Reports({ tools, departments, assignments, employees, st
       </div>
 
       <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
-        <div className="space-y-8 max-w-6xl mx-auto">
+        <div className="space-y-8 max-w-5xl mx-auto">
           {filteredDepartments.map(dept => {
-            const deptData = reportData[dept.id];
-            const toolIds = Object.keys(deptData?.total || {});
+            const deptTools = reportData[dept.id] || {};
+            const toolIds = Object.keys(deptTools);
             
             if (toolIds.length === 0) return null;
 
             return (
               <div key={dept.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-bold text-slate-800">{dept.name}</h2>
-                    {dept.collectiveListId && (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-200">
-                        Possui Kit Coletivo
-                      </span>
-                    )}
-                  </div>
+                  <h2 className="text-lg font-bold text-slate-800">{dept.name}</h2>
                   <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                     {toolIds.length} tipos de ferramentas
                   </span>
@@ -206,52 +171,25 @@ export default function Reports({ tools, departments, assignments, employees, st
                       <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
                         <th className="p-4 font-semibold">Ferramenta</th>
                         <th className="p-4 font-semibold">Marca</th>
-                        <th className="p-4 font-semibold text-center">
-                          <div className="flex flex-col items-center">
-                            <Users className="w-4 h-4 mb-1 text-slate-400" />
-                            <span>Individual</span>
-                          </div>
-                        </th>
-                        <th className="p-4 font-semibold text-center">
-                          <div className="flex flex-col items-center">
-                            <Building2 className="w-4 h-4 mb-1 text-slate-400" />
-                            <span>Coletivo</span>
-                          </div>
-                        </th>
-                        <th className="p-4 font-semibold text-center bg-blue-50/50">
-                          <div className="flex flex-col items-center">
-                            <span className="text-blue-600">Total</span>
-                          </div>
-                        </th>
+                        <th className="p-4 font-semibold">Categoria</th>
+                        <th className="p-4 font-semibold text-center">Quantidade Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {toolIds.map(toolId => {
                         const tool = tools.find(t => t.id === toolId);
-                        const individualQty = deptData.individual[toolId] || 0;
-                        const collectiveQty = deptData.collective[toolId] || 0;
-                        const totalQty = deptData.total[toolId];
-
                         return (
                           <tr key={toolId} className="hover:bg-slate-50 transition-colors">
-                            <td className="p-4">
-                              <p className="text-slate-800 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</p>
-                              <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{tool?.category}</p>
-                            </td>
+                            <td className="p-4 text-slate-800 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</td>
                             <td className="p-4 text-slate-600">{tool?.brand || '-'}</td>
-                            <td className="p-4 text-center">
-                              <span className={`text-sm ${individualQty > 0 ? 'text-slate-700 font-medium' : 'text-slate-300'}`}>
-                                {individualQty}
+                            <td className="p-4 text-slate-600">
+                              <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-medium">
+                                {tool?.category || '-'}
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={`text-sm ${collectiveQty > 0 ? 'text-amber-700 font-medium' : 'text-slate-300'}`}>
-                                {collectiveQty}
-                              </span>
-                            </td>
-                            <td className="p-4 text-center bg-blue-50/30">
-                              <span className="inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm px-2">
-                                {totalQty}
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-bold text-sm">
+                                {deptTools[toolId]}
                               </span>
                             </td>
                           </tr>
@@ -264,7 +202,7 @@ export default function Reports({ tools, departments, assignments, employees, st
             );
           })}
           
-          {filteredDepartments.every(dept => Object.keys(reportData[dept.id]?.total || {}).length === 0) && (
+          {filteredDepartments.every(dept => Object.keys(reportData[dept.id] || {}).length === 0) && (
             <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhum dado encontrado</h3>
