@@ -25,16 +25,16 @@ export default function Dashboard({ tools, departments, assignments, employees, 
     return missingCount;
   };
 
-  const pendingAssignments = assignments.filter(a => getMissingToolsCount(a) > 0);
-  const totalToolsAssigned = assignments.reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
-  const totalCollectiveTools = collectiveAssignments.reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+  const pendingAssignments = (assignments || []).filter(a => getMissingToolsCount(a) > 0);
+  const totalToolsAssigned = (assignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+  const totalCollectiveTools = (collectiveAssignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
-  const chartData = departments.map(dept => {
-    const individualCount = assignments
+  const chartData = (departments || []).map(dept => {
+    const individualCount = (assignments || [])
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
     
-    const collectiveCount = collectiveAssignments
+    const collectiveCount = (collectiveAssignments || [])
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
@@ -47,13 +47,13 @@ export default function Dashboard({ tools, departments, assignments, employees, 
   }).filter(d => d.total > 0);
 
   const stats = [
-    { label: 'Total de Ferramentas', value: tools.length, icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-50', tab: 'tools' },
-    { label: 'Uso Coletivo (Linhas)', value: collectiveAssignments.length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
-    { label: 'Atribuições Ativas', value: assignments.length, icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50', tab: 'assignments' },
+    { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-50', tab: 'tools' },
+    { label: 'Uso Coletivo (Linhas)', value: (collectiveAssignments || []).length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
+    { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50', tab: 'assignments' },
     { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50', tab: 'assignments' },
   ];
 
-  const recentAssignments = [...assignments]
+  const recentAssignments = [...(assignments || [])]
     .sort((a, b) => new Date(b.dateAssigned).getTime() - new Date(a.dateAssigned).getTime())
     .slice(0, 5);
 

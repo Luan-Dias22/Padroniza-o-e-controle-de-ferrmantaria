@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveAssignment } from '@/lib/data';
 import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -10,9 +10,10 @@ interface ReportsProps {
   assignments: Assignment[];
   employees: Employee[];
   standardLists: StandardToolList[];
+  collectiveAssignments: CollectiveAssignment[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, standardLists }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, standardLists, collectiveAssignments }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
 
@@ -25,38 +26,48 @@ export default function Reports({ tools, departments, assignments, employees, st
     }> = {};
 
     // Initialize data structure for all departments
-    departments.forEach(dept => {
+    (departments || []).forEach(dept => {
       data[dept.id] = {
         individual: {},
         collective: {},
         total: {}
       };
       
-      // Add collective tools if any
+      // Add collective tools from standard lists if any (legacy method)
       if (dept.collectiveListId) {
-        const collectiveKit = standardLists.find(s => s.id === dept.collectiveListId);
+        const collectiveKit = (standardLists || []).find(s => s.id === dept.collectiveListId);
         if (collectiveKit) {
-          collectiveKit.tools.forEach(tool => {
+          (collectiveKit.tools || []).forEach(tool => {
             data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
             data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
           });
         }
       }
+
+      // Add tools from new collectiveAssignments collection
+      (collectiveAssignments || [])
+        .filter(ca => ca.departmentId === dept.id)
+        .forEach(ca => {
+          (ca.assignedTools || []).forEach(tool => {
+            data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
+            data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
+          });
+        });
     });
 
-    // Aggregate tool quantities from assignments
-    assignments.forEach(assignment => {
+    // Aggregate tool quantities from individual assignments
+    (assignments || []).forEach(assignment => {
       const deptId = assignment.departmentId;
       if (!data[deptId]) return;
 
-      assignment.assignedTools.forEach(assignedTool => {
+      (assignment.assignedTools || []).forEach(assignedTool => {
         data[deptId].individual[assignedTool.toolId] = (data[deptId].individual[assignedTool.toolId] || 0) + assignedTool.quantity;
         data[deptId].total[assignedTool.toolId] = (data[deptId].total[assignedTool.toolId] || 0) + assignedTool.quantity;
       });
     });
 
     return data;
-  }, [assignments, departments, standardLists]);
+  }, [assignments, departments, standardLists, collectiveAssignments]);
 
   const filteredDepartments = departments.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;

@@ -52,7 +52,7 @@ export default function CollectiveTools({
     if (!selectedDeptId || selectedTools.length === 0) return;
 
     if (editingId) {
-      setCollectiveAssignments(collectiveAssignments.map(a => 
+      setCollectiveAssignments((collectiveAssignments || []).map(a => 
         a.id === editingId ? { ...a, departmentId: selectedDeptId, assignedTools: selectedTools } : a
       ));
     } else {
@@ -62,7 +62,7 @@ export default function CollectiveTools({
         assignedTools: selectedTools,
         dateAssigned: new Date().toISOString()
       };
-      setCollectiveAssignments([...collectiveAssignments, newAssignment]);
+      setCollectiveAssignments([...(collectiveAssignments || []), newAssignment]);
     }
 
     resetForm();
@@ -89,7 +89,7 @@ export default function CollectiveTools({
 
   const confirmDelete = () => {
     if (deleteModal.id) {
-      setCollectiveAssignments(collectiveAssignments.filter(a => a.id !== deleteModal.id));
+      setCollectiveAssignments((collectiveAssignments || []).filter(a => a.id !== deleteModal.id));
     }
     setDeleteModal({ isOpen: false, id: null });
   };
@@ -262,7 +262,7 @@ export default function CollectiveTools({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {collectiveAssignments.length === 0 ? (
+                {(!collectiveAssignments || collectiveAssignments.length === 0) ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-400 italic">Nenhuma atribuição coletiva realizada.</td>
                   </tr>
