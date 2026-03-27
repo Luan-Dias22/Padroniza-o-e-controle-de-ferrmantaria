@@ -14,6 +14,7 @@ export default function StandardToolLists({
   const [selectedKitId, setSelectedKitId] = useState<string>(standardLists[0]?.id || '');
   const [editingKitId, setEditingKitId] = useState<string | null>(null);
   const [editKitName, setEditKitName] = useState('');
+  const [sortAlphabetically, setSortAlphabetically] = useState(false);
   const [confirmUnlockModal, setConfirmUnlockModal] = useState<{
     isOpen: boolean;
     kitId: string | null;
@@ -227,9 +228,24 @@ export default function StandardToolLists({
                 </span>
               )}
             </div>
-            <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
-              {currentToolIds.length} ferramentas
-            </span>
+            <div className="flex items-center gap-3">
+              {selectedKitId && tools.length > 0 && (
+                <button
+                  onClick={() => setSortAlphabetically(!sortAlphabetically)}
+                  className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
+                    sortAlphabetically 
+                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                      : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                  title="Ordenar Alfabeticamente"
+                >
+                  Ordem Alfabética {sortAlphabetically ? '(Ativo)' : ''}
+                </button>
+              )}
+              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+                {currentToolIds.length} ferramentas
+              </span>
+            </div>
           </div>
           <div className="p-4 flex-1 overflow-y-auto">
             {!selectedKitId ? (
@@ -242,7 +258,14 @@ export default function StandardToolLists({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {tools.map(tool => {
+                {[...tools]
+                  .sort((a, b) => {
+                    if (sortAlphabetically) {
+                      return a.name.localeCompare(b.name);
+                    }
+                    return 0; // Default order
+                  })
+                  .map(tool => {
                   const isSelected = currentToolIds.includes(tool.id);
                   return (
                     <div 
