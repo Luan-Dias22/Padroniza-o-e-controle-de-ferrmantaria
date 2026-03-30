@@ -345,7 +345,7 @@ export default function EmployeeAssignments({
         onCancel={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
       />
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">Atribuições de Funcionários</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Atribuições de Funcionários</h1>
         {!isAssigning && (
           <button 
             onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setEmployeeSortByMatricula(false); setCustomTools([]); }}
@@ -357,9 +357,9 @@ export default function EmployeeAssignments({
       </div>
 
       {isAssigning && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-6">
           <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h2 className="text-lg font-bold text-slate-800">{editingAssignmentId ? 'Editar Atribuição' : 'Criar Atribuição'}</h2>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">{editingAssignmentId ? 'Editar Atribuição' : 'Criar Atribuição'}</h2>
             <button onClick={() => setIsAssigning(false)} className="text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
@@ -368,7 +368,7 @@ export default function EmployeeAssignments({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Selecionar Funcionário</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Selecionar Funcionário</label>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
@@ -382,7 +382,7 @@ export default function EmployeeAssignments({
                     className={`text-sm p-2 border rounded-lg outline-none transition-colors ${
                       employeeSortByMatricula 
                         ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                        : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                        : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                     title="Ordenar por Matrícula"
                   >
@@ -421,7 +421,7 @@ export default function EmployeeAssignments({
 
             <div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <label className="block text-sm font-medium text-slate-700">Ferramentas Atribuídas ({customTools.length})</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Ferramentas Atribuídas ({customTools.length})</label>
                 <div className="flex items-center gap-2">
                   <input 
                     type="text" 
@@ -441,7 +441,7 @@ export default function EmployeeAssignments({
                   </select>
                 </div>
               </div>
-              <div className="border border-slate-200 rounded-lg p-3 h-64 overflow-y-auto bg-slate-50">
+              <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 h-64 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
                 {!selectedEmployeeId ? (
                   <div className="h-full flex items-center justify-center text-slate-400 text-sm text-center">
                     Selecione um funcionário primeiro para carregar as ferramentas padrão.
@@ -479,7 +479,7 @@ export default function EmployeeAssignments({
                         return (
                         <div 
                           key={tool.id}
-                          className={`p-2 border rounded flex items-center gap-3 bg-white transition-colors ${
+                          className={`p-2 border rounded flex items-center gap-3 bg-white dark:bg-slate-800 transition-colors ${
                             isSelected ? 'border-blue-400' : 'border-slate-200 hover:border-blue-200'
                           }`}
                         >
@@ -492,7 +492,7 @@ export default function EmployeeAssignments({
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleCustomTool(tool.id)}>
-                            <p className="text-sm font-medium text-slate-800 truncate">{tool.name}</p>
+                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{tool.name}</p>
                             <p className="text-xs text-slate-500 truncate">{tool.brand}</p>
                           </div>
                           {isSelected && (
@@ -520,7 +520,7 @@ export default function EmployeeAssignments({
           <div className="mt-6 flex justify-end gap-3 border-t pt-4">
             <button 
               onClick={() => setIsAssigning(false)}
-              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+              className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               Cancelar
             </button>
@@ -536,9 +536,9 @@ export default function EmployeeAssignments({
       )}
 
       {!isAssigning && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-slate-800">Atribuições Atuais</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Atribuições Atuais</h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <input
                 type="text"
@@ -550,7 +550,7 @@ export default function EmployeeAssignments({
               <select
                 value={assignmentDepartmentFilter}
                 onChange={(e) => setAssignmentDepartmentFilter(e.target.value)}
-                className="text-sm p-1.5 border border-slate-300 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-auto"
+                className="text-sm p-1.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-blue-500 w-full sm:w-auto"
               >
                 <option value="">Todos os Departamentos</option>
                 {departments.map(d => (
@@ -562,7 +562,7 @@ export default function EmployeeAssignments({
                 className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
                   sortByMatricula 
                     ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                    : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
                 title="Ordenar por Matrícula"
               >
@@ -575,7 +575,7 @@ export default function EmployeeAssignments({
                 <select 
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value as any)}
-                  className="text-sm p-1.5 border border-slate-200 rounded-lg bg-white outline-none focus:ring-1 focus:ring-blue-500"
+                  className="text-sm p-1.5 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="all">Todas</option>
                   <option value="pending">Pendentes</option>
@@ -587,7 +587,7 @@ export default function EmployeeAssignments({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
+                <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-slate-700">
                   <th className="p-4 font-medium">Funcionário</th>
                   <th className="p-4 font-medium">Departamento</th>
                   <th className="p-4 font-medium">Ferramentas Atribuídas</th>
@@ -611,13 +611,13 @@ export default function EmployeeAssignments({
                     const missingToolsCount = missingTools.reduce((acc, mt) => acc + mt.missingQty, 0);
                     
                     return (
-                      <tr key={assignment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <tr key={assignment.id} className="border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                         <td className="p-4">
                           <button 
                             onClick={() => handleViewAssignment(assignment)}
                             className="text-left hover:text-blue-600 transition-colors group"
                           >
-                            <p className="font-medium text-slate-800 group-hover:text-blue-600">{emp?.name || 'Desconhecido'}</p>
+                            <p className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{emp?.name || 'Desconhecido'}</p>
                             <p className="text-xs text-slate-500">{emp?.employeeId}</p>
                           </button>
                         </td>
@@ -644,16 +644,16 @@ export default function EmployeeAssignments({
                         </td>
                         <td className="p-4 text-slate-600 text-sm">{date}</td>
                         <td className="p-4 flex justify-end gap-2">
-                          <button onClick={() => handleViewAssignment(assignment)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Ver Detalhes">
+                          <button onClick={() => handleViewAssignment(assignment)} className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Ver Detalhes">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button onClick={() => exportToPDF(assignment)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Exportar PDF">
+                          <button onClick={() => exportToPDF(assignment)} className="p-2 text-emerald-600 dark:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors" title="Exportar PDF">
                             <Download className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
+                          <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-600 dark:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                          <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Excluir">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
@@ -669,10 +669,10 @@ export default function EmployeeAssignments({
       {/* Details Modal */}
       {viewingAssignment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Detalhes da Atribuição</h2>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Detalhes da Atribuição</h2>
                 <p className="text-sm text-slate-500">
                   {employees.find(e => e.id === viewingAssignment.employeeId)?.name} • {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}
                 </p>
@@ -687,19 +687,19 @@ export default function EmployeeAssignments({
             
             <div className="p-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-6 mb-8">
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Colaborador</p>
-                  <p className="font-bold text-slate-800">{employees.find(e => e.id === viewingAssignment.employeeId)?.name}</p>
-                  <p className="text-sm text-slate-600">ID: {employees.find(e => e.id === viewingAssignment.employeeId)?.employeeId}</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-200">{employees.find(e => e.id === viewingAssignment.employeeId)?.name}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">ID: {employees.find(e => e.id === viewingAssignment.employeeId)?.employeeId}</p>
                 </div>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Departamento</p>
-                  <p className="font-bold text-slate-800">{departments.find(d => d.id === viewingAssignment.departmentId)?.name}</p>
-                  <p className="text-sm text-slate-600">Data: {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-200">{departments.find(d => d.id === viewingAssignment.departmentId)?.name}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Data: {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
                 Ferramentas Atribuídas
               </h3>
@@ -707,7 +707,7 @@ export default function EmployeeAssignments({
               <div className="border border-slate-100 rounded-xl overflow-hidden">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+                    <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100 dark:border-slate-700">
                       <th className="p-3 font-semibold">Marca</th>
                       <th className="p-3 font-semibold">Ferramenta</th>
                       <th className="p-3 font-semibold text-center">Qtd</th>
@@ -717,10 +717,10 @@ export default function EmployeeAssignments({
                     {(viewingAssignment.assignedTools || []).map((at, idx) => {
                       const tool = tools.find(t => t.id === at.toolId);
                       return (
-                        <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                        <tr key={idx} className="border-b border-slate-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                           <td className="p-3 text-slate-600">{tool?.brand}</td>
                           <td className="p-3">
-                            <p className="font-medium text-slate-800">{tool?.name}</p>
+                            <p className="font-medium text-slate-800 dark:text-slate-200">{tool?.name}</p>
                             <p className="text-[10px] text-slate-400">{tool?.category}</p>
                           </td>
                           <td className="p-3 text-center">
@@ -755,10 +755,10 @@ export default function EmployeeAssignments({
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
               <button 
                 onClick={() => setViewingAssignment(null)}
-                className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               >
                 Fechar
               </button>
