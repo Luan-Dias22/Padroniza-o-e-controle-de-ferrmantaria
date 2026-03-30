@@ -21,7 +21,8 @@ export default function Reports({ tools, departments, assignments, employees, co
     const data: Record<string, { 
       individual: Record<string, number>, 
       collective: Record<string, number>,
-      total: Record<string, number> 
+      total: Record<string, number>,
+      stations: Record<string, string[]>
     }> = {};
 
     // Initialize data structure for all departments
@@ -29,7 +30,8 @@ export default function Reports({ tools, departments, assignments, employees, co
       data[dept.id] = {
         individual: {},
         collective: {},
-        total: {}
+        total: {},
+        stations: {}
       };
       
       // Add tools from new collectiveStations collection
@@ -41,6 +43,13 @@ export default function Reports({ tools, departments, assignments, employees, co
             if (tool.toolId) {
               data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
               data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
+              
+              if (!data[dept.id].stations[tool.toolId]) {
+                data[dept.id].stations[tool.toolId] = [];
+              }
+              if (!data[dept.id].stations[tool.toolId].includes(s.name)) {
+                data[dept.id].stations[tool.toolId].push(s.name);
+              }
             }
           });
         });
@@ -217,12 +226,24 @@ export default function Reports({ tools, departments, assignments, employees, co
                         const individualQty = deptData.individual[toolId] || 0;
                         const collectiveQty = deptData.collective[toolId] || 0;
                         const totalQty = deptData.total[toolId];
+                        const stations = deptData.stations?.[toolId] || [];
 
                         return (
                           <tr key={toolId} className="hover:bg-slate-50 transition-colors">
                             <td className="p-4">
                               <p className="text-slate-800 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</p>
-                              <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{tool?.category}</p>
+                              <div className="flex flex-col gap-1 mt-1">
+                                <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{tool?.category}</p>
+                                {stations.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {stations.map((station, idx) => (
+                                      <span key={idx} className="bg-amber-50 text-amber-700 text-[9px] px-1.5 py-0.5 rounded border border-amber-200">
+                                        Posto: {station}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="p-4 text-slate-600">{tool?.brand || '-'}</td>
                             <td className="p-4 text-center">
