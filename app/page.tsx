@@ -176,6 +176,7 @@ export default function App() {
             assignments={assignments} 
             employees={employees}
             standardLists={standardLists}
+            collectiveStations={collectiveStations}
             onNavigate={setActiveTab} 
           />
         )}
@@ -227,6 +228,8 @@ export default function App() {
             departments={departments}
             assignments={assignments}
             employees={employees}
+            standardLists={standardLists}
+            collectiveStations={collectiveStations}
           />
         )}
         {activeTab === 'collective' && (

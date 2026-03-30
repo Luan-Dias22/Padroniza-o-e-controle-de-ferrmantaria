@@ -1,9 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveAssignment } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
 import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package } from 'lucide-react';
 
-export default function Dashboard({ tools, departments, assignments, employees, standardLists, collectiveAssignments, onNavigate }: { 
-  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveAssignments: CollectiveAssignment[], onNavigate: (tab: string) => void 
+export default function Dashboard({ tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate }: { 
+  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], onNavigate: (tab: string) => void 
 }) {
   // Helper to check for missing tools
   const getMissingToolsCount = (assignment: Assignment) => {
@@ -27,16 +27,17 @@ export default function Dashboard({ tools, departments, assignments, employees, 
 
   const pendingAssignments = (assignments || []).filter(a => getMissingToolsCount(a) > 0);
   const totalToolsAssigned = (assignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
-  const totalCollectiveTools = (collectiveAssignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+  const totalCollectiveTools = (collectiveStations || []).reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
   const chartData = (departments || []).map(dept => {
     const individualCount = (assignments || [])
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
     
-    const collectiveCount = (collectiveAssignments || [])
-      .filter(a => a.departmentId === dept.id)
-      .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+    // For collective tools, we'll match by line name if it matches department name
+    const collectiveCount = (collectiveStations || [])
+      .filter(s => s.line === dept.name)
+      .reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
     return {
       name: dept.name,
@@ -48,7 +49,7 @@ export default function Dashboard({ tools, departments, assignments, employees, 
 
   const stats = [
     { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-50', tab: 'tools' },
-    { label: 'Uso Coletivo (Linhas)', value: (collectiveAssignments || []).length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
+    { label: 'Uso Coletivo (Postos)', value: (collectiveStations || []).length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
     { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50', tab: 'assignments' },
     { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50', tab: 'assignments' },
   ];

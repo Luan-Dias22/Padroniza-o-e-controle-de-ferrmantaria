@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveAssignment } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
 import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -10,10 +10,10 @@ interface ReportsProps {
   assignments: Assignment[];
   employees: Employee[];
   standardLists: StandardToolList[];
-  collectiveAssignments: CollectiveAssignment[];
+  collectiveStations: CollectiveStation[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, standardLists, collectiveAssignments }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, standardLists, collectiveStations }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
 
@@ -44,13 +44,16 @@ export default function Reports({ tools, departments, assignments, employees, st
         }
       }
 
-      // Add tools from new collectiveAssignments collection
-      (collectiveAssignments || [])
-        .filter(ca => ca.departmentId === dept.id)
-        .forEach(ca => {
-          (ca.assignedTools || []).forEach(tool => {
-            data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
-            data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
+      // Add tools from new collectiveStations collection
+      // Match by line name if it matches department name
+      (collectiveStations || [])
+        .filter(s => s.line === dept.name)
+        .forEach(s => {
+          (s.tools || []).forEach(tool => {
+            if (tool.toolId) {
+              data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
+              data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
+            }
           });
         });
     });
@@ -67,7 +70,7 @@ export default function Reports({ tools, departments, assignments, employees, st
     });
 
     return data;
-  }, [assignments, departments, standardLists, collectiveAssignments]);
+  }, [assignments, departments, standardLists, collectiveStations]);
 
   const filteredDepartments = departments.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
