@@ -3,6 +3,7 @@ import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveSta
 import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getLogoBase64 } from '@/lib/pdfUtils';
 
 interface ReportsProps {
   tools: Tool[];
@@ -82,14 +83,43 @@ export default function Reports({ tools, departments, assignments, employees, co
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
+    const logoBase64 = getLogoBase64();
     
-    doc.setFontSize(18);
-    doc.text('Relatório de Ferramentas por Linha', 14, 22);
+    let startY = 20;
+
+    if (logoBase64) {
+      try {
+        const imgProps = doc.getImageProperties(logoBase64);
+        const maxLogoWidth = 40;
+        const maxLogoHeight = 20;
+        let logoWidth = maxLogoWidth;
+        let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+
+        if (logoHeight > maxLogoHeight) {
+          logoHeight = maxLogoHeight;
+          logoWidth = (imgProps.width * logoHeight) / imgProps.height;
+        }
+
+        doc.addImage(logoBase64, 'PNG', 14, 15, logoWidth, logoHeight, undefined, 'FAST');
+        startY = 15 + logoHeight + 10;
+      } catch (e) {
+        console.error('Error adding logo to PDF', e);
+      }
+    }
+    
+    doc.setFontSize(22);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.text('Relatório de Ferramentas por Linha', 14, startY);
     
     doc.setFontSize(11);
-    doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, 30);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, startY + 8);
 
-    let currentY = 40;
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.5);
+    doc.line(14, startY + 12, 196, startY + 12);
+
+    let currentY = startY + 22;
 
     filteredDepartments.forEach((dept, index) => {
       const deptData = reportData[dept.id];
@@ -103,9 +133,10 @@ export default function Reports({ tools, departments, assignments, employees, co
       }
 
       doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42); // slate-900
       doc.setFont('helvetica', 'bold');
       doc.text(`Linha/Departamento: ${dept.name}`, 14, currentY);
-      currentY += 5;
+      currentY += 6;
 
       const tableData = toolIds.map(toolId => {
         const tool = tools.find(t => t.id === toolId);
@@ -125,9 +156,21 @@ export default function Reports({ tools, departments, assignments, employees, co
         startY: currentY,
         head: [['Ferramenta', 'Marca', 'Indiv.', 'Colet.', 'Total', 'Postos']],
         body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] },
-        margin: { top: 10 },
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [15, 118, 110], // teal-700 (Volga brand color)
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [51, 65, 85] // slate-700
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // slate-50
+        },
+        margin: { top: 15 },
       });
 
       currentY = (doc as any).lastAutoTable.finalY + 15;

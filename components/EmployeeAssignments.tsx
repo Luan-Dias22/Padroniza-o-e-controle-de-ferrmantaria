@@ -4,6 +4,7 @@ import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, 
 import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getLogoBase64 } from '@/lib/pdfUtils';
 
 export default function EmployeeAssignments({
   employees, setEmployees, departments, tools, standardLists, assignments, setAssignments
@@ -140,35 +141,70 @@ export default function EmployeeAssignments({
   const exportToPDF = (assignment: Assignment) => {
     const emp = employees.find(e => e.id === assignment.employeeId);
     const dept = departments.find(d => d.id === assignment.departmentId);
-    const date = new Date(assignment.dateAssigned).toLocaleDateString();
+    const date = new Date(assignment.dateAssigned).toLocaleDateString('pt-BR');
 
     const doc = new jsPDF();
+    const logoBase64 = getLogoBase64();
     
-    // Header
+    let startY = 20;
+
+    // Header with Logo
+    if (logoBase64) {
+      try {
+        const imgProps = doc.getImageProperties(logoBase64);
+        const maxLogoWidth = 40;
+        const maxLogoHeight = 20;
+        let logoWidth = maxLogoWidth;
+        let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+
+        if (logoHeight > maxLogoHeight) {
+          logoHeight = maxLogoHeight;
+          logoWidth = (imgProps.width * logoHeight) / imgProps.height;
+        }
+
+        doc.addImage(logoBase64, 'PNG', 14, 15, logoWidth, logoHeight, undefined, 'FAST');
+        startY = 15 + logoHeight + 10;
+      } catch (e) {
+        console.error('Error adding logo to PDF', e);
+      }
+    }
+    
     doc.setFontSize(18);
-    doc.setTextColor(30, 41, 59); // slate-800
-    doc.text('TERMO DE RESPONSABILIDADE E ENTREGA', 105, 20, { align: 'center' });
-    doc.setFontSize(14);
-    doc.text('VOLGA - CONTROLE DE FERRAMENTAS', 105, 30, { align: 'center' });
+    doc.setTextColor(15, 118, 110); // teal-700
+    doc.setFont('helvetica', 'bold');
+    doc.text('TERMO DE RESPONSABILIDADE E ENTREGA', 105, startY, { align: 'center' });
     
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.line(14, 35, 196, 35);
+    doc.setFontSize(12);
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.setFont('helvetica', 'normal');
+    doc.text('CONTROLE DE FERRAMENTAS INDIVIDUAIS', 105, startY + 8, { align: 'center' });
+    
+    doc.setDrawColor(203, 213, 225); // slate-300
+    doc.setLineWidth(0.5);
+    doc.line(14, startY + 15, 196, startY + 15);
     
     // Employee Info
+    const infoY = startY + 25;
     doc.setFontSize(11);
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFont('helvetica', 'bold');
+    doc.text('DADOS DO COLABORADOR', 14, infoY);
+    
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(71, 85, 105); // slate-600
-    doc.text(`Colaborador: ${emp?.name || 'Desconhecido'}`, 14, 45);
-    doc.text(`Matrícula: ${emp?.employeeId || 'N/A'}`, 14, 52);
-    doc.text(`Departamento: ${dept?.name || 'Desconhecido'}`, 105, 45);
-    doc.text(`Data de Entrega: ${date}`, 105, 52);
+    doc.text(`Nome: ${emp?.name || 'Desconhecido'}`, 14, infoY + 8);
+    doc.text(`Matrícula: ${emp?.employeeId || 'N/A'}`, 14, infoY + 15);
+    doc.text(`Departamento: ${dept?.name || 'Desconhecido'}`, 105, infoY + 8);
+    doc.text(`Data de Entrega: ${date}`, 105, infoY + 15);
     
     // Agreement Text
-    const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa Volga, estou de acordo que recebi as ferramentas individuais abaixo relacionadas. A contar desta data, comprometo-me a devolvê-la em perfeito estado. Em caso de extravio e danos por mau uso que acarretem a perda total ou parcial do bem, fica obrigatório o ressarcimento ao proprietário dos prejuízos experimentados, no entanto o valor a ser pago é fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
+    const textY = infoY + 30;
+    const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa Volga, declaro ter recebido as ferramentas individuais abaixo relacionadas. A contar desta data, assumo a responsabilidade pela guarda e conservação das mesmas, comprometendo-me a devolvê-las em perfeito estado de funcionamento.\n\nEm caso de extravio ou danos por mau uso que acarretem a perda total ou parcial do bem, autorizo o desconto em folha de pagamento do valor correspondente ao prejuízo causado, fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
     
     doc.setFontSize(10);
-    doc.setTextColor(30, 41, 59);
+    doc.setTextColor(51, 65, 85); // slate-700
     const splitText = doc.splitTextToSize(agreementText, 182);
-    doc.text(splitText, 14, 65);
+    doc.text(splitText, 14, textY);
     
     // Table
     const tableData = (assignment.assignedTools || []).map(at => {
@@ -182,12 +218,12 @@ export default function EmployeeAssignments({
     });
 
     autoTable(doc, {
-      startY: 65 + (splitText.length * 5) + 5,
+      startY: textY + (splitText.length * 5) + 10,
       head: [['Marca', 'Ferramenta', 'Categoria', 'Quantidade']],
       body: tableData,
       theme: 'grid',
       headStyles: { 
-        fillColor: [30, 41, 59], 
+        fillColor: [15, 118, 110], // teal-700
         textColor: [255, 255, 255],
         fontSize: 10,
         fontStyle: 'bold',
@@ -195,7 +231,11 @@ export default function EmployeeAssignments({
       },
       bodyStyles: {
         fontSize: 9,
+        textColor: [51, 65, 85],
         halign: 'left'
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // slate-50
       },
       columnStyles: {
         3: { halign: 'center' }

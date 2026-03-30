@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
@@ -10,6 +10,7 @@ import EmployeeAssignments from '@/components/EmployeeAssignments';
 import Employees from '@/components/Employees';
 import Reports from '@/components/Reports';
 import CollectiveTools from '@/components/CollectiveTools';
+import Settings from '@/components/Settings';
 import { useFirestore } from '@/lib/useFirestore';
 import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
@@ -64,6 +65,7 @@ export default function App() {
     { id: 'assignments', label: 'Atribuições', icon: Users },
     { id: 'collective', label: 'Ferramentas Coletivas', icon: LayoutGrid },
     { id: 'reports', label: 'Relatórios', icon: FileText },
+    { id: 'settings', label: 'Configurações', icon: SettingsIcon },
   ];
 
   if (!isReady) {
@@ -239,6 +241,9 @@ export default function App() {
             setStations={setCollectiveStations}
             tools={tools}
           />
+        )}
+        {activeTab === 'settings' && (
+          <Settings />
         )}
       </main>
     </div>
