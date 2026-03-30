@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { CollectiveStation, CollectiveLine, Tool } from '@/lib/data';
-import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 export default function CollectiveTools({
@@ -22,6 +22,7 @@ export default function CollectiveTools({
   const [editingStation, setEditingStation] = useState<CollectiveStation | null>(null);
   const [editingLine, setEditingLine] = useState<CollectiveLine | null>(null);
   const [managingStation, setManagingStation] = useState<CollectiveStation | null>(null);
+  const [viewingStation, setViewingStation] = useState<CollectiveStation | null>(null);
 
   const [stationFormData, setStationFormData] = useState({ name: '', lineId: '' });
   const [lineFormData, setLineFormData] = useState({ name: '' });
@@ -313,6 +314,13 @@ export default function CollectiveTools({
                     <td className="p-4">
                       <div className="flex justify-end gap-2">
                         <button 
+                          onClick={() => setViewingStation(station)}
+                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Visualizar Ferramentas"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button 
                           onClick={() => { setManagingStation(station); setIsManageToolsModalOpen(true); }}
                           className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-blue-600 hover:text-white transition-all text-xs font-bold flex items-center gap-1.5"
                         >
@@ -550,6 +558,70 @@ export default function CollectiveTools({
                 className="px-8 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-900/20"
               >
                 Concluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* View Station Tools Modal */}
+      {viewingStation && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Detalhes do Posto</h2>
+                <p className="text-sm text-slate-500">{viewingStation.name} • {viewingStation.line}</p>
+              </div>
+              <button onClick={() => setViewingStation(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-blue-600" />
+                Ferramentas no Posto
+              </h3>
+              {viewingStation.tools.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-xl border border-slate-100">
+                  Nenhuma ferramenta atribuída a este posto.
+                </div>
+              ) : (
+                <div className="border border-slate-100 rounded-xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+                        <th className="p-3 font-semibold">Ferramenta</th>
+                        <th className="p-3 font-semibold">Categoria</th>
+                        <th className="p-3 font-semibold text-center">Atual</th>
+                        <th className="p-3 font-semibold text-center">Necessária</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewingStation.tools.map((t, idx) => (
+                        <tr key={idx} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                          <td className="p-3 font-medium text-slate-800">{t.name}</td>
+                          <td className="p-3 text-slate-600 text-sm">{t.category}</td>
+                          <td className="p-3 text-center">
+                            <span className={`inline-flex items-center justify-center font-bold px-2 py-0.5 rounded text-sm ${t.quantity < (t.requiredQuantity ?? t.quantity) ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
+                              {t.quantity}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center text-slate-600 font-medium">
+                            {t.requiredQuantity ?? t.quantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+              <button
+                onClick={() => setViewingStation(null)}
+                className="px-6 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors"
+              >
+                Fechar
               </button>
             </div>
           </div>

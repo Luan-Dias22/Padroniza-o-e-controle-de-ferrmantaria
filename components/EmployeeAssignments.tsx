@@ -591,6 +591,7 @@ export default function EmployeeAssignments({
                   <th className="p-4 font-medium">Funcionário</th>
                   <th className="p-4 font-medium">Departamento</th>
                   <th className="p-4 font-medium">Ferramentas Atribuídas</th>
+                  <th className="p-4 font-medium">Faltantes</th>
                   <th className="p-4 font-medium">Data</th>
                   <th className="p-4 font-medium text-right">Ações</th>
                 </tr>
@@ -598,7 +599,7 @@ export default function EmployeeAssignments({
               <tbody>
                 {filteredAssignments.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-500">Nenhuma atribuição encontrada.</td>
+                    <td colSpan={6} className="p-8 text-center text-slate-500">Nenhuma atribuição encontrada.</td>
                   </tr>
                 ) : (
                   filteredAssignments.map(assignment => {
@@ -607,6 +608,7 @@ export default function EmployeeAssignments({
                     const date = new Date(assignment.dateAssigned).toLocaleDateString();
                     
                     const missingTools = getMissingTools(assignment);
+                    const missingToolsCount = missingTools.reduce((acc, mt) => acc + mt.missingQty, 0);
                     
                     return (
                       <tr key={assignment.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
@@ -625,13 +627,20 @@ export default function EmployeeAssignments({
                             <span className="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
                               {(assignment.assignedTools || []).reduce((acc, t) => acc + t.quantity, 0)} itens ({(assignment.assignedTools || []).length} tipos)
                             </span>
-                            {missingTools.length > 0 && (
+                            {missingToolsCount > 0 && (
                               <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-200">
                                 <AlertTriangle className="w-3 h-3" />
                                 Pendente
                               </span>
                             )}
                           </div>
+                        </td>
+                        <td className="p-4 text-slate-600">
+                          {missingToolsCount > 0 ? (
+                            <span className="font-bold text-amber-600">{missingToolsCount}</span>
+                          ) : (
+                            <span className="text-slate-400">0</span>
+                          )}
                         </td>
                         <td className="p-4 text-slate-600 text-sm">{date}</td>
                         <td className="p-4 flex justify-end gap-2">
