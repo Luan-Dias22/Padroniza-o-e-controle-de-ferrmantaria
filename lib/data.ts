@@ -8,7 +8,7 @@ export type CollectiveStation = {
   id: string;
   name: string;
   line: string;
-  tools: { toolId?: string; name: string; category: string; quantity: number }[];
+  tools: { toolId?: string; name: string; category: string; quantity: number; requiredQuantity?: number }[];
 };
 
 export type CollectiveLine = {

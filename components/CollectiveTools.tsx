@@ -27,7 +27,7 @@ export default function CollectiveTools({
   const [lineFormData, setLineFormData] = useState({ name: '' });
   
   const [toolSearch, setToolSearch] = useState('');
-  const [newToolData, setNewToolData] = useState({ name: '', category: 'ferramenta manual', quantity: 1 });
+  const [newToolData, setNewToolData] = useState({ name: '', category: 'ferramenta manual', quantity: 1, requiredQuantity: 1 });
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -126,10 +126,11 @@ export default function CollectiveTools({
     });
   };
 
-  const handleAddToolToStation = (tool: Tool | { name: string, category: string }) => {
+  const handleAddToolToStation = (tool: Tool | { name: string, category: string }, isManual: boolean = false) => {
     if (!managingStation) return;
     
-    const quantity = newToolData.quantity || 1;
+    const quantity = isManual ? (newToolData.quantity || 0) : 1;
+    const requiredQuantity = isManual ? (newToolData.requiredQuantity || 1) : 1;
     const existingToolIdx = managingStation.tools.findIndex(t => 
       ('id' in tool && t.toolId === tool.id) || (!('id' in tool) && t.name === tool.name)
     );
@@ -137,19 +138,21 @@ export default function CollectiveTools({
     let updatedTools = [...managingStation.tools];
     if (existingToolIdx >= 0) {
       updatedTools[existingToolIdx].quantity += quantity;
+      updatedTools[existingToolIdx].requiredQuantity = (updatedTools[existingToolIdx].requiredQuantity ?? updatedTools[existingToolIdx].quantity) + requiredQuantity;
     } else {
       updatedTools.push({
         toolId: 'id' in tool ? tool.id : undefined,
         name: tool.name,
         category: tool.category,
-        quantity: quantity
+        quantity: quantity,
+        requiredQuantity: requiredQuantity
       });
     }
 
     const updatedStation = { ...managingStation, tools: updatedTools };
     setStations(stations.map(s => s.id === managingStation.id ? updatedStation : s));
     setManagingStation(updatedStation);
-    setNewToolData({ name: '', category: 'ferramenta manual', quantity: 1 });
+    setNewToolData({ name: '', category: 'ferramenta manual', quantity: 1, requiredQuantity: 1 });
   };
 
   const handleRemoveToolFromStation = (idx: number) => {
@@ -160,10 +163,11 @@ export default function CollectiveTools({
     setManagingStation(updatedStation);
   };
 
-  const handleUpdateToolQuantity = (idx: number, delta: number) => {
+  const handleUpdateToolQuantity = (idx: number, field: 'quantity' | 'requiredQuantity', delta: number) => {
     if (!managingStation) return;
     const updatedTools = [...managingStation.tools];
-    updatedTools[idx].quantity = Math.max(1, updatedTools[idx].quantity + delta);
+    const currentVal = updatedTools[idx][field] ?? updatedTools[idx].quantity;
+    updatedTools[idx][field] = Math.max(0, currentVal + delta);
     const updatedStation = { ...managingStation, tools: updatedTools };
     setStations(stations.map(s => s.id === managingStation.id ? updatedStation : s));
     setManagingStation(updatedStation);
@@ -300,7 +304,7 @@ export default function CollectiveTools({
                       <div className="flex items-center gap-2">
                         <Wrench className="w-4 h-4 text-slate-400" />
                         <span className="text-sm font-medium text-slate-600">
-                          {station.tools.reduce((acc, t) => acc + t.quantity, 0)} itens
+                          {station.tools.reduce((acc, t) => acc + t.quantity, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
                         </span>
                         <span className="text-xs text-slate-400">({station.tools.length} tipos)</span>
                       </div>
@@ -473,13 +477,27 @@ export default function CollectiveTools({
                           <p className="font-bold text-slate-800 truncate">{t.name}</p>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t.category}</p>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
-                            <button onClick={() => handleUpdateToolQuantity(idx, -1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-r border-slate-200">-</button>
-                            <span className="px-3 py-1 font-bold text-slate-700 min-w-[40px] text-center">{t.quantity}</span>
-                            <button onClick={() => handleUpdateToolQuantity(idx, 1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-l border-slate-200">+</button>
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Atual</span>
+                              <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-r border-slate-200">-</button>
+                                <span className="px-3 py-1 font-bold text-slate-700 min-w-[40px] text-center">{t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-l border-slate-200">+</button>
+                              </div>
+                            </div>
+                            <span className="text-slate-300 font-light text-2xl mt-4">/</span>
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Nec.</span>
+                              <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-r border-slate-200">-</button>
+                                <span className="px-3 py-1 font-bold text-slate-700 min-w-[40px] text-center">{t.requiredQuantity ?? t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2 py-1 hover:bg-slate-50 text-slate-500 border-l border-slate-200">+</button>
+                              </div>
+                            </div>
                           </div>
-                          <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-4 sm:mt-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -515,16 +533,29 @@ export default function CollectiveTools({
                         <option value="medição">Medição</option>
                         <option value="segurança">EPI</option>
                       </select>
-                      <input 
-                        type="number" 
-                        min="1"
-                        value={newToolData.quantity}
-                        onChange={e => setNewToolData({ ...newToolData, quantity: parseInt(e.target.value) || 1 })}
-                        className="w-16 p-2 border border-slate-300 rounded-lg text-sm text-center outline-none"
-                      />
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Atual</span>
+                        <input 
+                          type="number" 
+                          min="0"
+                          value={newToolData.quantity}
+                          onChange={e => setNewToolData({ ...newToolData, quantity: parseInt(e.target.value) || 0 })}
+                          className="w-16 p-2 border border-slate-300 rounded-lg text-sm text-center outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Nec.</span>
+                        <input 
+                          type="number" 
+                          min="1"
+                          value={newToolData.requiredQuantity}
+                          onChange={e => setNewToolData({ ...newToolData, requiredQuantity: parseInt(e.target.value) || 1 })}
+                          className="w-16 p-2 border border-slate-300 rounded-lg text-sm text-center outline-none"
+                        />
+                      </div>
                     </div>
                     <button 
-                      onClick={() => handleAddToolToStation({ name: newToolData.name, category: newToolData.category })}
+                      onClick={() => handleAddToolToStation({ name: newToolData.name, category: newToolData.category }, true)}
                       disabled={!newToolData.name}
                       className="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
@@ -550,7 +581,7 @@ export default function CollectiveTools({
                     {availableTools.map(tool => (
                       <button 
                         key={tool.id}
-                        onClick={() => handleAddToolToStation(tool)}
+                        onClick={() => handleAddToolToStation(tool, false)}
                         className="w-full flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
                       >
                         <div className="min-w-0">

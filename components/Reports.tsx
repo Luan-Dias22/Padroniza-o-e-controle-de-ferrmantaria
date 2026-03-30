@@ -21,6 +21,7 @@ export default function Reports({ tools, departments, assignments, employees, co
     const data: Record<string, { 
       individual: Record<string, number>, 
       collective: Record<string, number>,
+      requiredCollective: Record<string, number>,
       total: Record<string, number>,
       stations: Record<string, string[]>
     }> = {};
@@ -30,6 +31,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       data[dept.id] = {
         individual: {},
         collective: {},
+        requiredCollective: {},
         total: {},
         stations: {}
       };
@@ -42,6 +44,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           (s.tools || []).forEach(tool => {
             if (tool.toolId) {
               data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
+              data[dept.id].requiredCollective[tool.toolId] = (data[dept.id].requiredCollective[tool.toolId] || 0) + (tool.requiredQuantity ?? tool.quantity);
               data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
               
               if (!data[dept.id].stations[tool.toolId]) {
@@ -225,6 +228,7 @@ export default function Reports({ tools, departments, assignments, employees, co
                         const tool = tools.find(t => t.id === toolId);
                         const individualQty = deptData.individual[toolId] || 0;
                         const collectiveQty = deptData.collective[toolId] || 0;
+                        const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
                         const totalQty = deptData.total[toolId];
                         const stations = deptData.stations?.[toolId] || [];
 
@@ -252,9 +256,14 @@ export default function Reports({ tools, departments, assignments, employees, co
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={`text-sm ${collectiveQty > 0 ? 'text-amber-700 font-medium' : 'text-slate-300'}`}>
-                                {collectiveQty}
-                              </span>
+                              <div className="flex flex-col items-center">
+                                <span className={`text-sm ${collectiveQty > 0 ? 'text-amber-700 font-medium' : 'text-slate-300'}`}>
+                                  {collectiveQty}
+                                </span>
+                                {requiredCollectiveQty > collectiveQty && (
+                                  <span className="text-[9px] text-red-500 font-bold mt-0.5">Falta {requiredCollectiveQty - collectiveQty}</span>
+                                )}
+                              </div>
                             </td>
                             <td className="p-4 text-center bg-blue-50/30">
                               <span className="inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-sm px-2">
