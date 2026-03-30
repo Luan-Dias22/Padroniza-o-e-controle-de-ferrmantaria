@@ -42,9 +42,12 @@ export default function CollectiveTools({
   });
 
   const filteredStations = useMemo(() => {
-    if (selectedLineId === 'all') return stations;
-    const line = lines.find(l => l.id === selectedLineId);
-    return stations.filter(s => s.line === line?.name);
+    let result = stations;
+    if (selectedLineId !== 'all') {
+      const line = lines.find(l => l.id === selectedLineId);
+      result = stations.filter(s => s.line === line?.name);
+    }
+    return [...result].sort((a, b) => a.name.localeCompare(b.name));
   }, [stations, selectedLineId, lines]);
 
   const handleSaveLine = (e: React.FormEvent) => {
