@@ -80,6 +80,40 @@
         "uid": { "type": "string" }
       },
       "required": ["employeeId", "departmentId", "assignedTools", "dateAssigned", "uid"]
+    },
+    "CollectiveLine": {
+      "title": "CollectiveLine",
+      "description": "A production line for collective tools",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "uid"]
+    },
+    "CollectiveStation": {
+      "title": "CollectiveStation",
+      "description": "A station in a production line",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "line": { "type": "string" },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "toolId": { "type": "string" },
+              "name": { "type": "string" },
+              "category": { "type": "string" },
+              "quantity": { "type": "number" }
+            },
+            "required": ["name", "category", "quantity"]
+          }
+        },
+        "uid": { "type": "string" }
+      },
+      "required": ["name", "line", "tools", "uid"]
     }
   },
   "firestore": {
@@ -102,6 +136,14 @@
     "users/{userId}/assignments/{assignmentId}": {
       "schema": { "$ref": "#/entities/Assignment" },
       "description": "Assignments owned by the user"
+    },
+    "users/{userId}/collectiveLines/{lineId}": {
+      "schema": { "$ref": "#/entities/CollectiveLine" },
+      "description": "Collective lines owned by the user"
+    },
+    "users/{userId}/collectiveStations/{stationId}": {
+      "schema": { "$ref": "#/entities/CollectiveStation" },
+      "description": "Collective stations owned by the user"
     }
   }
 }

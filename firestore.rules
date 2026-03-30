@@ -46,6 +46,20 @@ service cloud.firestore {
     //   - dateAssigned: string (required)
     //   - uid: string (required, immutable)
     //
+    // Collection: users/{userId}/collectiveLines
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required)
+    //   - uid: string (required, immutable)
+    //
+    // Collection: users/{userId}/collectiveStations
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required)
+    //   - line: string (required)
+    //   - tools: list of objects (required)
+    //   - uid: string (required, immutable)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -123,6 +137,20 @@ service cloud.firestore {
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
+    function isValidCollectiveLine(data) {
+      return hasOnlyAllowedFields(['name', 'uid']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
+    function isValidCollectiveStation(data) {
+      return hasOnlyAllowedFields(['name', 'line', 'tools', 'uid']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.line is string && data.line.size() > 0 && data.line.size() < 100 &&
+             data.tools is list && data.tools.size() <= 200 &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -159,6 +187,20 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && hasRequiredFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid']) && isValidAssignment(request.resource.data) && uidUnchanged();
         allow update: if isOwner(userId) && isDocOwner() && isValidAssignment(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) && isDocOwner();
+      }
+
+      match /collectiveLines/{lineId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && hasRequiredFields(['name', 'uid']) && isValidCollectiveLine(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveLine(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) && isDocOwner();
+      }
+
+      match /collectiveStations/{stationId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && hasRequiredFields(['name', 'line', 'tools', 'uid']) && isValidCollectiveStation(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveStation(request.resource.data) && uidNotModified();
         allow delete: if isOwner(userId) && isDocOwner();
       }
     }

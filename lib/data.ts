@@ -4,6 +4,18 @@ export type Department = { id: string, name: string, standardListId?: string };
 export type Employee = { id: string, employeeId: string, name: string, departmentId: string };
 export type Assignment = { id: string, employeeId: string, departmentId: string, assignedTools: { toolId: string, quantity: number }[], dateAssigned: string };
 
+export type CollectiveStation = {
+  id: string;
+  name: string;
+  line: string;
+  tools: { toolId?: string; name: string; category: string; quantity: number }[];
+};
+
+export type CollectiveLine = {
+  id: string;
+  name: string;
+};
+
 export const mockTools: Tool[] = [
   { id: 't1', brand: 'Bosch', name: 'Furadeira Elétrica', category: 'ferramenta elétrica', description: 'Furadeira sem fio 20V' },
   { id: 't2', brand: 'Gedore', name: 'Chave de Torque', category: 'ferramenta manual', description: 'Encaixe de 1/2 polegada' },
