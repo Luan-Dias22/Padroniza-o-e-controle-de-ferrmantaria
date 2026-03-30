@@ -9,11 +9,10 @@ interface ReportsProps {
   departments: Department[];
   assignments: Assignment[];
   employees: Employee[];
-  standardLists: StandardToolList[];
   collectiveStations: CollectiveStation[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, standardLists, collectiveStations }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, collectiveStations }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
 
@@ -33,17 +32,6 @@ export default function Reports({ tools, departments, assignments, employees, st
         total: {}
       };
       
-      // Add collective tools from standard lists if any (legacy method)
-      if (dept.collectiveListId) {
-        const collectiveKit = (standardLists || []).find(s => s.id === dept.collectiveListId);
-        if (collectiveKit) {
-          (collectiveKit.tools || []).forEach(tool => {
-            data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
-            data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
-          });
-        }
-      }
-
       // Add tools from new collectiveStations collection
       // Match by line name if it matches department name
       (collectiveStations || [])
@@ -70,7 +58,7 @@ export default function Reports({ tools, departments, assignments, employees, st
     });
 
     return data;
-  }, [assignments, departments, standardLists, collectiveStations]);
+  }, [assignments, departments, collectiveStations]);
 
   const filteredDepartments = departments.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
@@ -193,11 +181,6 @@ export default function Reports({ tools, departments, assignments, employees, st
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <h2 className="text-lg font-bold text-slate-800">{dept.name}</h2>
-                    {dept.collectiveListId && (
-                      <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-200">
-                        Possui Kit Coletivo
-                      </span>
-                    )}
                   </div>
                   <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                     {toolIds.length} tipos de ferramentas
