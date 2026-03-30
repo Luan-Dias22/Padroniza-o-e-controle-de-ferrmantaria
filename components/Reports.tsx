@@ -109,18 +109,21 @@ export default function Reports({ tools, departments, assignments, employees, co
 
       const tableData = toolIds.map(toolId => {
         const tool = tools.find(t => t.id === toolId);
+        const stations = deptData.stations?.[toolId] || [];
+        const stationsText = stations.length > 0 ? stations.join(', ') : '-';
         return [
           tool?.name || 'Ferramenta Desconhecida',
           tool?.brand || '-',
           deptData.individual[toolId] || 0,
           deptData.collective[toolId] || 0,
-          deptData.total[toolId]
+          deptData.total[toolId],
+          stationsText
         ];
       });
 
       autoTable(doc, {
         startY: currentY,
-        head: [['Ferramenta', 'Marca', 'Indiv.', 'Colet.', 'Total']],
+        head: [['Ferramenta', 'Marca', 'Indiv.', 'Colet.', 'Total', 'Postos']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [59, 130, 246] },
