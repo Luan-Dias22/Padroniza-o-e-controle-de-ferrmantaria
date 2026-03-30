@@ -6,7 +6,9 @@ export default function Settings() {
   const [logo, setLogo] = useState<string | null>(null);
 
   useEffect(() => {
+    // Run only on client side to avoid hydration mismatch
     setLogo(getLogoBase64());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

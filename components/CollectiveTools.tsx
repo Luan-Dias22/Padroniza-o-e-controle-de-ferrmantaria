@@ -27,7 +27,6 @@ export default function CollectiveTools({
   const [lineFormData, setLineFormData] = useState({ name: '' });
   
   const [toolSearch, setToolSearch] = useState('');
-  const [newToolData, setNewToolData] = useState({ name: '', category: 'ferramenta manual', quantity: 1, requiredQuantity: 1 });
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -129,11 +128,11 @@ export default function CollectiveTools({
     });
   };
 
-  const handleAddToolToStation = (tool: Tool | { name: string, category: string }, isManual: boolean = false) => {
+  const handleAddToolToStation = (tool: Tool | { name: string, category: string }) => {
     if (!managingStation) return;
     
-    const quantity = isManual ? (newToolData.quantity || 0) : 1;
-    const requiredQuantity = isManual ? (newToolData.requiredQuantity || 1) : 1;
+    const quantity = 1;
+    const requiredQuantity = 1;
     const existingToolIdx = managingStation.tools.findIndex(t => 
       ('id' in tool && t.toolId === tool.id) || (!('id' in tool) && t.name === tool.name)
     );
@@ -155,7 +154,6 @@ export default function CollectiveTools({
     const updatedStation = { ...managingStation, tools: updatedTools };
     setStations(stations.map(s => s.id === managingStation.id ? updatedStation : s));
     setManagingStation(updatedStation);
-    setNewToolData({ name: '', category: 'ferramenta manual', quantity: 1, requiredQuantity: 1 });
   };
 
   const handleRemoveToolFromStation = (idx: number) => {
@@ -513,59 +511,6 @@ export default function CollectiveTools({
               {/* Right Side: Add Tools */}
               <div className="w-full md:w-80 bg-slate-50/50 p-6 overflow-y-auto">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Adicionar Ferramenta</h3>
-                
-                {/* Custom Tool Form */}
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
-                  <p className="text-xs font-bold text-slate-500 mb-3">Nova Ferramenta (Manual)</p>
-                  <div className="space-y-3">
-                    <input 
-                      type="text" 
-                      placeholder="Nome da ferramenta..."
-                      value={newToolData.name}
-                      onChange={e => setNewToolData({ ...newToolData, name: e.target.value })}
-                      className="w-full p-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <div className="flex gap-2">
-                      <select 
-                        value={newToolData.category}
-                        onChange={e => setNewToolData({ ...newToolData, category: e.target.value })}
-                        className="flex-1 p-2 border border-slate-300 rounded-lg text-xs outline-none bg-white"
-                      >
-                        <option value="ferramenta manual">Manual</option>
-                        <option value="ferramenta elétrica">Elétrica</option>
-                        <option value="medição">Medição</option>
-                        <option value="segurança">EPI</option>
-                      </select>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Atual</span>
-                        <input 
-                          type="number" 
-                          min="0"
-                          value={newToolData.quantity}
-                          onChange={e => setNewToolData({ ...newToolData, quantity: parseInt(e.target.value) || 0 })}
-                          className="w-16 p-2 border border-slate-300 rounded-lg text-sm text-center outline-none"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">Nec.</span>
-                        <input 
-                          type="number" 
-                          min="1"
-                          value={newToolData.requiredQuantity}
-                          onChange={e => setNewToolData({ ...newToolData, requiredQuantity: parseInt(e.target.value) || 1 })}
-                          className="w-16 p-2 border border-slate-300 rounded-lg text-sm text-center outline-none"
-                        />
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleAddToolToStation({ name: newToolData.name, category: newToolData.category }, true)}
-                      disabled={!newToolData.name}
-                      className="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Adicionar
-                    </button>
-                  </div>
-                </div>
 
                 {/* Search from Catalog */}
                 <div className="space-y-3">
@@ -584,7 +529,7 @@ export default function CollectiveTools({
                     {availableTools.map(tool => (
                       <button 
                         key={tool.id}
-                        onClick={() => handleAddToolToStation(tool, false)}
+                        onClick={() => handleAddToolToStation(tool)}
                         className="w-full flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left group"
                       >
                         <div className="min-w-0">
