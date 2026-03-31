@@ -11,9 +11,10 @@ interface ReportsProps {
   assignments: Assignment[];
   employees: Employee[];
   collectiveStations: CollectiveStation[];
+  standardLists: StandardToolList[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, collectiveStations }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedToolType, setSelectedToolType] = useState<'all' | 'individual' | 'collective'>('all');
@@ -76,8 +77,34 @@ export default function Reports({ tools, departments, assignments, employees, co
       });
     });
 
+    // Calculate required individual tools based on employees and standard lists
+    (departments || []).forEach(dept => {
+      if (!dept.standardListId || !data[dept.id]) return;
+      
+      const standardList = (standardLists || []).find(l => l.id === dept.standardListId);
+      if (!standardList) return;
+
+      const deptEmployeesCount = (employees || []).filter(e => e.departmentId === dept.id).length;
+      
+      (standardList.tools || []).forEach(tool => {
+        const requiredQty = tool.quantity * deptEmployeesCount;
+        // We use requiredCollective as a general "required" bucket for collective tools, 
+        // but for individual tools we need to factor this into the "Nec." (Necessary) column.
+        // Let's add a new field to track required individual tools.
+        if (!data[dept.id].requiredIndividual) {
+          (data[dept.id] as any).requiredIndividual = {};
+        }
+        (data[dept.id] as any).requiredIndividual[tool.toolId] = requiredQty;
+        
+        // Ensure the tool is in the total list so it shows up in the report even if not assigned yet
+        if (data[dept.id].total[tool.toolId] === undefined) {
+          data[dept.id].total[tool.toolId] = 0;
+        }
+      });
+    });
+
     return data;
-  }, [assignments, departments, collectiveStations]);
+  }, [assignments, departments, collectiveStations, employees, standardLists]);
 
   const filteredDepartments = departments.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
@@ -164,10 +191,11 @@ export default function Reports({ tools, departments, assignments, employees, co
         const individualQty = deptData.individual[toolId] || 0;
         const collectiveQty = deptData.collective[toolId] || 0;
         const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
+        const requiredIndividualQty = (deptData as any).requiredIndividual?.[toolId] || 0;
 
         const reqQty = selectedToolType === 'all' 
-          ? (individualQty + requiredCollectiveQty)
-          : (selectedToolType === 'individual' ? individualQty : requiredCollectiveQty);
+          ? (requiredIndividualQty + requiredCollectiveQty)
+          : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
         const curQty = selectedToolType === 'all'
           ? (individualQty + collectiveQty)
@@ -322,10 +350,11 @@ export default function Reports({ tools, departments, assignments, employees, co
                         const individualQty = deptData.individual[toolId] || 0;
                         const collectiveQty = deptData.collective[toolId] || 0;
                         const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
+                        const requiredIndividualQty = (deptData as any).requiredIndividual?.[toolId] || 0;
                         
                         const reqQty = selectedToolType === 'all' 
-                          ? (individualQty + requiredCollectiveQty)
-                          : (selectedToolType === 'individual' ? individualQty : requiredCollectiveQty);
+                          ? (requiredIndividualQty + requiredCollectiveQty)
+                          : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
                         const curQty = selectedToolType === 'all'
                           ? (individualQty + collectiveQty)

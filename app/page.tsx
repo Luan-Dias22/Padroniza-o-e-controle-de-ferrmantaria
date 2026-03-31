@@ -22,18 +22,22 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return savedTheme === 'dark' || (!savedTheme && prefersDark);
+    }
+    return false;
+  });
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setIsDarkMode(true);
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [isDarkMode]);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -269,6 +273,7 @@ export default function App() {
             assignments={assignments}
             employees={employees}
             collectiveStations={collectiveStations}
+            standardLists={standardLists}
           />
         )}
         {activeTab === 'collective' && (

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 
 export default function Settings() {
-  const [logo, setLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Run only on client side to avoid hydration mismatch
-    setLogo(getLogoBase64());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [logo, setLogo] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return getLogoBase64();
+    }
+    return null;
+  });
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,7 +61,7 @@ export default function Settings() {
               <div className="w-48 h-32 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-slate-50 relative overflow-hidden group">
                 {logo ? (
                   <>
-                    <img src={logo} alt="Logo da Empresa" className="max-w-full max-h-full object-contain p-2" />
+                    <Image src={logo} alt="Logo da Empresa" width={192} height={128} className="max-w-full max-h-full object-contain p-2" unoptimized />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
                         onClick={handleRemoveLogo}

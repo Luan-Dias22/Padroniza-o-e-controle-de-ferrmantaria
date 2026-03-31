@@ -4,10 +4,17 @@
 
 # Run and deploy your AI Studio app
 
-Criei esse projeto usando a ferramenta Google AI Studio para auxiliar na padronização de ferramentas individuais, coletivas e geração de relatórios e termos de responsabilidade.
-A IA utilizada foi o Gemini 3 flash e Gemini 3.1 pro
+This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/69c9ad42-b539-40dd-886b-74e20672e178
 
-#aistudio, #geministudio, #generative-ai, #typescript
+## Run Locally
 
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
