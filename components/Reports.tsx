@@ -25,6 +25,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       individual: Record<string, number>, 
       collective: Record<string, number>,
       requiredCollective: Record<string, number>,
+      requiredIndividual: Record<string, number>,
       total: Record<string, number>,
       stations: Record<string, string[]>,
       stationDetails: Record<string, { name: string, missing: number }[]>
@@ -36,6 +37,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         individual: {},
         collective: {},
         requiredCollective: {},
+        requiredIndividual: {},
         total: {},
         stations: {},
         stationDetails: {}
@@ -91,10 +93,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         // We use requiredCollective as a general "required" bucket for collective tools, 
         // but for individual tools we need to factor this into the "Nec." (Necessary) column.
         // Let's add a new field to track required individual tools.
-        if (!data[dept.id].requiredIndividual) {
-          (data[dept.id] as any).requiredIndividual = {};
-        }
-        (data[dept.id] as any).requiredIndividual[tool.toolId] = requiredQty;
+        data[dept.id].requiredIndividual[tool.toolId] = requiredQty;
         
         // Ensure the tool is in the total list so it shows up in the report even if not assigned yet
         if (data[dept.id].total[tool.toolId] === undefined) {
@@ -191,7 +190,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         const individualQty = deptData.individual[toolId] || 0;
         const collectiveQty = deptData.collective[toolId] || 0;
         const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
-        const requiredIndividualQty = (deptData as any).requiredIndividual?.[toolId] || 0;
+        const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
 
         const reqQty = selectedToolType === 'all' 
           ? (requiredIndividualQty + requiredCollectiveQty)
@@ -350,7 +349,7 @@ export default function Reports({ tools, departments, assignments, employees, co
                         const individualQty = deptData.individual[toolId] || 0;
                         const collectiveQty = deptData.collective[toolId] || 0;
                         const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
-                        const requiredIndividualQty = (deptData as any).requiredIndividual?.[toolId] || 0;
+                        const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
                         
                         const reqQty = selectedToolType === 'all' 
                           ? (requiredIndividualQty + requiredCollectiveQty)
