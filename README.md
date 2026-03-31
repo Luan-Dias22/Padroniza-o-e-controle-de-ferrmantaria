@@ -4,7 +4,7 @@
 
 # Run and deploy your AI Studio app
 
-This contains everything you need to run your app locally.
+Criei esse projeto usando a ferramenta Google AI Studio para auxiliar na padronização de ferramentas individuais, coletivas e geração de relatórios e termos de responsabilidade.
 
 View your app in AI Studio: https://ai.studio/apps/69c9ad42-b539-40dd-886b-74e20672e178
 
