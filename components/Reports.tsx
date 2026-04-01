@@ -197,6 +197,53 @@ export default function Reports({ tools, departments, assignments, employees, co
     return true;
   });
 
+  const summaryData = useMemo(() => {
+    let indCurrent = 0;
+    let indMissing = 0;
+    let colCurrent = 0;
+    let colMissing = 0;
+
+    filteredDepartments.forEach(dept => {
+      const deptData = reportData[dept.id];
+      if (!deptData) return;
+
+      const toolIds = Object.keys(deptData.total || {}).filter(toolId => {
+        const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
+        const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
+        
+        if (selectedToolType === 'individual') return hasIndividual;
+        if (selectedToolType === 'collective') return hasCollective;
+        return hasIndividual || hasCollective;
+      });
+
+      toolIds.forEach(toolId => {
+        const currentInd = deptData.individual[toolId] || 0;
+        const requiredInd = deptData.requiredIndividual[toolId] || 0;
+        const missingInd = Math.max(0, requiredInd - currentInd);
+
+        const currentCol = deptData.collective[toolId] || 0;
+        const requiredCol = deptData.requiredCollective[toolId] || 0;
+        const missingCol = Math.max(0, requiredCol - currentCol);
+
+        if (selectedToolType === 'all' || selectedToolType === 'individual') {
+          indCurrent += currentInd;
+          indMissing += missingInd;
+        }
+        
+        if (selectedToolType === 'all' || selectedToolType === 'collective') {
+          colCurrent += currentCol;
+          colMissing += missingCol;
+        }
+      });
+    });
+
+    return {
+      individual: { current: indCurrent, missing: indMissing },
+      collective: { current: colCurrent, missing: colMissing },
+      total: { current: indCurrent + colCurrent, missing: indMissing + colMissing }
+    };
+  }, [filteredDepartments, reportData, selectedToolType]);
+
   const handleExportPDF = () => {
     const doc = new jsPDF();
     const logoBase64 = getLogoBase64();
@@ -329,7 +376,7 @@ export default function Reports({ tools, departments, assignments, employees, co
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-2rem)]">
-      <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <FileText className="w-6 h-6 text-blue-600" />
@@ -340,12 +387,57 @@ export default function Reports({ tools, departments, assignments, employees, co
           </p>
         </div>
         
-        <button
-          onClick={handleExportPDF}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
-        >
-          <Download className="w-4 h-4" /> Exportar PDF
-        </button>
+        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+          <div className="flex items-center gap-6 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm flex-1 lg:flex-none justify-center">
+            {(selectedToolType === 'all' || selectedToolType === 'individual') && (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Individuais</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5" title="Atuais">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-sm font-bold text-slate-700">{summaryData.individual.current}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5" title="Faltantes">
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                    <span className="text-sm font-bold text-slate-700">{summaryData.individual.missing}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {(selectedToolType === 'all' || selectedToolType === 'collective') && (
+              <>
+                {selectedToolType === 'all' && <div className="w-px h-8 bg-slate-200"></div>}
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Coletivas</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5" title="Atuais">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <span className="text-sm font-bold text-slate-700">{summaryData.collective.current}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5" title="Faltantes">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <span className="text-sm font-bold text-slate-700">{summaryData.collective.missing}</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="w-px h-8 bg-slate-200"></div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Faltante</span>
+              <span className="text-sm font-bold text-red-600">{summaryData.total.missing}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleExportPDF}
+            className="px-4 py-2.5 h-full bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors font-medium shadow-sm shadow-blue-600/20 w-full lg:w-auto"
+          >
+            <Download className="w-4 h-4" /> Exportar PDF
+          </button>
+        </div>
       </div>
 
       <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row gap-4">
