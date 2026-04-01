@@ -1,4 +1,4 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
 import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package } from 'lucide-react';
 
@@ -136,8 +136,9 @@ export default function Dashboard({ tools, departments, assignments, employees, 
                         padding: '12px'
                       }}
                     />
-                    <Bar dataKey="individual" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={45} name="Individual" />
-                    <Bar dataKey="collective" stackId="a" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={45} name="Coletivo" />
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                    <Bar dataKey="individual" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={30} name="Individual" />
+                    <Bar dataKey="collective" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={30} name="Coletivo" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
