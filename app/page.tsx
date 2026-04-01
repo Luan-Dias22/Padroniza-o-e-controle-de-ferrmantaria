@@ -274,6 +274,7 @@ export default function App() {
             employees={employees}
             collectiveStations={collectiveStations}
             standardLists={standardLists}
+            collectiveLines={collectiveLines}
           />
         )}
         {activeTab === 'collective' && (

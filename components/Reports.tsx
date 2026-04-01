@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine } from '@/lib/data';
 import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -12,9 +12,10 @@ interface ReportsProps {
   employees: Employee[];
   collectiveStations: CollectiveStation[];
   standardLists: StandardToolList[];
+  collectiveLines: CollectiveLine[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedToolType, setSelectedToolType] = useState<'all' | 'individual' | 'collective'>('all');
@@ -68,6 +69,48 @@ export default function Reports({ tools, departments, assignments, employees, co
         });
     });
 
+    // Initialize data structure for collective lines that are NOT departments
+    (collectiveLines || []).forEach(line => {
+      // Check if this line is already a department to avoid duplication
+      const isDepartment = (departments || []).some(d => d.name === line.name);
+      if (isDepartment) return;
+
+      // Use a prefix to distinguish from department IDs
+      const lineId = `line_${line.id}`;
+      
+      data[lineId] = {
+        individual: {},
+        collective: {},
+        requiredCollective: {},
+        requiredIndividual: {},
+        total: {},
+        stations: {},
+        stationDetails: {}
+      };
+
+      (collectiveStations || [])
+        .filter(s => s.line === line.name)
+        .forEach(s => {
+          (s.tools || []).forEach(tool => {
+            if (tool.toolId) {
+              data[lineId].collective[tool.toolId] = (data[lineId].collective[tool.toolId] || 0) + tool.quantity;
+              data[lineId].requiredCollective[tool.toolId] = (data[lineId].requiredCollective[tool.toolId] || 0) + (tool.requiredQuantity ?? tool.quantity);
+              data[lineId].total[tool.toolId] = (data[lineId].total[tool.toolId] || 0) + tool.quantity;
+              
+              if (!data[lineId].stations[tool.toolId]) {
+                data[lineId].stations[tool.toolId] = [];
+                data[lineId].stationDetails[tool.toolId] = [];
+              }
+              if (!data[lineId].stations[tool.toolId].includes(s.name)) {
+                data[lineId].stations[tool.toolId].push(s.name);
+                const missing = Math.max(0, (tool.requiredQuantity ?? tool.quantity) - tool.quantity);
+                data[lineId].stationDetails[tool.toolId].push({ name: s.name, missing });
+              }
+            }
+          });
+        });
+    });
+
     // Aggregate tool quantities from individual assignments
     (assignments || []).forEach(assignment => {
       const deptId = assignment.departmentId;
@@ -103,9 +146,50 @@ export default function Reports({ tools, departments, assignments, employees, co
     });
 
     return data;
-  }, [assignments, departments, collectiveStations, employees, standardLists]);
+  }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines]);
 
-  const filteredDepartments = departments.filter(dept => {
+  // Combine departments and collective lines for filtering and display
+  const allReportEntities = useMemo(() => {
+    const entities: { id: string, name: string, isLineOnly?: boolean }[] = [...departments];
+    
+    (collectiveLines || []).forEach(line => {
+      if (!entities.some(e => e.name === line.name)) {
+        entities.push({ id: `line_${line.id}`, name: line.name, isLineOnly: true });
+      }
+    });
+    
+    return entities.sort((a, b) => {
+      const getWeight = (name: string) => {
+        const lowerName = name.toLowerCase().trim();
+        
+        if (lowerName.startsWith('linha 1 ') || lowerName === 'linha 1') return 1;
+        if (lowerName.startsWith('linha 2 ') || lowerName === 'linha 2') return 2;
+        if (lowerName.startsWith('linha 3 ') || lowerName === 'linha 3') return 3;
+        if (lowerName.startsWith('linha 4 ') || lowerName === 'linha 4') return 4;
+        if (lowerName.startsWith('linha 6 ') || lowerName === 'linha 6') return 6;
+        if (lowerName.startsWith('linha 9 ') || lowerName === 'linha 9') return 9;
+        if (lowerName.startsWith('linha 10 ') || lowerName === 'linha 10') return 10;
+        if (lowerName.includes('fábrica de cabos') || lowerName.includes('fabrica de cabos')) return 11;
+        
+        const match = lowerName.match(/^linha\s+(\d+)/);
+        if (match) {
+          return 100 + parseInt(match[1], 10);
+        }
+        
+        return 999;
+      };
+
+      const weightA = getWeight(a.name);
+      const weightB = getWeight(b.name);
+
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [departments, collectiveLines]);
+
+  const filteredDepartments = allReportEntities.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
     if (searchQuery) {
       return dept.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -281,7 +365,7 @@ export default function Reports({ tools, departments, assignments, employees, co
             className="p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white min-w-[150px]"
           >
             <option value="all">Todas as Linhas</option>
-            {departments.map(dept => (
+            {allReportEntities.map(dept => (
               <option key={dept.id} value={dept.id}>{dept.name}</option>
             ))}
           </select>
