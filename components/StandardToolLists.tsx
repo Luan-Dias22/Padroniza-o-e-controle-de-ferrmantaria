@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Department, StandardToolList, Tool } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, Link as LinkIcon, Lock, Unlock } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, Link as LinkIcon, Lock, Unlock, Search } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 export default function StandardToolLists({ 
@@ -15,6 +15,7 @@ export default function StandardToolLists({
   const [editingKitId, setEditingKitId] = useState<string | null>(null);
   const [editKitName, setEditKitName] = useState('');
   const [sortAlphabetically, setSortAlphabetically] = useState(false);
+  const [toolSearchQuery, setToolSearchQuery] = useState('');
   const [confirmUnlockModal, setConfirmUnlockModal] = useState<{
     isOpen: boolean;
     kitId: string | null;
@@ -230,17 +231,29 @@ export default function StandardToolLists({
             </div>
             <div className="flex items-center gap-3">
               {selectedKitId && tools.length > 0 && (
-                <button
-                  onClick={() => setSortAlphabetically(!sortAlphabetically)}
-                  className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
-                    sortAlphabetically 
-                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                      : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                  title="Ordenar Alfabeticamente"
-                >
-                  Ordem Alfabética {sortAlphabetically ? '(Ativo)' : ''}
-                </button>
+                <>
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar ferramenta..."
+                      value={toolSearchQuery}
+                      onChange={(e) => setToolSearchQuery(e.target.value)}
+                      className="pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setSortAlphabetically(!sortAlphabetically)}
+                    className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
+                      sortAlphabetically 
+                        ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                        : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                    title="Ordenar Alfabeticamente"
+                  >
+                    Ordem Alfabética {sortAlphabetically ? '(Ativo)' : ''}
+                  </button>
+                </>
               )}
               <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
                 {currentToolIds.length} ferramentas
@@ -259,6 +272,13 @@ export default function StandardToolLists({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[...tools]
+                  .filter(tool => {
+                    if (!toolSearchQuery) return true;
+                    const searchLower = toolSearchQuery.toLowerCase();
+                    return tool.name.toLowerCase().includes(searchLower) || 
+                           tool.brand.toLowerCase().includes(searchLower) ||
+                           tool.category.toLowerCase().includes(searchLower);
+                  })
                   .sort((a, b) => {
                     if (sortAlphabetically) {
                       return a.name.localeCompare(b.name);
