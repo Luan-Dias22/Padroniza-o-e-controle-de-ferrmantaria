@@ -243,10 +243,12 @@ export default function Reports({ tools, departments, assignments, employees, co
     filteredDepartments.forEach((dept, index) => {
       const deptData = reportData[dept.id];
       const toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
-        if (selectedToolType === 'all') return true;
-        if (selectedToolType === 'individual') return (deptData.individual[toolId] || 0) > 0;
-        if (selectedToolType === 'collective') return (deptData.collective[toolId] || 0) > 0;
-        return true;
+        const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
+        const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
+        
+        if (selectedToolType === 'individual') return hasIndividual;
+        if (selectedToolType === 'collective') return hasCollective;
+        return hasIndividual || hasCollective;
       });
       
       if (toolIds.length === 0) return; // Skip empty departments
@@ -386,10 +388,12 @@ export default function Reports({ tools, departments, assignments, employees, co
           {filteredDepartments.map(dept => {
             const deptData = reportData[dept.id];
             const toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
-              if (selectedToolType === 'all') return true;
-              if (selectedToolType === 'individual') return (deptData.individual[toolId] || 0) > 0;
-              if (selectedToolType === 'collective') return (deptData.collective[toolId] || 0) > 0;
-              return true;
+              const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
+              const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
+              
+              if (selectedToolType === 'individual') return hasIndividual;
+              if (selectedToolType === 'collective') return hasCollective;
+              return hasIndividual || hasCollective;
             });
             
             if (toolIds.length === 0) return null;
