@@ -74,13 +74,17 @@ export default function App() {
     try {
       await signInWithGoogle();
     } catch (error: any) {
-      console.error(error);
+      console.error("Login error:", error);
       if (error.code === 'auth/popup-closed-by-user') {
         setLoginError('O pop-up foi fechado antes de concluir o login. Tente novamente.');
+      } else if (error.code === 'auth/popup-blocked') {
+        setLoginError('O pop-up de login foi bloqueado pelo seu navegador. Por favor, permita pop-ups para este site e tente novamente.');
       } else if (error.code === 'auth/unauthorized-domain') {
-        setLoginError('Este domínio não está autorizado no Firebase. Por favor, verifique as configurações.');
+        setLoginError('Este domínio não está autorizado no Firebase. Por favor, verifique se o domínio do aplicativo foi adicionado aos domínios autorizados no Console do Firebase.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        setLoginError('A solicitação de login foi cancelada. Tente novamente.');
       } else {
-        setLoginError(`Erro ao fazer login: ${error.message}. Se você estiver usando Safari, modo anônimo ou bloqueadores de rastreamento, tente desativá-los ou usar outro navegador.`);
+        setLoginError(`Erro ao fazer login: ${error.message || 'Erro desconhecido'}. Se você estiver usando Safari, modo anônimo ou bloqueadores de rastreamento, tente desativá-los ou usar outro navegador.`);
       }
     }
   };
