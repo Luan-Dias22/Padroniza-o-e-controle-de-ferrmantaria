@@ -9,6 +9,7 @@
         "name": { "type": "string" },
         "category": { "type": "string" },
         "description": { "type": "string" },
+        "price": { "type": "number" },
         "uid": { "type": "string" }
       },
       "required": ["brand", "name", "category", "description", "uid"]

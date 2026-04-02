@@ -491,9 +491,9 @@ export default function EmployeeAssignments({
                           >
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleCustomTool(tool.id)}>
-                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{tool.name}</p>
-                            <p className="text-xs text-slate-500 truncate">{tool.brand}</p>
+                          <div className="flex-1 min-w-0 pr-2 cursor-pointer" onClick={() => toggleCustomTool(tool.id)}>
+                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 break-words">{tool.name}</p>
+                            <p className="text-xs text-slate-500 break-words">{tool.brand}</p>
                           </div>
                           {isSelected && (
                             <div className="flex items-center gap-2">

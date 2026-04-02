@@ -127,6 +127,14 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
         const dataToSave = { ...item, uid: userId };
         // Remove id from the document body since it's the document key
         delete (dataToSave as any).id;
+
+        // Strip undefined values to prevent Firestore errors
+        Object.keys(dataToSave).forEach(key => {
+          if ((dataToSave as any)[key] === undefined) {
+            delete (dataToSave as any)[key];
+          }
+        });
+
         await setDoc(docRef, dataToSave);
       }
     } catch (error) {

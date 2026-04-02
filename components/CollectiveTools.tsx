@@ -482,9 +482,9 @@ export default function CollectiveTools({
                   ) : (
                     managingStation.tools.map((t, idx) => (
                       <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 group">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-800 dark:text-slate-200 truncate">{t.name}</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t.category}</p>
+                        <div className="flex-1 min-w-0 pr-4">
+                          <p className="font-bold text-slate-800 dark:text-slate-200 break-words">{t.name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{t.category}</p>
                         </div>
                         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
                           <div className="flex items-center gap-2">
@@ -540,9 +540,9 @@ export default function CollectiveTools({
                         onClick={() => handleAddToolToStation(tool)}
                         className="w-full flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all text-left group"
                       >
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{tool.name}</p>
-                          <p className="text-[9px] text-slate-400 truncate">{tool.brand}</p>
+                        <div className="min-w-0 pr-2">
+                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 break-words">{tool.name}</p>
+                          <p className="text-[9px] text-slate-400 break-words mt-0.5">{tool.brand}</p>
                         </div>
                         <Plus className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500" />
                       </button>

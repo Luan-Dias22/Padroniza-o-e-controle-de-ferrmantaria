@@ -97,11 +97,12 @@ service cloud.firestore {
     // Domain Validators
     // ===============================================================
     function isValidTool(data) {
-      return hasOnlyAllowedFields(['brand', 'name', 'category', 'description', 'uid']) &&
+      return (hasOnlyAllowedFields(['brand', 'name', 'category', 'description', 'uid']) || hasOnlyAllowedFields(['brand', 'name', 'category', 'description', 'price', 'uid'])) &&
              data.brand is string && data.brand.size() > 0 && data.brand.size() < 100 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
              data.description is string && data.description.size() < 1000 &&
+             (!('price' in data) || (data.price is number && data.price >= 0)) &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
