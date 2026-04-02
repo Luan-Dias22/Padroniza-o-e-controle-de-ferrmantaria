@@ -193,14 +193,18 @@ export default function Budgets({
     doc.setTextColor(100, 116, 139);
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 42);
 
+    let isFirstLine = true;
     let yPos = 50;
 
     Object.values(budgetData).forEach(line => {
       if (line.tools.length === 0) return;
 
-      if (yPos > 250) {
+      if (!isFirstLine) {
         doc.addPage();
         yPos = 20;
+      } else {
+        isFirstLine = false;
+        yPos = 50;
       }
 
       doc.setFontSize(14);
