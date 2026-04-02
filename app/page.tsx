@@ -143,23 +143,40 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col md:flex-row font-sans transition-colors duration-300">
       {/* Mobile Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center">
+      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-30">
         <div className="font-bold text-lg flex items-center gap-2">
           <Wrench className="w-5 h-5 text-blue-400" />
           ToolManager
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        <button onClick={() => setIsMobileMenuOpen(true)}>
+          <Menu className="w-6 h-6" />
         </button>
       </div>
 
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0 z-40`}>
-        <div className="p-3 hidden md:flex items-center gap-2 border-b border-slate-800">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
-            <Wrench className="w-4 h-4 text-white" />
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col h-screen transform transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:relative md:translate-x-0 md:block
+      `}>
+        <div className="p-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+              <Wrench className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-base tracking-tight">ToolManager</span>
           </div>
-          <span className="font-bold text-base tracking-tight">ToolManager</span>
+          <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
         <nav className="p-2 space-y-0.5 flex-grow overflow-y-auto">
           {tabs.map(tab => {
