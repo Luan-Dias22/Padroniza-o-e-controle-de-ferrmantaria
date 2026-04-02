@@ -21,6 +21,7 @@ export default function Budgets({
 }: BudgetsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
+  const [toolCategoryFilter, setToolCategoryFilter] = useState<'all' | 'collective' | 'individual'>('all');
 
   // Initialize editing prices with current tool prices
   React.useEffect(() => {
@@ -74,100 +75,104 @@ export default function Budgets({
     });
 
     // Calculate Collective Tools
-    const processCollectiveStations = (stations: CollectiveStation[], lineName: string, lineId: string) => {
-      if (!data[lineId]) return;
-      
-      // Aggregate tools for this line
-      const lineTools: Record<string, { required: number, available: number }> = {};
-      
-      stations.filter(s => s.line === lineName).forEach(s => {
-        (s.tools || []).forEach(t => {
-          if (t.toolId) {
-            if (!lineTools[t.toolId]) lineTools[t.toolId] = { required: 0, available: 0 };
-            lineTools[t.toolId].required += (t.requiredQuantity ?? t.quantity);
-            lineTools[t.toolId].available += t.quantity;
+    if (toolCategoryFilter === 'all' || toolCategoryFilter === 'collective') {
+      const processCollectiveStations = (stations: CollectiveStation[], lineName: string, lineId: string) => {
+        if (!data[lineId]) return;
+        
+        // Aggregate tools for this line
+        const lineTools: Record<string, { required: number, available: number }> = {};
+        
+        stations.filter(s => s.line === lineName).forEach(s => {
+          (s.tools || []).forEach(t => {
+            if (t.toolId) {
+              if (!lineTools[t.toolId]) lineTools[t.toolId] = { required: 0, available: 0 };
+              lineTools[t.toolId].required += (t.requiredQuantity ?? t.quantity);
+              lineTools[t.toolId].available += t.quantity;
+            }
+          });
+        });
+
+        Object.keys(lineTools).forEach(toolId => {
+          const tool = tools.find(t => t.id === toolId);
+          if (tool) {
+            const required = lineTools[toolId].required;
+            const missing = Math.max(0, required - lineTools[toolId].available);
+            const price = tool.price || 0;
+            
+            const costRequired = required * price;
+            const costMissing = missing * price;
+
+            data[lineId].requiredCost += costRequired;
+            data[lineId].missingCost += costMissing;
+            
+            data[lineId].tools.push({ tool, required, missing, costRequired, costMissing });
           }
         });
+      };
+
+      // Process collective tools for departments
+      (departments || []).forEach(dept => {
+        processCollectiveStations(collectiveStations || [], dept.name, dept.id);
       });
 
-      Object.keys(lineTools).forEach(toolId => {
-        const tool = tools.find(t => t.id === toolId);
-        if (tool) {
-          const required = lineTools[toolId].required;
-          const missing = Math.max(0, required - lineTools[toolId].available);
-          const price = tool.price || 0;
-          
-          const costRequired = required * price;
-          const costMissing = missing * price;
-
-          data[lineId].requiredCost += costRequired;
-          data[lineId].missingCost += costMissing;
-          
-          data[lineId].tools.push({ tool, required, missing, costRequired, costMissing });
-        }
+      // Process collective tools for collective lines
+      (collectiveLines || []).forEach(line => {
+        const isDepartment = (departments || []).some(d => d.name === line.name);
+        if (isDepartment) return;
+        processCollectiveStations(collectiveStations || [], line.name, `line_${line.id}`);
       });
-    };
-
-    // Process collective tools for departments
-    (departments || []).forEach(dept => {
-      processCollectiveStations(collectiveStations || [], dept.name, dept.id);
-    });
-
-    // Process collective tools for collective lines
-    (collectiveLines || []).forEach(line => {
-      const isDepartment = (departments || []).some(d => d.name === line.name);
-      if (isDepartment) return;
-      processCollectiveStations(collectiveStations || [], line.name, `line_${line.id}`);
-    });
+    }
 
     // Calculate Individual Tools (only for departments)
-    (departments || []).forEach(dept => {
-      if (!dept.standardListId) return;
-      
-      const standardList = (standardLists || []).find(l => l.id === dept.standardListId);
-      if (!standardList) return;
+    if (toolCategoryFilter === 'all' || toolCategoryFilter === 'individual') {
+      (departments || []).forEach(dept => {
+        if (!dept.standardListId) return;
+        
+        const standardList = (standardLists || []).find(l => l.id === dept.standardListId);
+        if (!standardList) return;
 
-      const deptEmployees = (employees || []).filter(e => e.departmentId === dept.id);
-      const deptEmployeesCount = deptEmployees.length;
-      
-      // Calculate available tools from assignments
-      const availableTools: Record<string, number> = {};
-      (assignments || []).filter(a => a.departmentId === dept.id).forEach(assignment => {
-        (assignment.assignedTools || []).forEach(t => {
-          availableTools[t.toolId] = (availableTools[t.toolId] || 0) + t.quantity;
+        const deptEmployees = (employees || []).filter(e => e.departmentId === dept.id);
+        const deptEmployeesCount = deptEmployees.length;
+        
+        // Calculate available tools from assignments
+        const availableTools: Record<string, number> = {};
+        (assignments || []).filter(a => a.departmentId === dept.id).forEach(assignment => {
+          (assignment.assignedTools || []).forEach(t => {
+            availableTools[t.toolId] = (availableTools[t.toolId] || 0) + t.quantity;
+          });
+        });
+
+        (standardList.tools || []).forEach(t => {
+          const tool = tools.find(tool => tool.id === t.toolId);
+          if (tool) {
+            const required = t.quantity * deptEmployeesCount;
+            const available = availableTools[t.toolId] || 0;
+            const missing = Math.max(0, required - available);
+            const price = tool.price || 0;
+
+            const costRequired = required * price;
+            const costMissing = missing * price;
+
+            data[dept.id].requiredCost += costRequired;
+            data[dept.id].missingCost += costMissing;
+
+            // Check if tool already exists in this line's tools array (from collective)
+            const existingToolIndex = data[dept.id].tools.findIndex(item => item.tool.id === tool.id);
+            if (existingToolIndex >= 0) {
+              data[dept.id].tools[existingToolIndex].required += required;
+              data[dept.id].tools[existingToolIndex].missing += missing;
+              data[dept.id].tools[existingToolIndex].costRequired += costRequired;
+              data[dept.id].tools[existingToolIndex].costMissing += costMissing;
+            } else {
+              data[dept.id].tools.push({ tool, required, missing, costRequired, costMissing });
+            }
+          }
         });
       });
-
-      (standardList.tools || []).forEach(t => {
-        const tool = tools.find(tool => tool.id === t.toolId);
-        if (tool) {
-          const required = t.quantity * deptEmployeesCount;
-          const available = availableTools[t.toolId] || 0;
-          const missing = Math.max(0, required - available);
-          const price = tool.price || 0;
-
-          const costRequired = required * price;
-          const costMissing = missing * price;
-
-          data[dept.id].requiredCost += costRequired;
-          data[dept.id].missingCost += costMissing;
-
-          // Check if tool already exists in this line's tools array (from collective)
-          const existingToolIndex = data[dept.id].tools.findIndex(item => item.tool.id === tool.id);
-          if (existingToolIndex >= 0) {
-            data[dept.id].tools[existingToolIndex].required += required;
-            data[dept.id].tools[existingToolIndex].missing += missing;
-            data[dept.id].tools[existingToolIndex].costRequired += costRequired;
-            data[dept.id].tools[existingToolIndex].costMissing += costMissing;
-          } else {
-            data[dept.id].tools.push({ tool, required, missing, costRequired, costMissing });
-          }
-        }
-      });
-    });
+    }
 
     return data;
-  }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines]);
+  }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, toolCategoryFilter]);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -179,7 +184,10 @@ export default function Budgets({
 
     doc.setFontSize(20);
     doc.setTextColor(30, 58, 138);
-    doc.text('Relatório de Orçamentos por Linha', 14, 35);
+    let title = 'Relatório de Orçamentos por Linha';
+    if (toolCategoryFilter === 'collective') title += ' (Ferramentas Coletivas)';
+    if (toolCategoryFilter === 'individual') title += ' (Ferramentas Individuais)';
+    doc.text(title, 14, 35);
     
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
@@ -244,13 +252,24 @@ export default function Budgets({
           <Calculator className="w-6 h-6 text-blue-600" />
           Orçamentos
         </h1>
-        <button
-          onClick={generatePDF}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
-        >
-          <Download className="w-4 h-4" />
-          Gerar PDF de Orçamentos
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <select
+            value={toolCategoryFilter}
+            onChange={(e) => setToolCategoryFilter(e.target.value as any)}
+            className="w-full sm:w-auto p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="all">Todas as Ferramentas</option>
+            <option value="collective">Apenas Coletivas</option>
+            <option value="individual">Apenas Individuais</option>
+          </select>
+          <button
+            onClick={generatePDF}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" />
+            Gerar PDF
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">

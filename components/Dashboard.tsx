@@ -2,8 +2,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
 import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package } from 'lucide-react';
 
-export default function Dashboard({ tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate }: { 
-  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], onNavigate: (tab: string) => void 
+export default function Dashboard({ 
+  tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate, isDarkMode, toggleDarkMode 
+}: { 
+  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], onNavigate: (tab: string) => void,
+  isDarkMode: boolean, toggleDarkMode: () => void
 }) {
   // Helper to check for missing tools
   const getMissingToolsCount = (assignment: Assignment) => {
@@ -68,6 +71,12 @@ export default function Dashboard({ tools, departments, assignments, employees, 
           <p className="text-slate-500 mt-1">Bem-vindo ao sistema de gestão de ferramentas Volga.</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={toggleDarkMode}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm border border-slate-200 dark:border-slate-700"
+          >
+            {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
           <button 
             onClick={() => onNavigate('assignments')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
