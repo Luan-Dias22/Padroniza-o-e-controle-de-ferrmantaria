@@ -22,6 +22,7 @@ export default function Employees({
   const [newDeptName, setNewDeptName] = useState('');
   const [editingDeptId, setEditingDeptId] = useState<string | null>(null);
   const [editDeptName, setEditDeptName] = useState('');
+  const [editDeptNewcomers, setEditDeptNewcomers] = useState<number>(0);
 
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
@@ -97,7 +98,8 @@ export default function Employees({
     
     setDepartments([...departments, {
       id: crypto.randomUUID(),
-      name: newDeptName.trim()
+      name: newDeptName.trim(),
+      expectedNewcomers: 0
     }]);
     
     setNewDeptName('');
@@ -105,7 +107,7 @@ export default function Employees({
 
   const handleUpdateDepartment = () => {
     if (!editDeptName.trim() || !editingDeptId) return;
-    setDepartments(departments.map(d => d.id === editingDeptId ? { ...d, name: editDeptName.trim() } : d));
+    setDepartments(departments.map(d => d.id === editingDeptId ? { ...d, name: editDeptName.trim(), expectedNewcomers: editDeptNewcomers } : d));
     setEditingDeptId(null);
   };
 
@@ -167,27 +169,46 @@ export default function Employees({
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 border border-transparent"
                   >
                     {editingDeptId === dept.id ? (
-                      <div className="flex items-center gap-2 w-full" onClick={e => e.stopPropagation()}>
+                      <div className="flex flex-col gap-2 w-full" onClick={e => e.stopPropagation()}>
                         <input 
                           autoFocus
                           value={editDeptName} 
                           onChange={e => setEditDeptName(e.target.value)}
-                          className="flex-1 p-1 border border-slate-300 rounded text-sm"
+                          className="w-full p-1 border border-slate-300 rounded text-sm"
+                          placeholder="Nome da linha"
                         />
-                        <button onClick={handleUpdateDepartment} className="text-green-600 p-1"><Check className="w-4 h-4" /></button>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 whitespace-nowrap">Novatos previstos:</span>
+                          <input 
+                            type="number"
+                            min="0"
+                            value={editDeptNewcomers} 
+                            onChange={e => setEditDeptNewcomers(parseInt(e.target.value) || 0)}
+                            className="w-16 p-1 border border-slate-300 rounded text-sm"
+                          />
+                          <div className="flex-1"></div>
+                          <button onClick={handleUpdateDepartment} className="text-green-600 p-1 bg-green-50 rounded hover:bg-green-100"><Check className="w-4 h-4" /></button>
+                        </div>
                       </div>
                     ) : (
-                      <>
-                        <span className="font-medium text-sm text-slate-700">{dept.name}</span>
-                        <div className="flex gap-1">
-                          <button onClick={() => { setEditingDeptId(dept.id); setEditDeptName(dept.name); }} className="p-1 text-slate-400 hover:text-blue-600">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDeleteDepartment(dept.id)} className="p-1 text-slate-400 hover:text-red-600">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      <div className="flex flex-col w-full">
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-medium text-sm text-slate-700">{dept.name}</span>
+                          <div className="flex gap-1">
+                            <button onClick={() => { setEditingDeptId(dept.id); setEditDeptName(dept.name); setEditDeptNewcomers(dept.expectedNewcomers || 0); }} className="p-1 text-slate-400 hover:text-blue-600">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDeleteDepartment(dept.id)} className="p-1 text-slate-400 hover:text-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </>
+                        {(dept.expectedNewcomers || 0) > 0 && (
+                          <span className="text-xs text-blue-600 mt-1 bg-blue-50 px-2 py-0.5 rounded-full w-fit">
+                            +{dept.expectedNewcomers} novato(s) previsto(s)
+                          </span>
+                        )}
+                      </div>
                     )}
                   </li>
                 ))}

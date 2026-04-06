@@ -129,7 +129,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       const standardList = (standardLists || []).find(l => l.id === dept.standardListId);
       if (!standardList) return;
 
-      const deptEmployeesCount = (employees || []).filter(e => e.departmentId === dept.id).length;
+      const deptEmployeesCount = (employees || []).filter(e => e.departmentId === dept.id).length + (dept.expectedNewcomers || 0);
       
       (standardList.tools || []).forEach(tool => {
         const requiredQty = tool.quantity * deptEmployeesCount;
@@ -309,6 +309,16 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setTextColor(15, 23, 42); // slate-900
       doc.setFont('helvetica', 'bold');
       doc.text(`Linha/Departamento: ${dept.name}`, 14, currentY);
+      
+      // Find the original department to get expectedNewcomers
+      const originalDept = departments.find(d => d.id === dept.id);
+      if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
+        doc.setFontSize(10);
+        doc.setTextColor(22, 163, 74); // Green color
+        doc.setFont('helvetica', 'normal');
+        doc.text(`(+${originalDept.expectedNewcomers} novatos previstos)`, 120, currentY);
+      }
+      
       currentY += 6;
 
       const head = ['Ferramenta', 'Marca', 'Nec.', 'Atu.', 'Fal.'];
@@ -495,6 +505,17 @@ export default function Reports({ tools, departments, assignments, employees, co
                 <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <h2 className="text-lg font-bold text-slate-800">{dept.name}</h2>
+                    {(() => {
+                      const originalDept = departments.find(d => d.id === dept.id);
+                      if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
+                        return (
+                          <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                            +{originalDept.expectedNewcomers} novatos previstos
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
                     {toolIds.length} tipos de ferramentas

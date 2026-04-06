@@ -56,6 +56,7 @@ export default function Budgets({
   const budgetData = useMemo(() => {
     const data: Record<string, { 
       name: string;
+      expectedNewcomers: number;
       requiredCost: number;
       missingCost: number;
       tools: { tool: Tool, required: number, missing: number, costRequired: number, costMissing: number }[];
@@ -63,7 +64,7 @@ export default function Budgets({
 
     // Initialize data structure for all departments
     (departments || []).forEach(dept => {
-      data[dept.id] = { name: dept.name, requiredCost: 0, missingCost: 0, tools: [] };
+      data[dept.id] = { name: dept.name, expectedNewcomers: dept.expectedNewcomers || 0, requiredCost: 0, missingCost: 0, tools: [] };
     });
 
     // Initialize data structure for collective lines that are NOT departments
@@ -71,7 +72,7 @@ export default function Budgets({
       const isDepartment = (departments || []).some(d => d.name === line.name);
       if (isDepartment) return;
       const lineId = `line_${line.id}`;
-      data[lineId] = { name: line.name, requiredCost: 0, missingCost: 0, tools: [] };
+      data[lineId] = { name: line.name, expectedNewcomers: 0, requiredCost: 0, missingCost: 0, tools: [] };
     });
 
     // Calculate Collective Tools
@@ -132,7 +133,7 @@ export default function Budgets({
         if (!standardList) return;
 
         const deptEmployees = (employees || []).filter(e => e.departmentId === dept.id);
-        const deptEmployeesCount = deptEmployees.length;
+        const deptEmployeesCount = deptEmployees.length + (dept.expectedNewcomers || 0);
         
         // Calculate available tools from assignments
         const availableTools: Record<string, number> = {};
@@ -210,6 +211,11 @@ export default function Budgets({
       doc.setFontSize(14);
       doc.setTextColor(30, 58, 138);
       doc.text(`Linha: ${line.name}`, 14, yPos);
+      if (line.expectedNewcomers > 0) {
+        doc.setFontSize(10);
+        doc.setTextColor(22, 163, 74); // Green color
+        doc.text(`(+${line.expectedNewcomers} novatos previstos)`, 100, yPos);
+      }
       yPos += 8;
 
       doc.setFontSize(11);
@@ -351,8 +357,13 @@ export default function Budgets({
           
           return (
             <div key={line.name} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">
-                {line.name}
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center justify-between">
+                <span>{line.name}</span>
+                {line.expectedNewcomers > 0 && (
+                  <span className="text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
+                    +{line.expectedNewcomers} novatos previstos
+                  </span>
+                )}
               </h3>
               
               <div className="grid grid-cols-2 gap-4 mb-6">

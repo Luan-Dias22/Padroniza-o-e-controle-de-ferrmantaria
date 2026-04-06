@@ -43,6 +43,7 @@
       "properties": {
         "name": { "type": "string" },
         "standardListId": { "type": "string" },
+        "expectedNewcomers": { "type": "number" },
         "uid": { "type": "string" }
       },
       "required": ["name", "uid"]

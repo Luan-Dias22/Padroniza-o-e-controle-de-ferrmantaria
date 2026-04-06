@@ -115,9 +115,10 @@ service cloud.firestore {
     }
 
     function isValidDepartment(data) {
-      return (hasOnlyAllowedFields(['name', 'uid']) || hasOnlyAllowedFields(['name', 'standardListId', 'uid'])) &&
+      return (hasOnlyAllowedFields(['name', 'uid']) || hasOnlyAllowedFields(['name', 'standardListId', 'uid']) || hasOnlyAllowedFields(['name', 'expectedNewcomers', 'uid']) || hasOnlyAllowedFields(['name', 'standardListId', 'expectedNewcomers', 'uid'])) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              (!('standardListId' in data) || (data.standardListId is string && data.standardListId.size() < 100)) &&
+             (!('expectedNewcomers' in data) || (data.expectedNewcomers is number && data.expectedNewcomers >= 0)) &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
