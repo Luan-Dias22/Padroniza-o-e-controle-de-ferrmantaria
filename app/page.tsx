@@ -14,8 +14,8 @@ import Settings from '@/components/Settings';
 import Budgets from '@/components/Budgets';
 import { useFirestore } from '@/lib/useFirestore';
 import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation } from '@/lib/data';
-import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth, signInWithGoogle, signInWithGoogleRedirect, logOut } from '@/lib/firebase';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -23,6 +23,8 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
@@ -53,6 +55,20 @@ export default function App() {
   };
 
   useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          setUser(result.user);
+        }
+      } catch (error: any) {
+        console.error("Redirect login error:", error);
+        setLoginError(`Erro ao fazer login via redirecionamento: ${error.message}`);
+      }
+    };
+
+    checkRedirectResult();
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthInitialized(true);
@@ -72,20 +88,22 @@ export default function App() {
 
   const handleLogin = async () => {
     setLoginError(null);
+    setIsLoggingIn(true);
     try {
+      // Revertendo para Popup pois o ambiente do AI Studio bloqueia o Redirecionamento (Erro 403)
       await signInWithGoogle();
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError('O pop-up foi fechado antes de concluir o login. Tente novamente.');
-      } else if (error.code === 'auth/popup-blocked') {
-        setLoginError('O pop-up de login foi bloqueado pelo seu navegador. Por favor, permita pop-ups para este site e tente novamente.');
+      setIsLoggingIn(false);
+      
+      if (error.code === 'auth/popup-blocked') {
+        setLoginError('O pop-up de login foi bloqueado. Por favor, clique novamente e permita pop-ups para este site.');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        setLoginError('O login foi cancelado. Tente clicar no botão novamente.');
       } else if (error.code === 'auth/unauthorized-domain') {
-        setLoginError('Este domínio não está autorizado no Firebase. Por favor, verifique se o domínio do aplicativo foi adicionado aos domínios autorizados no Console do Firebase.');
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setLoginError('A solicitação de login foi cancelada. Tente novamente.');
+        setLoginError('Domínio não autorizado. Se estiver usando o link de compartilhamento, tente o link de desenvolvimento.');
       } else {
-        setLoginError(`Erro ao fazer login: ${error.message || 'Erro desconhecido'}. Se você estiver usando Safari, modo anônimo ou bloqueadores de rastreamento, tente desativá-los ou usar outro navegador.`);
+        setLoginError(`Erro: ${error.message || 'Erro ao conectar'}. Dica: Tente abrir o app em uma nova aba do navegador.`);
       }
     }
   };
@@ -109,12 +127,6 @@ export default function App() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 transition-colors duration-300">
-        <button
-          onClick={toggleDarkMode}
-          className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-        >
-          {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-        </button>
         <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Wrench className="w-8 h-8" />
@@ -130,10 +142,20 @@ export default function App() {
 
           <button
             onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+            disabled={isLoggingIn}
+            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <LogIn className="w-5 h-5" />
-            Entrar com Google
+            {isLoggingIn ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Conectando...
+              </>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5" />
+                Entrar com Google
+              </>
+            )}
           </button>
         </div>
       </div>

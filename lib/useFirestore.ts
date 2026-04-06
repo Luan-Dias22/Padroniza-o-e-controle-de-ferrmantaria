@@ -68,7 +68,8 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       }
     });
     return () => unsubscribeAuth();
-  }, [initialValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
