@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Employee, Assignment, Department, Tool, StandardToolList } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,6 +30,11 @@ export default function EmployeeAssignments({
   const [assignmentEmployeeSearch, setAssignmentEmployeeSearch] = useState('');
   const [assignmentDepartmentFilter, setAssignmentDepartmentFilter] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -106,8 +112,8 @@ export default function EmployeeAssignments({
     if (dept && dept.standardListId) {
       const standardList = standardLists.find(s => s.id === dept.standardListId);
       if (standardList) {
-        standardList.tools.forEach(stdTool => {
-          const assignedTool = assignment.assignedTools?.find(t => t.toolId === stdTool.toolId);
+        (standardList.tools || []).forEach(stdTool => {
+          const assignedTool = (assignment.assignedTools || []).find(t => t.toolId === stdTool.toolId);
           const assignedQty = assignedTool ? assignedTool.quantity : 0;
           if (assignedQty < stdTool.quantity) {
             const tool = tools.find(t => t.id === stdTool.toolId);
@@ -710,125 +716,129 @@ export default function EmployeeAssignments({
       )}
       
       {/* Details Modal */}
-      <AnimatePresence>
-        {viewingAssignment && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          >
+      {mounted && createPortal(
+        <AnimatePresence>
+          {viewingAssignment && (
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative"
+              key="details-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Detalhes da Atribuição</h2>
-                  <p className="text-sm text-slate-400 font-mono mt-1">
-                    {employees.find(e => e.id === viewingAssignment.employeeId)?.name} • {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => setViewingAssignment(null)}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="bg-slate-950/50 p-5 rounded-xl border border-slate-800">
-                    <p className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest mb-2">Colaborador</p>
-                    <p className="font-bold text-white text-lg">{employees.find(e => e.id === viewingAssignment.employeeId)?.name}</p>
-                    <p className="text-sm text-slate-400 font-mono mt-1">ID: {employees.find(e => e.id === viewingAssignment.employeeId)?.employeeId}</p>
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative"
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
+                <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Detalhes da Atribuição</h2>
+                    <p className="text-sm text-slate-400 font-mono mt-1">
+                      {employees.find(e => e.id === viewingAssignment.employeeId)?.name} • {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}
+                    </p>
                   </div>
-                  <div className="bg-slate-950/50 p-5 rounded-xl border border-slate-800">
-                    <p className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest mb-2">Departamento</p>
-                    <p className="font-bold text-white text-lg">{departments.find(d => d.id === viewingAssignment.departmentId)?.name}</p>
-                    <p className="text-sm text-slate-400 font-mono mt-1">Data: {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}</p>
-                  </div>
+                  <button 
+                    onClick={() => setViewingAssignment(null)}
+                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
-
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-400" />
-                  Ferramentas Atribuídas
-                </h3>
                 
-                <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/30">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-slate-900/50 text-slate-400 text-[10px] font-mono uppercase tracking-wider border-b border-slate-800">
-                        <th className="p-4 font-semibold">Marca</th>
-                        <th className="p-4 font-semibold">Ferramenta</th>
-                        <th className="p-4 font-semibold text-center">Qtd</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(viewingAssignment.assignedTools || []).map((at, idx) => {
-                        const tool = tools.find(t => t.id === at.toolId);
-                        return (
-                          <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                            <td className="p-4 text-slate-400 text-sm">{tool?.brand}</td>
-                            <td className="p-4">
-                              <p className="font-medium text-slate-200">{tool?.name}</p>
-                              <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mt-1">{tool?.category}</p>
-                            </td>
-                            <td className="p-4 text-center">
-                              <span className="inline-flex items-center justify-center bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold px-3 py-1 rounded-lg text-sm">
-                                {at.quantity}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {getMissingTools(viewingAssignment).length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="font-bold text-amber-400 mb-4 flex items-center gap-2 text-sm">
-                      <AlertTriangle className="w-4 h-4" />
-                      Ferramentas Pendentes (Faltando)
-                    </h3>
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
-                      <ul className="space-y-3">
-                        {getMissingTools(viewingAssignment).map((mt, idx) => (
-                          <li key={idx} className="flex justify-between items-center text-sm text-amber-200">
-                            <span>{mt.toolName}</span>
-                            <span className="font-bold font-mono bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30">Falta: {mt.missingQty}</span>
-                          </li>
-                        ))}
-                      </ul>
+                <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="bg-slate-950/50 p-5 rounded-xl border border-slate-800">
+                      <p className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest mb-2">Colaborador</p>
+                      <p className="font-bold text-white text-lg">{employees.find(e => e.id === viewingAssignment.employeeId)?.name}</p>
+                      <p className="text-sm text-slate-400 font-mono mt-1">ID: {employees.find(e => e.id === viewingAssignment.employeeId)?.employeeId}</p>
+                    </div>
+                    <div className="bg-slate-950/50 p-5 rounded-xl border border-slate-800">
+                      <p className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest mb-2">Departamento</p>
+                      <p className="font-bold text-white text-lg">{departments.find(d => d.id === viewingAssignment.departmentId)?.name}</p>
+                      <p className="text-sm text-slate-400 font-mono mt-1">Data: {new Date(viewingAssignment.dateAssigned).toLocaleDateString()}</p>
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div className="p-6 border-t border-slate-800 bg-slate-900/80 flex justify-end gap-3">
-                <button 
-                  onClick={() => setViewingAssignment(null)}
-                  className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
-                >
-                  Fechar
-                </button>
-                <button 
-                  onClick={() => exportToPDF(viewingAssignment)}
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
-                >
-                  <Download className="w-4 h-4" />
-                  Exportar PDF
-                </button>
-              </div>
+                  <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-400" />
+                    Ferramentas Atribuídas
+                  </h3>
+                  
+                  <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/30">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-900/50 text-slate-400 text-[10px] font-mono uppercase tracking-wider border-b border-slate-800">
+                          <th className="p-4 font-semibold">Marca</th>
+                          <th className="p-4 font-semibold">Ferramenta</th>
+                          <th className="p-4 font-semibold text-center">Qtd</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(viewingAssignment.assignedTools || []).map((at, idx) => {
+                          const tool = tools.find(t => t.id === at.toolId);
+                          return (
+                            <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                              <td className="p-4 text-slate-400 text-sm">{tool?.brand}</td>
+                              <td className="p-4">
+                                <p className="font-medium text-slate-200">{tool?.name}</p>
+                                <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mt-1">{tool?.category}</p>
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className="inline-flex items-center justify-center bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold px-3 py-1 rounded-lg text-sm">
+                                  {at.quantity}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {getMissingTools(viewingAssignment).length > 0 && (
+                    <div className="mt-8">
+                      <h3 className="font-bold text-amber-400 mb-4 flex items-center gap-2 text-sm">
+                        <AlertTriangle className="w-4 h-4" />
+                        Ferramentas Pendentes (Faltando)
+                      </h3>
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
+                        <ul className="space-y-3">
+                          {getMissingTools(viewingAssignment).map((mt, idx) => (
+                            <li key={idx} className="flex justify-between items-center text-sm text-amber-200">
+                              <span>{mt.toolName}</span>
+                              <span className="font-bold font-mono bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg border border-amber-500/30">Falta: {mt.missingQty}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-6 border-t border-slate-800 bg-slate-900/80 flex justify-end gap-3">
+                  <button 
+                    onClick={() => setViewingAssignment(null)}
+                    className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
+                  >
+                    Fechar
+                  </button>
+                  <button 
+                    onClick={() => exportToPDF(viewingAssignment)}
+                    className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar PDF
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <ConfirmModal 
         isOpen={deleteModal.isOpen}
