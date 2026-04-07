@@ -4,6 +4,7 @@ import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-rea
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getLogoBase64 } from '@/lib/pdfUtils';
+import { motion } from 'motion/react';
 
 interface ReportsProps {
   tools: Tool[];
@@ -308,15 +309,17 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setFontSize(14);
       doc.setTextColor(15, 23, 42); // slate-900
       doc.setFont('helvetica', 'bold');
-      doc.text(`Linha/Departamento: ${dept.name}`, 14, currentY);
+      const deptText = `Linha/Departamento: ${dept.name}`;
+      doc.text(deptText, 14, currentY);
       
       // Find the original department to get expectedNewcomers
       const originalDept = departments.find(d => d.id === dept.id);
       if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
+        const textWidth = doc.getTextWidth(deptText);
         doc.setFontSize(10);
         doc.setTextColor(22, 163, 74); // Green color
         doc.setFont('helvetica', 'normal');
-        doc.text(`(+${originalDept.expectedNewcomers} novatos previstos)`, 120, currentY);
+        doc.text(`(+${originalDept.expectedNewcomers} novatos previstos)`, 14 + textWidth + 4, currentY);
       }
       
       currentY += 6;
@@ -384,32 +387,49 @@ export default function Reports({ tools, departments, assignments, employees, co
     doc.save('relatorio-ferramentas-por-linha.pdf');
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-2rem)]">
-      <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-slate-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col h-[calc(100vh-2rem)]"
+    >
+      <div className="p-6 border-b border-slate-800/50 bg-slate-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+            <FileText className="w-6 h-6 text-cyan-400" />
             Relatório por Linha
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-400 text-sm mt-1">
             Visão geral das quantidades de ferramentas atribuídas por departamento/linha.
           </p>
         </div>
         
         <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="flex items-center gap-6 bg-white px-5 py-2.5 rounded-xl border border-slate-200 shadow-sm flex-1 lg:flex-none justify-center">
+          <div className="flex items-center gap-6 bg-slate-800/50 px-5 py-2.5 rounded-xl border border-slate-700/50 shadow-inner flex-1 lg:flex-none justify-center">
             {(selectedToolType === 'all' || selectedToolType === 'individual') && (
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Individuais</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Individuais</span>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5" title="Atuais">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm font-bold text-slate-700">{summaryData.individual.current}</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                    <span className="text-sm font-bold text-white">{summaryData.individual.current}</span>
                   </div>
                   <div className="flex items-center gap-1.5" title="Faltantes">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span className="text-sm font-bold text-slate-700">{summaryData.individual.missing}</span>
+                    <div className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]"></div>
+                    <span className="text-sm font-bold text-white">{summaryData.individual.missing}</span>
                   </div>
                 </div>
               </div>
@@ -417,56 +437,56 @@ export default function Reports({ tools, departments, assignments, employees, co
             
             {(selectedToolType === 'all' || selectedToolType === 'collective') && (
               <>
-                {selectedToolType === 'all' && <div className="w-px h-8 bg-slate-200"></div>}
+                {selectedToolType === 'all' && <div className="w-px h-8 bg-slate-700/50"></div>}
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Coletivas</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Coletivas</span>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5" title="Atuais">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                      <span className="text-sm font-bold text-slate-700">{summaryData.collective.current}</span>
+                      <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
+                      <span className="text-sm font-bold text-white">{summaryData.collective.current}</span>
                     </div>
                     <div className="flex items-center gap-1.5" title="Faltantes">
-                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                      <span className="text-sm font-bold text-slate-700">{summaryData.collective.missing}</span>
+                      <div className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]"></div>
+                      <span className="text-sm font-bold text-white">{summaryData.collective.missing}</span>
                     </div>
                   </div>
                 </div>
               </>
             )}
 
-            <div className="w-px h-8 bg-slate-200"></div>
+            <div className="w-px h-8 bg-slate-700/50"></div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Faltante</span>
-              <span className="text-sm font-bold text-red-600">{summaryData.total.missing}</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Faltante</span>
+              <span className="text-sm font-bold text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">{summaryData.total.missing}</span>
             </div>
           </div>
 
           <button
             onClick={handleExportPDF}
-            className="px-4 py-2.5 h-full bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors font-medium shadow-sm shadow-blue-600/20 w-full lg:w-auto"
+            className="px-4 py-2.5 h-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] w-full lg:w-auto"
           >
             <Download className="w-4 h-4" /> Exportar PDF
           </button>
         </div>
       </div>
 
-      <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="p-4 border-b border-slate-800/50 bg-slate-900/30 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 group">
+          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
           <input
             type="text"
             placeholder="Buscar linha/departamento..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-slate-400" />
+          <Filter className="w-5 h-5 text-slate-500" />
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white min-w-[150px]"
+            className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todas as Linhas</option>
             {allReportEntities.map(dept => (
@@ -476,7 +496,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           <select
             value={selectedToolType}
             onChange={(e) => setSelectedToolType(e.target.value as any)}
-            className="p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white min-w-[150px]"
+            className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todos os Tipos</option>
             <option value="individual">Individuais</option>
@@ -485,8 +505,13 @@ export default function Reports({ tools, departments, assignments, employees, co
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 bg-slate-50/50">
-        <div className="space-y-8 max-w-6xl mx-auto">
+      <div className="flex-1 overflow-auto p-6 bg-slate-950/30 custom-scrollbar">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-8 max-w-6xl mx-auto"
+        >
           {filteredDepartments.map(dept => {
             const deptData = reportData[dept.id];
             const toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
@@ -501,15 +526,19 @@ export default function Reports({ tools, departments, assignments, employees, co
             if (toolIds.length === 0) return null;
 
             return (
-              <div key={dept.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+              <motion.div 
+                variants={itemVariants}
+                key={dept.id} 
+                className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden shadow-lg backdrop-blur-sm"
+              >
+                <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-700/50 flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-lg font-bold text-slate-800">{dept.name}</h2>
+                    <h2 className="text-lg font-bold text-white tracking-tight">{dept.name}</h2>
                     {(() => {
                       const originalDept = departments.find(d => d.id === dept.id);
                       if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
                         return (
-                          <span className="text-xs font-medium bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20">
                             +{originalDept.expectedNewcomers} novatos previstos
                           </span>
                         );
@@ -517,34 +546,34 @@ export default function Reports({ tools, departments, assignments, employees, co
                       return null;
                     })()}
                   </div>
-                  <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  <span className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-semibold px-3 py-1 rounded-full">
                     {toolIds.length} tipos de ferramentas
                   </span>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm">
+                      <tr className="bg-slate-950/50 border-b border-slate-800 text-slate-400 text-sm">
                         <th className="p-4 font-semibold">Ferramenta</th>
                         <th className="p-4 font-semibold">Marca</th>
                         <th className="p-4 font-semibold text-center">
                           <div className="flex flex-col items-center">
-                            <span className="text-slate-500">Nec.</span>
+                            <span className="text-slate-400">Nec.</span>
                           </div>
                         </th>
                         <th className="p-4 font-semibold text-center">
                           <div className="flex flex-col items-center">
-                            <span className="text-slate-500">Atu.</span>
+                            <span className="text-slate-400">Atu.</span>
                           </div>
                         </th>
-                        <th className="p-4 font-semibold text-center bg-blue-50/50">
+                        <th className="p-4 font-semibold text-center bg-cyan-950/30">
                           <div className="flex flex-col items-center">
-                            <span className="text-blue-600">Fal.</span>
+                            <span className="text-cyan-400">Fal.</span>
                           </div>
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-800/50">
                       {toolIds.map(toolId => {
                         const tool = tools.find(t => t.id === toolId);
                         const individualQty = deptData.individual[toolId] || 0;
@@ -564,15 +593,19 @@ export default function Reports({ tools, departments, assignments, employees, co
                         const stations = deptData.stations?.[toolId] || [];
 
                         return (
-                          <tr key={toolId} className="hover:bg-slate-50 transition-colors">
+                          <motion.tr 
+                            whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
+                            key={toolId} 
+                            className="transition-colors"
+                          >
                             <td className="p-4">
-                              <p className="text-slate-800 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</p>
+                              <p className="text-slate-200 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</p>
                               <div className="flex flex-col gap-1 mt-1">
-                                <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{tool?.category}</p>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{tool?.category}</p>
                                 {(selectedToolType === 'all' || selectedToolType === 'collective') && stations.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-1">
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
                                     {deptData.stationDetails[toolId].map((detail, idx) => (
-                                      <span key={idx} className={`text-[9px] px-1.5 py-0.5 rounded border ${detail.missing > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                      <span key={idx} className={`text-[10px] px-2 py-0.5 rounded-md border ${detail.missing > 0 ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
                                         Posto: {detail.name} {detail.missing > 0 && `(Falta ${detail.missing})`}
                                       </span>
                                     ))}
@@ -580,41 +613,44 @@ export default function Reports({ tools, departments, assignments, employees, co
                                 )}
                               </div>
                             </td>
-                            <td className="p-4 text-slate-600">{tool?.brand || '-'}</td>
+                            <td className="p-4 text-slate-400">{tool?.brand || '-'}</td>
                             <td className="p-4 text-center">
-                              <span className="text-sm text-slate-600 font-medium">
+                              <span className="text-sm text-slate-300 font-medium">
                                 {reqQty}
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={`text-sm font-medium ${curQty < reqQty ? 'text-amber-600' : 'text-slate-600'}`}>
+                              <span className={`text-sm font-medium ${curQty < reqQty ? 'text-amber-400' : 'text-slate-300'}`}>
                                 {curQty}
                               </span>
                             </td>
-                            <td className="p-4 text-center bg-blue-50/30">
-                              <span className={`inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full font-bold text-sm px-2 ${missingQty > 0 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                            <td className="p-4 text-center bg-cyan-950/20">
+                              <span className={`inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full font-bold text-sm px-2 border ${missingQty > 0 ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_rgba(248,113,113,0.2)]' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'}`}>
                                 {missingQty}
                               </span>
                             </td>
-                          </tr>
+                          </motion.tr>
                         );
                       })}
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
           
           {filteredDepartments.every(dept => Object.keys(reportData[dept.id]?.total || {}).length === 0) && (
-            <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-lg font-medium text-slate-900 mb-1">Nenhum dado encontrado</h3>
+            <motion.div 
+              variants={itemVariants}
+              className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm"
+            >
+              <FileText className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-slate-300 mb-2">Nenhum dado encontrado</h3>
               <p className="text-slate-500">Não há ferramentas atribuídas para as linhas selecionadas.</p>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine } from '@/lib/data';
 import { Calculator, Download, Save, Search } from 'lucide-react';
+import { motion } from 'motion/react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getLogoBase64 } from '@/lib/pdfUtils';
@@ -255,18 +256,38 @@ export default function Budgets({
     t.brand.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <Calculator className="w-6 h-6 text-blue-600" />
-          Orçamentos
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+            <Calculator className="w-5 h-5 text-emerald-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Orçamentos</h1>
+        </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <select
             value={toolCategoryFilter}
             onChange={(e) => setToolCategoryFilter(e.target.value as any)}
-            className="w-full sm:w-auto p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full sm:w-auto p-2.5 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
           >
             <option value="all">Todas as Ferramentas</option>
             <option value="collective">Apenas Coletivas</option>
@@ -274,7 +295,7 @@ export default function Budgets({
           </select>
           <button
             onClick={generatePDF}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm whitespace-nowrap"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
           >
             <Download className="w-4 h-4" />
             Gerar PDF
@@ -282,8 +303,8 @@ export default function Budgets({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
+      <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
+        <div className="p-5 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/80">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -291,57 +312,63 @@ export default function Budgets({
               placeholder="Buscar ferramentas para definir preço..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
             />
           </div>
           <button
             onClick={handleSavePrices}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto justify-center"
           >
             <Save className="w-4 h-4" />
             Salvar Preços
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar max-h-96">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                <th className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Ferramenta</th>
-                <th className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Marca</th>
-                <th className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300">Categoria</th>
-                <th className="p-4 text-sm font-semibold text-slate-600 dark:text-slate-300 w-48">Valor Unitário (R$)</th>
+            <thead className="sticky top-0 bg-slate-950/90 backdrop-blur-sm z-10">
+              <tr className="border-b border-slate-800">
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Ferramenta</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Marca</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Categoria</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold w-48">Valor Unitário (R$)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {filteredTools.map(tool => (
-                <tr key={tool.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="p-4 text-sm text-slate-800 dark:text-slate-200 font-medium">{tool.name}</td>
-                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{tool.brand}</td>
-                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
-                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-medium">
+            <tbody className="divide-y divide-slate-800/50">
+              {filteredTools.map((tool, idx) => (
+                <motion.tr 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.02 }}
+                  key={tool.id} 
+                  className="hover:bg-slate-800/30 transition-colors"
+                >
+                  <td className="p-4 text-sm text-slate-200 font-medium">{tool.name}</td>
+                  <td className="p-4 text-xs font-mono text-slate-400 uppercase tracking-wider">{tool.brand}</td>
+                  <td className="p-4 text-sm text-slate-400">
+                    <span className="px-2.5 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg text-[10px] font-mono uppercase tracking-wider">
                       {tool.category}
                     </span>
                   </td>
                   <td className="p-4">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 text-sm">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-mono">R$</span>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={editingPrices[tool.id] ?? ''}
                         onChange={(e) => handlePriceChange(tool.id, e.target.value)}
-                        className="w-full pl-9 pr-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-mono"
                         placeholder="0.00"
                       />
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
               {filteredTools.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={4} className="p-8 text-center text-slate-500 font-mono text-sm">
                     Nenhuma ferramenta encontrada.
                   </td>
                 </tr>
@@ -349,61 +376,70 @@ export default function Budgets({
             </tbody>
           </table>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.values(budgetData).map(line => {
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Object.values(budgetData).map((line, idx) => {
           if (line.tools.length === 0) return null;
           
           return (
-            <div key={line.name} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center justify-between">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+              key={line.name} 
+              className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 to-teal-500/50" />
+              <h3 className="text-lg font-bold text-white mb-5 border-b border-slate-800 pb-3 flex items-center justify-between">
                 <span>{line.name}</span>
                 {line.expectedNewcomers > 0 && (
-                  <span className="text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                    +{line.expectedNewcomers} novatos previstos
+                  <span className="text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                    +{line.expectedNewcomers} novatos
                   </span>
                 )}
               </h3>
               
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                  <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">Custo Necessário</p>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10">
+                  <p className="text-[10px] font-mono text-blue-400/70 uppercase tracking-widest mb-1">Custo Necessário</p>
+                  <p className="text-2xl font-bold text-blue-400 font-mono">
                     R$ {line.requiredCost.toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-100 dark:border-red-800/30">
-                  <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-1">Custo Faltante</p>
-                  <p className="text-2xl font-bold text-red-700 dark:text-red-300">
+                <div className="bg-red-500/5 p-4 rounded-xl border border-red-500/10">
+                  <p className="text-[10px] font-mono text-red-400/70 uppercase tracking-widest mb-1">Custo Faltante</p>
+                  <p className="text-2xl font-bold text-red-400 font-mono">
                     R$ {line.missingCost.toFixed(2)}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Detalhamento</h4>
-                {line.tools.map((t, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-sm p-2 hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-lg transition-colors">
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">{t.tool.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{t.tool.brand} • R$ {(t.tool.price || 0).toFixed(2)}</p>
+                <h4 className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest">Detalhamento</h4>
+                <div className="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                  {line.tools.map((t, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm p-3 bg-slate-950/30 border border-slate-800/50 hover:border-slate-700 rounded-xl transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-slate-200">{t.tool.name}</p>
+                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mt-0.5">{t.tool.brand} • R$ {(t.tool.price || 0).toFixed(2)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-slate-400 text-xs">
+                          <span className="font-bold text-slate-200">{t.missing}</span> faltam de {t.required}
+                        </p>
+                        <p className="text-xs font-mono font-bold text-red-400 mt-0.5">
+                          R$ {t.costMissing.toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-slate-600 dark:text-slate-300">
-                        <span className="font-medium">{t.missing}</span> faltam de {t.required}
-                      </p>
-                      <p className="text-xs font-medium text-red-600 dark:text-red-400">
-                        R$ {t.costMissing.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Department, StandardToolList, Tool } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, Link as LinkIcon, Lock, Unlock, Search } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, Link as LinkIcon, Lock, Unlock, Search, ListChecks } from 'lucide-react';
+import { motion } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
 
 export default function StandardToolLists({ 
@@ -119,8 +120,26 @@ export default function StandardToolLists({
     setDepartments(departments.map(d => d.id === deptId ? { ...d, standardListId: kitId || undefined } : d));
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <ConfirmModal 
         isOpen={deleteModal.isOpen}
         title={deleteModal.title}
@@ -135,40 +154,51 @@ export default function StandardToolLists({
         onConfirm={confirmUnlock}
         onCancel={() => setConfirmUnlockModal({ isOpen: false, kitId: null })}
         confirmText="Liberar"
-        confirmColor="bg-blue-600 hover:bg-blue-700"
+        confirmColor="bg-cyan-600 hover:bg-cyan-700"
       />
-      <h1 className="text-2xl font-bold text-slate-800">Kits de Ferramentas Padrão</h1>
+      
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-purple-500/10 border border-purple-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+          <ListChecks className="w-5 h-5 text-purple-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Kits de Ferramentas Padrão</h1>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Kits Management */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
-          <div className="p-4 border-b border-slate-100 bg-slate-50">
-            <h2 className="text-lg font-semibold text-slate-800">Kits Padrão</h2>
+        <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden flex flex-col h-[500px] relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500/50 to-indigo-500/50" />
+          <div className="p-5 border-b border-slate-800 bg-slate-900/80">
+            <h2 className="text-lg font-semibold text-white">Kits Padrão</h2>
           </div>
-          <div className="p-4 border-b border-slate-100">
+          <div className="p-4 border-b border-slate-800 bg-slate-950/30">
             <form onSubmit={handleAddKit} className="flex gap-2">
               <input 
                 type="text" 
                 value={newKitName} 
                 onChange={e => setNewKitName(e.target.value)}
                 placeholder="Nome do novo kit..."
-                className="flex-1 p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="flex-1 p-2.5 bg-slate-950/50 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 outline-none transition-all"
               />
-              <button type="submit" className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button type="submit" className="p-2.5 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl hover:bg-purple-500/30 hover:border-purple-400 transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]">
                 <Plus className="w-5 h-5" />
               </button>
             </form>
           </div>
-          <div className="flex-1 overflow-y-auto p-2">
+          <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
             {standardLists.length === 0 ? (
-              <p className="text-center text-slate-500 p-4 text-sm">Nenhum kit criado.</p>
+              <p className="text-center text-slate-500 p-4 text-sm font-mono">Nenhum kit criado.</p>
             ) : (
-              <ul className="space-y-1">
+              <ul className="space-y-2">
                 {standardLists.map(kit => (
-                  <li 
+                  <motion.li 
                     key={kit.id} 
-                    className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedKitId === kit.id ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50 border border-transparent'
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                      selectedKitId === kit.id 
+                        ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.1)]' 
+                        : 'hover:bg-slate-800/50 border border-transparent'
                     }`}
                     onClick={() => setSelectedKitId(kit.id)}
                   >
@@ -178,30 +208,30 @@ export default function StandardToolLists({
                           autoFocus
                           value={editKitName} 
                           onChange={e => setEditKitName(e.target.value)}
-                          className="flex-1 p-1 border border-slate-300 rounded text-sm"
+                          className="flex-1 p-1.5 bg-slate-950 border border-slate-700 rounded text-sm text-slate-200 outline-none focus:border-purple-500"
                         />
-                        <button onClick={handleUpdateKit} className="text-green-600 p-1"><Check className="w-4 h-4" /></button>
+                        <button onClick={handleUpdateKit} className="text-emerald-400 p-1 hover:bg-emerald-500/10 rounded"><Check className="w-4 h-4" /></button>
                       </div>
                     ) : (
                       <>
-                        <span className={`font-medium text-sm ${selectedKitId === kit.id ? 'text-blue-700' : 'text-slate-700'} flex items-center gap-2`}>
+                        <span className={`font-medium text-sm ${selectedKitId === kit.id ? 'text-purple-400' : 'text-slate-300'} flex items-center gap-2`}>
                           {kit.name}
-                          {kit.isLocked && <Lock className="w-3 h-3 text-slate-400" />}
+                          {kit.isLocked && <Lock className="w-3 h-3 text-slate-500" />}
                         </span>
                         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                           <button 
                             onClick={() => handleToggleLock(kit.id)} 
-                            className={`p-1 transition-colors ${kit.isLocked ? 'text-amber-500 hover:text-amber-600' : 'text-slate-400 hover:text-blue-600'}`}
+                            className={`p-1.5 rounded-lg transition-colors ${kit.isLocked ? 'text-amber-400 hover:bg-amber-500/10' : 'text-slate-500 hover:text-purple-400 hover:bg-purple-500/10'}`}
                             title={kit.isLocked ? "Desbloquear Kit" : "Travar Kit"}
                           >
                             {kit.isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                           </button>
                           {!kit.isLocked && (
                             <>
-                              <button onClick={() => { setEditingKitId(kit.id); setEditKitName(kit.name); }} className="p-1 text-slate-400 hover:text-blue-600">
+                              <button onClick={() => { setEditingKitId(kit.id); setEditKitName(kit.name); }} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
                                 <Edit2 className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDeleteKit(kit.id)} className="p-1 text-slate-400 hover:text-red-600">
+                              <button onClick={() => handleDeleteKit(kit.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </>
@@ -209,65 +239,66 @@ export default function StandardToolLists({
                         </div>
                       </>
                     )}
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Standard Tools Selection */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col h-[500px]">
-          <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+        <motion.div variants={itemVariants} className="lg:col-span-2 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 flex flex-col h-[500px] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-1 bg-gradient-to-l from-purple-500/50 to-transparent" />
+          <div className="p-5 border-b border-slate-800 bg-slate-900/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-slate-800">
+              <h2 className="text-lg font-semibold text-white">
                 {currentKit ? `Ferramentas do ${currentKit.name}` : 'Selecione um kit'}
               </h2>
               {currentKit?.isLocked && (
-                <span className="flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wider">
+                <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20 uppercase tracking-wider">
                   <Lock className="w-3 h-3" /> Travado
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               {selectedKitId && tools.length > 0 && (
                 <>
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <div className="relative flex-1 sm:flex-none">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                       type="text"
                       placeholder="Buscar ferramenta..."
                       value={toolSearchQuery}
                       onChange={(e) => setToolSearchQuery(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                      className="w-full sm:w-48 pl-9 pr-3 py-2 bg-slate-950/50 border border-slate-700 rounded-xl text-sm text-slate-200 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
                     />
                   </div>
                   <button
                     onClick={() => setSortAlphabetically(!sortAlphabetically)}
-                    className={`text-sm p-1.5 border rounded-lg outline-none transition-colors ${
+                    className={`text-xs font-mono p-2 border rounded-xl outline-none transition-all uppercase tracking-wider ${
                       sortAlphabetically 
-                        ? 'border-blue-500 bg-blue-50 text-blue-700' 
-                        : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                        ? 'border-purple-500/50 bg-purple-500/10 text-purple-400' 
+                        : 'border-slate-700 bg-slate-950/50 text-slate-400 hover:bg-slate-800/50'
                     }`}
                     title="Ordenar Alfabeticamente"
                   >
-                    Ordem Alfabética {sortAlphabetically ? '(Ativo)' : ''}
+                    A-Z {sortAlphabetically ? 'ON' : 'OFF'}
                   </button>
                 </>
               )}
-              <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
+              <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-mono px-2 py-1 rounded-lg whitespace-nowrap">
                 {currentToolIds.length} ferramentas
               </span>
             </div>
           </div>
-          <div className="p-4 flex-1 overflow-y-auto">
+          <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
             {!selectedKitId ? (
-              <div className="h-full flex items-center justify-center text-slate-500">
+              <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">
                 Selecione um kit à esquerda para gerenciar suas ferramentas.
               </div>
             ) : tools.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-500">
-                Nenhuma ferramenta registrada ainda. Vá para Registro de Ferramentas para adicionar ferramentas.
+              <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">
+                Nenhuma ferramenta registrada ainda. Vá para Registro de Ferramentas.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -290,15 +321,15 @@ export default function StandardToolLists({
                   return (
                     <div 
                       key={tool.id}
-                      className={`p-3 border rounded-lg flex items-start gap-3 transition-all ${
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
+                      className={`p-3 border rounded-xl flex items-start gap-3 transition-all ${
+                        isSelected ? 'border-purple-500/50 bg-purple-500/5' : 'border-slate-800 hover:border-slate-600 hover:bg-slate-800/30'
                       }`}
                     >
                       <div 
-                        className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                        className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
                           currentKit?.isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
                         } ${
-                          isSelected ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
+                          isSelected ? 'bg-purple-500 border-purple-500' : 'border-slate-600 bg-slate-900'
                         }`} 
                         onClick={() => !currentKit?.isLocked && toggleToolInKit(tool.id)}
                       >
@@ -308,19 +339,19 @@ export default function StandardToolLists({
                         className={`flex-1 ${currentKit?.isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`} 
                         onClick={() => !currentKit?.isLocked && toggleToolInKit(tool.id)}
                       >
-                        <p className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>{tool.name}</p>
-                        <p className="text-xs text-slate-500">{tool.brand} • {tool.category}</p>
+                        <p className={`font-medium text-sm ${isSelected ? 'text-purple-300' : 'text-slate-300'}`}>{tool.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{tool.brand} • {tool.category}</p>
                       </div>
                       {isSelected && (
                         <div className="flex items-center gap-2">
-                          <label className="text-xs text-slate-600">Qtd:</label>
+                          <label className="text-[10px] font-mono text-slate-500 uppercase">Qtd:</label>
                           <input 
                             type="number" 
                             min="1"
                             disabled={currentKit?.isLocked}
                             value={currentTools.find(t => t.toolId === tool.id)?.quantity || 1}
                             onChange={(e) => updateToolQuantity(tool.id, parseInt(e.target.value) || 1)}
-                            className="w-16 p-1 border border-slate-300 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                            className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                           />
                         </div>
                       )}
@@ -330,34 +361,43 @@ export default function StandardToolLists({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Departments Linkage */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LinkIcon className="w-5 h-5 text-slate-500" />
-            <h2 className="text-lg font-semibold text-slate-800">Departamentos e Kits</h2>
+      <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+        <div className="p-5 border-b border-slate-800 bg-slate-900/80 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-cyan-500/10 border border-cyan-500/30 rounded-lg flex items-center justify-center">
+              <LinkIcon className="w-4 h-4 text-cyan-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-white">Departamentos e Kits</h2>
           </div>
         </div>
-        <div className="p-4">
+        <div className="p-5">
           {departments.length === 0 ? (
-            <p className="text-slate-500 text-sm">Nenhum departamento registrado. Crie departamentos na aba Colaboradores.</p>
+            <p className="text-slate-500 text-sm font-mono">Nenhum departamento registrado. Crie departamentos na aba Colaboradores.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {departments.map(dept => (
-                <div key={dept.id} className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {departments.map((dept, idx) => (
+                <motion.div 
+                  key={dept.id} 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="border border-slate-800 rounded-xl p-5 bg-slate-950/30 flex flex-col gap-4 hover:border-slate-700 transition-colors"
+                >
                   <div className="flex justify-between items-start">
-                    <p className="font-medium text-slate-800">{dept.name}</p>
+                    <p className="font-bold text-slate-200">{dept.name}</p>
                   </div>
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Kit Individual</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest font-mono text-slate-500">Kit Individual</label>
                       <select
                         value={dept.standardListId || ''}
                         onChange={e => handleLinkKitToDepartment(dept.id, e.target.value)}
-                        className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-300 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
                       >
                         <option value="">-- Sem kit individual --</option>
                         {standardLists.map(kit => (
@@ -366,12 +406,12 @@ export default function StandardToolLists({
                       </select>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { CollectiveStation, CollectiveLine, Tool } from '@/lib/data';
 import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
 
 export default function CollectiveTools({
@@ -180,8 +181,26 @@ export default function CollectiveTools({
     t.brand.toLowerCase().includes(toolSearch.toLowerCase())
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <ConfirmModal 
         isOpen={deleteModal.isOpen}
         title={deleteModal.title}
@@ -191,14 +210,19 @@ export default function CollectiveTools({
       />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Ferramentas Coletivas por Posto</h1>
-          <p className="text-slate-500 text-sm mt-1">Gerencie conjuntos de ferramentas compartilhadas em postos de trabalho.</p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+            <LayoutGrid className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Ferramentas Coletivas</h1>
+            <p className="text-slate-400 text-sm mt-0.5 font-mono">Gerencie conjuntos de ferramentas compartilhadas em postos de trabalho.</p>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button 
             onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 text-sm font-medium"
+            className="px-5 py-2.5 bg-slate-900/50 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 text-sm font-medium"
           >
             <Settings2 className="w-4 h-4" /> Gerenciar Linhas
           </button>
@@ -212,7 +236,7 @@ export default function CollectiveTools({
               setStationFormData({ name: '', lineId: selectedLineId === 'all' ? lines[0].id : selectedLineId }); 
               setIsStationModalOpen(true); 
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+            className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all flex items-center gap-2 text-sm font-medium shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
             <Plus className="w-4 h-4" /> Novo Posto
           </button>
@@ -220,18 +244,18 @@ export default function CollectiveTools({
       </div>
 
       {/* Line Selector & Summary */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-medium mr-2">
-          <LayoutGrid className="w-5 h-5 text-blue-500" />
-          <span>Linha de Montagem:</span>
+      <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-5 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 text-slate-400 font-medium mr-2">
+          <LayoutGrid className="w-5 h-5 text-indigo-400" />
+          <span className="font-mono text-sm uppercase tracking-wider">Linha de Montagem:</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => setSelectedLineId('all')}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               selectedLineId === 'all' 
-                ? 'bg-blue-600 text-white shadow-md' 
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
+                : 'bg-slate-950/50 border border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
             }`}
           >
             Todas as Linhas
@@ -240,10 +264,10 @@ export default function CollectiveTools({
             <button 
               key={line.id}
               onClick={() => setSelectedLineId(line.id)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 selectedLineId === line.id 
-                  ? 'bg-blue-600 text-white shadow-md' 
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
+                  : 'bg-slate-950/50 border border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
               }`}
             >
               {line.name}
@@ -251,35 +275,37 @@ export default function CollectiveTools({
           ))}
           <button 
             onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-            className="px-3 py-1.5 border border-dashed border-slate-300 text-slate-500 rounded-full text-sm hover:border-blue-400 hover:text-blue-500 transition-all flex items-center gap-1"
+            className="px-4 py-2 border border-dashed border-slate-700 bg-slate-950/30 text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
           >
-            <Plus className="w-3 h-3" /> Nova Linha
+            <Plus className="w-3.5 h-3.5" /> Nova Linha
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stations Grid/Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto">
+      <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
-                <th className="p-4 font-bold">Posto de Trabalho</th>
-                <th className="p-4 font-bold">Linha</th>
-                <th className="p-4 font-bold">Ferramentas Coletivas</th>
-                <th className="p-4 font-bold text-right">Ações</th>
+              <tr className="bg-slate-950/50 text-slate-400 text-xs font-mono uppercase tracking-wider border-b border-slate-800">
+                <th className="p-4 font-semibold">Posto de Trabalho</th>
+                <th className="p-4 font-semibold">Linha</th>
+                <th className="p-4 font-semibold">Ferramentas Coletivas</th>
+                <th className="p-4 font-semibold text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-800/50">
               {filteredStations.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-12 text-center">
-                    <div className="flex flex-col items-center justify-center text-slate-400 space-y-3">
-                      <Building2 className="w-12 h-12 opacity-20" />
-                      <p className="text-sm">Nenhum posto encontrado para esta seleção.</p>
+                    <div className="flex flex-col items-center justify-center text-slate-500 space-y-4">
+                      <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700">
+                        <Building2 className="w-8 h-8 text-slate-600" />
+                      </div>
+                      <p className="text-sm font-mono">Nenhum posto encontrado para esta seleção.</p>
                       <button 
                         onClick={() => { setEditingStation(null); setStationFormData({ name: '', lineId: lines[0]?.id || '' }); setIsStationModalOpen(true); }}
-                        className="text-blue-600 text-sm font-bold hover:underline"
+                        className="text-indigo-400 text-sm font-bold hover:text-indigo-300 hover:underline transition-colors"
                       >
                         Criar primeiro posto
                       </button>
@@ -287,44 +313,54 @@ export default function CollectiveTools({
                   </td>
                 </tr>
               ) : (
-                filteredStations.map(station => (
-                  <tr key={station.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                filteredStations.map((station, idx) => (
+                  <motion.tr 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    key={station.id} 
+                    className="hover:bg-slate-800/30 transition-colors group"
+                  >
                     <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                          <Settings2 className="w-4 h-4" />
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center shadow-inner">
+                          <Settings2 className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{station.name}</span>
+                        <span className="font-bold text-slate-200">{station.name}</span>
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-[10px] font-bold uppercase tracking-tight">
+                      <span className="px-3 py-1.5 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
                         {station.line}
                       </span>
                     </td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Wrench className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          {station.tools.reduce((acc, t) => acc + t.quantity, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
-                        </span>
-                        <span className="text-xs text-slate-400">({station.tools.length} tipos)</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-slate-800/50 rounded-lg flex items-center justify-center border border-slate-700">
+                          <Wrench className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-300">
+                            {station.tools.reduce((acc, t) => acc + t.quantity, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{station.tools.length} tipos</span>
+                        </div>
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => setViewingStation(station)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
                           title="Visualizar Ferramentas"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => { setManagingStation(station); setIsManageToolsModalOpen(true); }}
-                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white transition-all text-xs font-bold flex items-center gap-1.5"
+                          className="px-4 py-2 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg hover:bg-indigo-600 hover:border-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-2"
                         >
-                          <Wrench className="w-3.5 h-3.5" /> Gerenciar Ferramentas
+                          <Wrench className="w-3.5 h-3.5" /> Gerenciar
                         </button>
                         <button 
                           onClick={() => { 
@@ -333,300 +369,361 @@ export default function CollectiveTools({
                             setStationFormData({ name: station.name, lineId: line?.id || '' }); 
                             setIsStationModalOpen(true); 
                           }}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleDeleteStation(station)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </motion.div>
 
       {/* Line Management Modal */}
-      {isLineModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Gerenciar Linhas</h2>
-              <button onClick={() => setIsLineModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6 space-y-6">
-              <form onSubmit={handleSaveLine} className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder="Nome da nova linha..."
-                  value={lineFormData.name}
-                  onChange={e => setLineFormData({ name: e.target.value })}
-                  className="flex-1 p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-transparent text-slate-800 dark:text-slate-200"
-                  autoFocus
-                />
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold">
-                  {editingLine ? 'Salvar' : 'Adicionar'}
+      <AnimatePresence>
+        {isLineModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-blue-500" />
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                <h2 className="text-xl font-bold text-white">Gerenciar Linhas</h2>
+                <button onClick={() => setIsLineModalOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
                 </button>
-              </form>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                {lines.map(line => (
-                  <div key={line.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 group">
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{line.name}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingLine(line); setLineFormData({ name: line.name }); }} className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg">
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleDeleteLine(line)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {lines.length === 0 && <p className="text-center text-slate-400 text-sm py-4">Nenhuma linha cadastrada.</p>}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="p-6 space-y-6">
+                <form onSubmit={handleSaveLine} className="flex gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Nome da nova linha..."
+                    value={lineFormData.name}
+                    onChange={e => setLineFormData({ name: e.target.value })}
+                    className="flex-1 p-3 bg-slate-950/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none text-sm text-slate-200 transition-all"
+                    autoFocus
+                  />
+                  <button type="submit" className="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all">
+                    {editingLine ? 'Salvar' : 'Adicionar'}
+                  </button>
+                </form>
+
+                <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                  {lines.map(line => (
+                    <div key={line.id} className="flex items-center justify-between p-4 bg-slate-950/30 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors group">
+                      <span className="font-medium text-slate-300">{line.name}</span>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingLine(line); setLineFormData({ name: line.name }); }} className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteLine(line)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {lines.length === 0 && <p className="text-center text-slate-500 text-sm font-mono py-6">Nenhuma linha cadastrada.</p>}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Station Modal */}
-      {isStationModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">{editingStation ? 'Editar Posto' : 'Novo Posto de Trabalho'}</h2>
-              <button onClick={() => setIsStationModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveStation} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Nome do Posto *</label>
-                <input 
-                  type="text" 
-                  placeholder="ex: Posto 1 - Crimpagem"
-                  value={stationFormData.name}
-                  onChange={e => setStationFormData({ ...stationFormData, name: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-transparent text-slate-800 dark:text-slate-200"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Linha de Montagem *</label>
-                <select 
-                  value={stationFormData.lineId}
-                  onChange={e => setStationFormData({ ...stationFormData, lineId: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200"
-                  required
-                >
-                  <option value="" disabled>Selecione uma linha</option>
-                  {lines.map(line => (
-                    <option key={line.id} value={line.id}>{line.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button 
-                  type="button" 
-                  onClick={() => setIsStationModalOpen(false)}
-                  className="px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-900/20"
-                >
-                  {editingStation ? 'Salvar Alterações' : 'Criar Posto'}
+      <AnimatePresence>
+        {isStationModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                <h2 className="text-xl font-bold text-white">{editingStation ? 'Editar Posto' : 'Novo Posto de Trabalho'}</h2>
+                <button onClick={() => setIsStationModalOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <form onSubmit={handleSaveStation} className="p-6 space-y-5">
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Nome do Posto *</label>
+                  <input 
+                    type="text" 
+                    placeholder="ex: Posto 1 - Crimpagem"
+                    value={stationFormData.name}
+                    onChange={e => setStationFormData({ ...stationFormData, name: e.target.value })}
+                    className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-slate-200 transition-all"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">Linha de Montagem *</label>
+                  <select 
+                    value={stationFormData.lineId}
+                    onChange={e => setStationFormData({ ...stationFormData, lineId: e.target.value })}
+                    className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-slate-200 transition-all appearance-none"
+                    required
+                  >
+                    <option value="" disabled>Selecione uma linha</option>
+                    {lines.map(line => (
+                      <option key={line.id} value={line.id}>{line.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-800">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsStationModalOpen(false)}
+                    className="px-5 py-2.5 text-slate-300 font-medium border border-slate-700 hover:bg-slate-800 rounded-xl transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                  >
+                    {editingStation ? 'Salvar Alterações' : 'Criar Posto'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Manage Tools Modal */}
-      {isManageToolsModalOpen && managingStation && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Gerenciar Ferramentas</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{managingStation.name} • {managingStation.line}</p>
+      <AnimatePresence>
+        {isManageToolsModalOpen && managingStation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Gerenciar Ferramentas</h2>
+                  <p className="text-sm text-slate-400 font-mono mt-1">{managingStation.name} • {managingStation.line}</p>
+                </div>
+                <button onClick={() => setIsManageToolsModalOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-              <button onClick={() => setIsManageToolsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-              {/* Left Side: Current Tools */}
-              <div className="flex-1 p-6 overflow-y-auto border-r border-slate-100">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Ferramentas no Posto</h3>
-                <div className="space-y-3">
-                  {managingStation.tools.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-2xl">
-                      <Wrench className="w-10 h-10 text-slate-200 mx-auto mb-2" />
-                      <p className="text-slate-400 text-sm">Nenhuma ferramenta adicionada.</p>
-                    </div>
-                  ) : (
-                    managingStation.tools.map((t, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 group">
-                        <div className="flex-1 min-w-0 pr-4">
-                          <p className="font-bold text-slate-800 dark:text-slate-200 break-words">{t.name}</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{t.category}</p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex flex-col items-center">
-                              <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Atual</span>
-                              <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700">-</button>
-                                <span className="px-3 py-1 font-bold text-slate-700 dark:text-slate-300 min-w-[40px] text-center">{t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700">+</button>
-                              </div>
-                            </div>
-                            <span className="text-slate-300 dark:text-slate-600 font-light text-2xl mt-4">/</span>
-                            <div className="flex flex-col items-center">
-                              <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Nec.</span>
-                              <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700">-</button>
-                                <span className="px-3 py-1 font-bold text-slate-700 dark:text-slate-300 min-w-[40px] text-center">{t.requiredQuantity ?? t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700">+</button>
-                              </div>
-                            </div>
-                          </div>
-                          <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors mt-4 sm:mt-0">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+              
+              <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+                {/* Left Side: Current Tools */}
+                <div className="flex-1 p-6 overflow-y-auto border-r border-slate-800 custom-scrollbar">
+                  <h3 className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest mb-5">Ferramentas no Posto</h3>
+                  <div className="space-y-3">
+                    {managingStation.tools.length === 0 ? (
+                      <div className="text-center py-16 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-950/30">
+                        <Wrench className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                        <p className="text-slate-500 text-sm font-mono">Nenhuma ferramenta adicionada.</p>
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Right Side: Add Tools */}
-              <div className="w-full md:w-80 bg-slate-50/50 dark:bg-slate-800/20 p-6 overflow-y-auto">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Adicionar Ferramenta</h3>
-
-                {/* Search from Catalog */}
-                <div className="space-y-3">
-                  <p className="text-xs font-bold text-slate-500">Do Catálogo</p>
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Buscar no catálogo..."
-                      value={toolSearch}
-                      onChange={e => setToolSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    ) : (
+                      managingStation.tools.map((t, idx) => (
+                        <motion.div 
+                          layout
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          key={idx} 
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-950/50 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors group gap-4"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-200 break-words">{t.name}</p>
+                            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-1.5">{t.category}</p>
+                          </div>
+                          <div className="flex items-center gap-4 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] font-mono font-bold text-blue-400 uppercase mb-1.5">Atual</span>
+                              <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
+                                <span className="px-3 py-1.5 font-bold text-slate-200 min-w-[40px] text-center font-mono">{t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
+                              </div>
+                            </div>
+                            <span className="text-slate-700 font-light text-2xl mt-4">/</span>
+                            <div className="flex flex-col items-center">
+                              <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase mb-1.5">Nec.</span>
+                              <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
+                                <span className="px-3 py-1.5 font-bold text-slate-200 min-w-[40px] text-center font-mono">{t.requiredQuantity ?? t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
+                              </div>
+                            </div>
+                            <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2.5 ml-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors mt-4">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {availableTools.map(tool => (
-                      <button 
-                        key={tool.id}
-                        onClick={() => handleAddToolToStation(tool)}
-                        className="w-full flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all text-left group"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 break-words">{tool.name}</p>
-                          <p className="text-[9px] text-slate-400 break-words mt-0.5">{tool.brand}</p>
-                        </div>
-                        <Plus className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-500" />
-                      </button>
-                    ))}
-                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
-              <button 
-                onClick={() => setIsManageToolsModalOpen(false)}
-                className="px-8 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-900/20"
-              >
-                Concluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* View Station Tools Modal */}
-      {viewingStation && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-              <div>
-                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Detalhes do Posto</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{viewingStation.name} • {viewingStation.line}</p>
-              </div>
-              <button onClick={() => setViewingStation(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-                <Wrench className="w-5 h-5 text-blue-600" />
-                Ferramentas no Posto
-              </h3>
-              {viewingStation.tools.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                  Nenhuma ferramenta atribuída a este posto.
-                </div>
-              ) : (
-                <div className="border border-slate-100 rounded-xl overflow-hidden">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100 dark:border-slate-700">
-                        <th className="p-3 font-semibold">Ferramenta</th>
-                        <th className="p-3 font-semibold">Categoria</th>
-                        <th className="p-3 font-semibold text-center">Atual</th>
-                        <th className="p-3 font-semibold text-center">Necessária</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewingStation.tools.map((t, idx) => (
-                        <tr key={idx} className="border-b border-slate-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                          <td className="p-3 font-medium text-slate-800 dark:text-slate-200">{t.name}</td>
-                          <td className="p-3 text-slate-600 dark:text-slate-400 text-sm">{t.category}</td>
-                          <td className="p-3 text-center">
-                            <span className={`inline-flex items-center justify-center font-bold px-2 py-0.5 rounded text-sm ${t.quantity < (t.requiredQuantity ?? t.quantity) ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>
-                              {t.quantity}
-                            </span>
-                          </td>
-                          <td className="p-3 text-center text-slate-600 dark:text-slate-400 font-medium">
-                            {t.requiredQuantity ?? t.quantity}
-                          </td>
-                        </tr>
+                {/* Right Side: Add Tools */}
+                <div className="w-full md:w-96 bg-slate-950/50 p-6 overflow-y-auto custom-scrollbar">
+                  <h3 className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest mb-5">Adicionar Ferramenta</h3>
+
+                  {/* Search from Catalog */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wider">Do Catálogo</p>
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                      <input 
+                        type="text" 
+                        placeholder="Buscar no catálogo..."
+                        value={toolSearch}
+                        onChange={e => setToolSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                      {availableTools.map(tool => (
+                        <button 
+                          key={tool.id}
+                          onClick={() => handleAddToolToStation(tool)}
+                          className="w-full flex items-center justify-between p-3.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group"
+                        >
+                          <div className="min-w-0 pr-3">
+                            <p className="text-sm font-medium text-slate-300 break-words group-hover:text-indigo-300 transition-colors">{tool.name}</p>
+                            <p className="text-[10px] font-mono text-slate-500 break-words mt-1 uppercase tracking-wider">{tool.brand}</p>
+                          </div>
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                            <Plus className="w-4 h-4 text-slate-400 group-hover:text-white" />
+                          </div>
+                        </button>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
-              <button
-                onClick={() => setViewingStation(null)}
-                className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+              </div>
+
+              <div className="p-5 border-t border-slate-800 bg-slate-900/80 flex justify-end">
+                <button 
+                  onClick={() => setIsManageToolsModalOpen(false)}
+                  className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+                >
+                  Concluir
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* View Station Tools Modal */}
+      <AnimatePresence>
+        {viewingStation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
+              <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Detalhes do Posto</h2>
+                  <p className="text-sm text-slate-400 font-mono mt-1">{viewingStation.name} • {viewingStation.line}</p>
+                </div>
+                <button onClick={() => setViewingStation(null)} className="text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <h3 className="font-bold text-white mb-5 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20">
+                    <Wrench className="w-4 h-4 text-blue-400" />
+                  </div>
+                  Ferramentas no Posto
+                </h3>
+                {viewingStation.tools.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500 bg-slate-950/50 rounded-2xl border border-slate-800 font-mono text-sm">
+                    Nenhuma ferramenta atribuída a este posto.
+                  </div>
+                ) : (
+                  <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/30">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-900/50 text-slate-400 text-[10px] font-mono uppercase tracking-wider border-b border-slate-800">
+                          <th className="p-4 font-semibold">Ferramenta</th>
+                          <th className="p-4 font-semibold">Categoria</th>
+                          <th className="p-4 font-semibold text-center">Atual</th>
+                          <th className="p-4 font-semibold text-center">Necessária</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingStation.tools.map((t, idx) => (
+                          <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                            <td className="p-4 font-medium text-slate-200">{t.name}</td>
+                            <td className="p-4 text-slate-400 text-xs font-mono uppercase tracking-wider">{t.category}</td>
+                            <td className="p-4 text-center">
+                              <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-lg text-sm font-mono border ${t.quantity < (t.requiredQuantity ?? t.quantity) ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                {t.quantity}
+                              </span>
+                            </td>
+                            <td className="p-4 text-center text-slate-400 font-mono font-bold">
+                              {t.requiredQuantity ?? t.quantity}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="p-5 border-t border-slate-800 bg-slate-900/80 flex justify-end">
+                <button
+                  onClick={() => setViewingStation(null)}
+                  className="px-6 py-2.5 border border-slate-700 text-slate-300 font-medium rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

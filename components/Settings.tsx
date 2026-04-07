@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
+import { motion } from 'motion/react';
 
 export default function Settings() {
   const [logo, setLogo] = useState<string | null>(() => {
@@ -32,40 +33,49 @@ export default function Settings() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-2rem)]">
-      <div className="p-6 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-slate-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col h-[calc(100vh-2rem)]"
+    >
+      <div className="p-6 border-b border-slate-800/50 bg-slate-900/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <SettingsIcon className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+            <SettingsIcon className="w-6 h-6 text-cyan-400" />
             Configurações
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-400 text-sm mt-1">
             Gerencie as configurações gerais do sistema, como a logo da empresa para os relatórios.
           </p>
         </div>
       </div>
 
-      <div className="p-6 overflow-y-auto flex-1">
+      <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
         <div className="max-w-2xl">
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-slate-500" />
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 shadow-inner"
+          >
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-cyan-400" />
               Logo da Empresa
             </h2>
-            <p className="text-slate-600 text-sm mb-6">
+            <p className="text-slate-400 text-sm mb-6">
               Esta logo será exibida no cabeçalho dos relatórios em PDF e nos Termos de Responsabilidade.
               Recomendamos uma imagem com fundo transparente (PNG) para melhor visualização.
             </p>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="w-48 h-32 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center bg-slate-50 relative overflow-hidden group">
+              <div className="w-48 h-32 border-2 border-dashed border-slate-700 rounded-xl flex items-center justify-center bg-slate-900/50 relative overflow-hidden group transition-colors hover:border-cyan-500/50">
                 {logo ? (
                   <>
                     <Image src={logo} alt="Logo da Empresa" width={192} height={128} className="max-w-full max-h-full object-contain p-2" unoptimized />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                       <button
                         onClick={handleRemoveLogo}
-                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        className="p-2.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 hover:text-red-300 transition-all shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                         title="Remover logo"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -73,7 +83,7 @@ export default function Settings() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-slate-400 flex flex-col items-center">
+                  <div className="text-slate-500 flex flex-col items-center">
                     <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
                     <span className="text-sm font-medium">Sem logo</span>
                   </div>
@@ -81,7 +91,7 @@ export default function Settings() {
               </div>
 
               <div className="flex-1">
-                <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 rounded-xl cursor-pointer transition-colors font-medium">
+                <label className="flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl cursor-pointer transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]">
                   <Upload className="w-5 h-5" />
                   <span>Escolher Imagem</span>
                   <input
@@ -91,14 +101,14 @@ export default function Settings() {
                     onChange={handleLogoUpload}
                   />
                 </label>
-                <p className="text-xs text-slate-500 mt-2 text-center sm:text-left">
+                <p className="text-xs text-slate-500 mt-3 text-center sm:text-left">
                   Formatos suportados: PNG, JPG, SVG. Tamanho máximo recomendado: 2MB.
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

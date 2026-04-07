@@ -1,6 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
-import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package } from 'lucide-react';
+import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package, Activity, LayoutGrid } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function Dashboard({ 
   tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate, isDarkMode, toggleDarkMode 
@@ -51,35 +52,48 @@ export default function Dashboard({
   }).filter(d => d.total > 0);
 
   const stats = [
-    { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-blue-600', bgColor: 'bg-blue-50', tab: 'tools' },
-    { label: 'Uso Coletivo (Postos)', value: (collectiveStations || []).length, icon: Package, color: 'text-indigo-600', bgColor: 'bg-indigo-50', tab: 'collective' },
-    { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50', tab: 'assignments' },
-    { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50', tab: 'assignments' },
+    { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20', tab: 'tools' },
+    { label: 'Uso Coletivo (Postos)', value: (collectiveStations || []).length, icon: Package, color: 'text-purple-400', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/20', tab: 'collective' },
+    { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'assignments' },
+    { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', tab: 'assignments' },
   ];
 
   const recentAssignments = [...(assignments || [])]
     .sort((a, b) => new Date(b.dateAssigned).getTime() - new Date(a.dateAssigned).getTime())
     .slice(0, 5);
 
-  const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
 
   return (
-    <div className="space-y-8">
+    <motion.div 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Painel de Controle</h1>
-          <p className="text-slate-500 mt-1">Bem-vindo ao sistema de gestão de ferramentas Volga.</p>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <Activity className="w-8 h-8 text-cyan-400" />
+            Painel de Controle
+          </h1>
+          <p className="text-slate-400 mt-1 font-mono text-sm">SISTEMA_VOLGA // STATUS: ONLINE</p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={toggleDarkMode}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm border border-slate-200 dark:border-slate-700"
-          >
-            {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-          </button>
           <button 
             onClick={() => onNavigate('assignments')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/30 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)]"
           >
             <Plus className="w-4 h-4" /> Nova Atribuição
           </button>
@@ -91,69 +105,82 @@ export default function Dashboard({
         {stats.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <div 
+            <motion.div 
               key={i} 
+              variants={itemVariants}
               onClick={() => onNavigate(stat.tab)}
-              className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 cursor-pointer hover:shadow-md hover:border-blue-100 transition-all group"
+              className={`bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border ${stat.borderColor} cursor-pointer hover:bg-slate-800/80 transition-all group relative overflow-hidden`}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl group-hover:scale-110 transition-transform`}>
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-transparent to-white opacity-5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:opacity-10 transition-opacity`} />
+              <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl border ${stat.borderColor} group-hover:scale-110 transition-transform shadow-lg`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-cyan-400 transition-colors" />
               </div>
-              <div>
-                <p className="text-sm text-slate-500 font-medium">{stat.label}</p>
-                <p className="text-3xl font-bold text-slate-900 mt-1">{stat.value}</p>
+              <div className="relative z-10">
+                <p className="text-sm text-slate-400 font-medium">{stat.label}</p>
+                <p className={`text-4xl font-bold ${stat.color} mt-1 font-mono tracking-tight`}>{stat.value}</p>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+        <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
+          <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border border-slate-800 relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-lg font-bold text-slate-800">Distribuição por Departamento</h2>
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Ferramentas Atribuídas</span>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <LayoutGrid className="w-5 h-5 text-cyan-400" />
+                Distribuição por Departamento
+              </h2>
+              <span className="text-xs font-mono text-cyan-500/70 uppercase tracking-widest border border-cyan-500/20 px-2 py-1 rounded bg-cyan-500/5">Métricas Ativas</span>
             </div>
             <div className="h-80 w-full">
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
                     <XAxis 
                       dataKey="name" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                      tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'monospace' }} 
                       dy={10}
                     />
                     <YAxis 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                      tick={{ fill: '#64748b', fontSize: 12, fontFamily: 'monospace' }} 
                     />
                     <Tooltip 
-                      cursor={{ fill: '#f8fafc' }}
+                      cursor={{ fill: '#1e293b' }}
                       contentStyle={{ 
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        backdropFilter: 'blur(8px)',
                         borderRadius: '12px', 
-                        border: 'none', 
-                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                        padding: '12px'
+                        border: '1px solid rgba(56, 189, 248, 0.2)', 
+                        boxShadow: '0 0 20px rgba(0,0,0,0.5)',
+                        padding: '12px',
+                        color: '#f8fafc',
+                        fontFamily: 'monospace'
                       }}
+                      itemStyle={{ color: '#e2e8f0' }}
                     />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                    <Bar dataKey="individual" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={30} name="Individual" />
-                    <Bar dataKey="collective" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={30} name="Coletivo" />
+                    <Legend wrapperStyle={{ paddingTop: '20px', fontFamily: 'monospace', fontSize: '12px' }} />
+                    <Bar dataKey="individual" fill="#06b6d4" radius={[4, 4, 0, 0]} barSize={24} name="Individual" />
+                    <Bar dataKey="collective" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={24} name="Coletivo" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
-                  <ClipboardCheck className="w-12 h-12 opacity-20" />
-                  <p>Nenhuma atribuição realizada ainda.</p>
+                <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
+                  <div className="w-16 h-16 rounded-full border border-slate-700 flex items-center justify-center bg-slate-800/50">
+                    <ClipboardCheck className="w-8 h-8 opacity-50" />
+                  </div>
+                  <p className="font-mono text-sm">Aguardando dados...</p>
                 </div>
               )}
             </div>
@@ -163,44 +190,56 @@ export default function Dashboard({
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <button 
               onClick={() => onNavigate('tools')}
-              className="p-4 bg-white border border-slate-100 rounded-xl hover:border-blue-200 hover:bg-blue-50 transition-all flex flex-col items-center text-center gap-2 group"
+              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <Wrench className="w-6 h-6 text-blue-500 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-semibold text-slate-700">Registrar Ferramenta</span>
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+                <Wrench className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-cyan-400 transition-colors uppercase tracking-wider">Registrar Ferramenta</span>
             </button>
             <button 
               onClick={() => onNavigate('standard')}
-              className="p-4 bg-white border border-slate-100 rounded-xl hover:border-purple-200 hover:bg-purple-50 transition-all flex flex-col items-center text-center gap-2 group"
+              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <ListChecks className="w-6 h-6 text-purple-500 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-semibold text-slate-700">Gerenciar Listas</span>
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                <ListChecks className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-purple-400 transition-colors uppercase tracking-wider">Gerenciar Listas</span>
             </button>
             <button 
               onClick={() => onNavigate('collective')}
-              className="p-4 bg-white border border-slate-100 rounded-xl hover:border-indigo-200 hover:bg-indigo-50 transition-all flex flex-col items-center text-center gap-2 group"
+              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <Package className="w-6 h-6 text-indigo-500 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-semibold text-slate-700">Uso Coletivo</span>
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+                <Package className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-indigo-400 transition-colors uppercase tracking-wider">Uso Coletivo</span>
             </button>
             <button 
               onClick={() => onNavigate('employees')}
-              className="p-4 bg-white border border-slate-100 rounded-xl hover:border-emerald-200 hover:bg-emerald-50 transition-all flex flex-col items-center text-center gap-2 group"
+              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <Building2 className="w-6 h-6 text-emerald-500 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-semibold text-slate-700">Ver Departamentos</span>
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                <Building2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <span className="text-xs font-semibold text-slate-300 group-hover:text-emerald-400 transition-colors uppercase tracking-wider">Departamentos</span>
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent Activity Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-800">Atividades Recentes</h2>
+        <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-800 flex flex-col relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-1 bg-gradient-to-l from-transparent via-blue-500/50 to-transparent" />
+          <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-400" />
+              Log de Atividades
+            </h2>
             <button 
               onClick={() => onNavigate('assignments')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 uppercase tracking-wider"
+              className="text-xs font-mono text-cyan-400 hover:text-cyan-300 uppercase tracking-widest"
             >
-              Ver Todas
+              [Ver_Todas]
             </button>
           </div>
           <div className="p-6 flex-1">
@@ -212,38 +251,47 @@ export default function Dashboard({
                   const missingCount = getMissingToolsCount(assignment);
                   
                   return (
-                    <div key={assignment.id} className="flex gap-4 items-start group">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        missingCount > 0 ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                    <motion.div 
+                      key={assignment.id} 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="flex gap-4 items-start group relative"
+                    >
+                      <div className="absolute left-5 top-10 bottom-[-24px] w-px bg-slate-800 group-last:hidden" />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative z-10 border ${
+                        missingCount > 0 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
                       }`}>
                         {missingCount > 0 ? <AlertTriangle className="w-5 h-5" /> : <ClipboardCheck className="w-5 h-5" />}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                      <div className="flex-1 min-w-0 pt-1">
+                        <p className="text-sm font-bold text-slate-200 truncate group-hover:text-cyan-400 transition-colors">
                           {emp?.name || 'Desconhecido'}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {dept?.name} • {new Date(assignment.dateAssigned).toLocaleDateString()}
+                        <p className="text-xs text-slate-500 mt-1 font-mono">
+                          {dept?.name} // {new Date(assignment.dateAssigned).toLocaleDateString()}
                         </p>
                         {missingCount > 0 && (
-                          <span className="inline-block mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 uppercase tracking-tighter">
+                          <span className="inline-block mt-2 text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20 uppercase tracking-widest">
                             {missingCount} pendência(s)
                           </span>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2 py-12">
-                <ClipboardCheck className="w-12 h-12 opacity-20" />
-                <p className="text-sm">Nenhuma atividade recente.</p>
+              <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3 py-12">
+                <div className="w-16 h-16 rounded-full border border-slate-700 flex items-center justify-center bg-slate-800/50">
+                  <ClipboardCheck className="w-8 h-8 opacity-50" />
+                </div>
+                <p className="font-mono text-sm">Nenhum log registrado.</p>
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

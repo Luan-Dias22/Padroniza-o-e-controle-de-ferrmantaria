@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, ExternalLink } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
@@ -14,7 +15,7 @@ import Settings from '@/components/Settings';
 import Budgets from '@/components/Budgets';
 import { useFirestore } from '@/lib/useFirestore';
 import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation } from '@/lib/data';
-import { auth, signInWithGoogle, signInWithGoogleRedirect, logOut } from '@/lib/firebase';
+import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 
 export default function App() {
@@ -25,34 +26,10 @@ export default function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return savedTheme === 'dark' || (!savedTheme && prefersDark);
-    }
-    return false;
-  });
-
+  // Force dark mode for the technological look
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
+    document.documentElement.classList.add('dark');
+  }, []);
 
   useEffect(() => {
     const checkRedirectResult = async () => {
@@ -90,7 +67,6 @@ export default function App() {
     setLoginError(null);
     setIsLoggingIn(true);
     try {
-      // Revertendo para Popup pois o ambiente do AI Studio bloqueia o Redirecionamento (Erro 403)
       await signInWithGoogle();
     } catch (error: any) {
       console.error("Login error:", error);
@@ -121,88 +97,135 @@ export default function App() {
   ];
 
   if (!isReady) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-slate-600">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-cyan-400">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        >
+          <Zap className="w-12 h-12" />
+        </motion.div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 transition-colors duration-300">
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Wrench className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">ToolManager</h1>
-          <p className="text-slate-500 mb-8">Faça login para gerenciar o inventário de ferramentas da sua equipe.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[120px]" />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center relative z-10"
+        >
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+            className="w-20 h-20 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
+          >
+            <Wrench className="w-10 h-10" />
+          </motion.div>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">ToolManager <span className="text-cyan-400">OS</span></h1>
+          <p className="text-slate-400 mb-8 text-sm">Sistema avançado de gestão e padronização de ferramentaria.</p>
           
           {loginError && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 text-left">
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mb-6 p-4 bg-red-500/10 text-red-400 text-sm rounded-xl border border-red-500/20 text-left"
+            >
               {loginError}
-            </div>
+            </motion.div>
           )}
 
           <button
             onClick={handleLogin}
             disabled={isLoggingIn}
-            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]"
           >
             {isLoggingIn ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Conectando...
+                Autenticando...
               </>
             ) : (
               <>
                 <LogIn className="w-5 h-5" />
-                Entrar com Google
+                Acessar Sistema
               </>
             )}
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex flex-col md:flex-row font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans text-slate-200 selection:bg-cyan-500/30 relative overflow-hidden">
+      {/* Global Animated Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+      </div>
+
       {/* Mobile Header */}
-      <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-30">
-        <div className="font-bold text-lg flex items-center gap-2">
-          <Wrench className="w-5 h-5 text-blue-400" />
-          ToolManager
+      <div className="md:hidden bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 flex justify-between items-center sticky top-0 z-30">
+        <div className="font-bold text-lg flex items-center gap-2 text-white">
+          <Wrench className="w-5 h-5 text-cyan-400" />
+          ToolManager <span className="text-cyan-400 text-xs align-top">OS</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(true)}>
+        <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-300 hover:text-white">
           <Menu className="w-6 h-6" />
         </button>
       </div>
 
       {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col h-screen transform transition-transform duration-300 ease-in-out
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:relative md:translate-x-0 md:block
-      `}>
-        <div className="p-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+      <motion.div 
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 flex-shrink-0 flex flex-col h-screen
+          md:relative md:translate-x-0 md:block
+        `}
+        initial={false}
+        animate={{ x: isMobileMenuOpen ? 0 : (typeof window !== 'undefined' && window.innerWidth < 768 ? '-100%' : 0) }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      >
+        <div className="p-5 flex items-center justify-between border-b border-slate-800/50">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
               <Wrench className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-base tracking-tight">ToolManager</span>
+            <span className="font-bold text-lg tracking-tight text-white">ToolManager</span>
           </div>
           <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
-        <nav className="p-2 space-y-0.5 flex-grow overflow-y-auto">
+        
+        <nav className="p-3 space-y-1 flex-grow overflow-y-auto custom-scrollbar">
           {tabs.map(tab => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
@@ -210,136 +233,154 @@ export default function App() {
                   setActiveTab(tab.id);
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all duration-200 text-left ${
-                  activeTab === tab.id 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left relative group ${
+                  isActive 
+                    ? 'text-cyan-400 bg-cyan-500/10' 
+                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs font-medium">{tab.label}</span>
+                {isActive && (
+                  <motion.div 
+                    layoutId="activeTab" 
+                    className="absolute inset-0 bg-cyan-500/10 border border-cyan-500/20 rounded-xl"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <Icon className={`w-5 h-5 flex-shrink-0 relative z-10 ${isActive ? 'text-cyan-400' : 'group-hover:text-cyan-400 transition-colors'}`} />
+                <span className="text-sm font-medium relative z-10">{tab.label}</span>
               </button>
             );
           })}
         </nav>
         
         {/* User Profile & Logout */}
-        <div className="p-2 border-t border-slate-800">
-          <div className="flex items-center gap-2 mb-1 px-2">
+        <div className="p-4 border-t border-slate-800/50 bg-slate-900/30">
+          <div className="flex items-center gap-3 mb-3">
             {user.photoURL ? (
-              <Image src={user.photoURL} alt="Profile" width={24} height={24} className="rounded-full" referrerPolicy="no-referrer" />
+              <Image src={user.photoURL} alt="Profile" width={36} height={36} className="rounded-full border border-slate-700" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center">
-                <Users className="w-3 h-3 text-slate-300" />
+              <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-slate-400" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-medium text-white truncate">{user.displayName || 'Usuário'}</p>
-              <p className="text-[9px] text-slate-400 truncate">{user.email}</p>
+              <p className="text-sm font-medium text-white truncate">{user.displayName || 'Operador'}</p>
+              <p className="text-xs text-slate-500 truncate">{user.email}</p>
             </div>
           </div>
           <button
             onClick={logOut}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors text-left"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all text-sm font-medium"
           >
-            <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="text-[11px] font-medium">Sair</span>
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            Desconectar
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 overflow-auto">
-        {activeTab === 'dashboard' && (
-          <Dashboard 
-            tools={tools} 
-            departments={departments} 
-            assignments={assignments} 
-            employees={employees}
-            standardLists={standardLists}
-            collectiveStations={collectiveStations}
-            onNavigate={setActiveTab} 
-            isDarkMode={isDarkMode}
-            toggleDarkMode={toggleDarkMode}
-          />
-        )}
-        {activeTab === 'tools' && (
-          <ToolRegistration 
-            tools={tools} 
-            setTools={setTools} 
-            standardLists={standardLists}
-            setStandardLists={setStandardLists}
-            assignments={assignments}
-            setAssignments={setAssignments}
-          />
-        )}
-        {activeTab === 'standard' && (
-          <StandardToolLists 
-            departments={departments} 
-            setDepartments={setDepartments}
-            tools={tools}
-            standardLists={standardLists}
-            setStandardLists={setStandardLists}
-          />
-        )}
-        {activeTab === 'employees' && (
-          <Employees 
-            employees={employees}
-            setEmployees={setEmployees}
-            departments={departments}
-            setDepartments={setDepartments}
-            assignments={assignments}
-            setAssignments={setAssignments}
-            tools={tools}
-            standardLists={standardLists}
-          />
-        )}
-        {activeTab === 'assignments' && (
-          <EmployeeAssignments 
-            employees={employees}
-            setEmployees={setEmployees}
-            departments={departments}
-            tools={tools}
-            standardLists={standardLists}
-            assignments={assignments}
-            setAssignments={setAssignments}
-          />
-        )}
-        {activeTab === 'reports' && (
-          <Reports 
-            tools={tools}
-            departments={departments}
-            assignments={assignments}
-            employees={employees}
-            collectiveStations={collectiveStations}
-            standardLists={standardLists}
-            collectiveLines={collectiveLines}
-          />
-        )}
-        {activeTab === 'collective' && (
-          <CollectiveTools 
-            lines={collectiveLines}
-            setLines={setCollectiveLines}
-            stations={collectiveStations}
-            setStations={setCollectiveStations}
-            tools={tools}
-          />
-        )}
-        {activeTab === 'settings' && (
-          <Settings />
-        )}
-        {activeTab === 'budgets' && (
-          <Budgets 
-            tools={tools}
-            setTools={setTools}
-            departments={departments}
-            assignments={assignments}
-            employees={employees}
-            collectiveStations={collectiveStations}
-            standardLists={standardLists}
-            collectiveLines={collectiveLines}
-          />
-        )}
+      <main className="flex-1 p-4 md:p-8 overflow-auto relative z-10 custom-scrollbar">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
+          >
+            {activeTab === 'dashboard' && (
+              <Dashboard 
+                tools={tools} 
+                departments={departments} 
+                assignments={assignments} 
+                employees={employees}
+                standardLists={standardLists}
+                collectiveStations={collectiveStations}
+                onNavigate={setActiveTab} 
+                isDarkMode={true}
+                toggleDarkMode={() => {}}
+              />
+            )}
+            {activeTab === 'tools' && (
+              <ToolRegistration 
+                tools={tools} 
+                setTools={setTools} 
+                standardLists={standardLists}
+                setStandardLists={setStandardLists}
+                assignments={assignments}
+                setAssignments={setAssignments}
+              />
+            )}
+            {activeTab === 'standard' && (
+              <StandardToolLists 
+                departments={departments} 
+                setDepartments={setDepartments}
+                tools={tools}
+                standardLists={standardLists}
+                setStandardLists={setStandardLists}
+              />
+            )}
+            {activeTab === 'employees' && (
+              <Employees 
+                employees={employees}
+                setEmployees={setEmployees}
+                departments={departments}
+                setDepartments={setDepartments}
+                assignments={assignments}
+                setAssignments={setAssignments}
+                tools={tools}
+                standardLists={standardLists}
+              />
+            )}
+            {activeTab === 'assignments' && (
+              <EmployeeAssignments 
+                employees={employees}
+                setEmployees={setEmployees}
+                departments={departments}
+                tools={tools}
+                standardLists={standardLists}
+                assignments={assignments}
+                setAssignments={setAssignments}
+              />
+            )}
+            {activeTab === 'reports' && (
+              <Reports 
+                tools={tools}
+                departments={departments}
+                assignments={assignments}
+                employees={employees}
+                collectiveStations={collectiveStations}
+                standardLists={standardLists}
+                collectiveLines={collectiveLines}
+              />
+            )}
+            {activeTab === 'collective' && (
+              <CollectiveTools 
+                lines={collectiveLines}
+                setLines={setCollectiveLines}
+                stations={collectiveStations}
+                setStations={setCollectiveStations}
+                tools={tools}
+              />
+            )}
+            {activeTab === 'settings' && (
+              <Settings />
+            )}
+            {activeTab === 'budgets' && (
+              <Budgets 
+                tools={tools}
+                setTools={setTools}
+                departments={departments}
+                assignments={assignments}
+                employees={employees}
+                collectiveStations={collectiveStations}
+                standardLists={standardLists}
+                collectiveLines={collectiveLines}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
