@@ -249,7 +249,9 @@ export default function Reports({ tools, departments, assignments, employees, co
     const doc = new jsPDF();
     const logoBase64 = getLogoBase64();
     
-    let startY = 20;
+    // --- HEADER: Industrial / Tech Style ---
+    doc.setFillColor(15, 23, 42); // slate-900 background for header
+    doc.rect(0, 0, 210, 45, 'F');
 
     if (logoBase64) {
       try {
@@ -264,29 +266,32 @@ export default function Reports({ tools, departments, assignments, employees, co
           logoWidth = (imgProps.width * logoHeight) / imgProps.height;
         }
 
-        doc.addImage(logoBase64, 'PNG', 14, 15, logoWidth, logoHeight, undefined, 'FAST');
-        startY = 15 + logoHeight + 10;
+        doc.addImage(logoBase64, 'PNG', 14, 12, logoWidth, logoHeight, undefined, 'FAST');
       } catch (e) {
         console.error('Error adding logo to PDF', e);
       }
     }
     
-    doc.setFontSize(22);
-    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255); // white
+    doc.setFont('helvetica', 'bold');
     const title = selectedToolType === 'all' 
-      ? 'Relatório de Ferramentas por Linha' 
-      : `Relatório de Ferramentas ${selectedToolType === 'individual' ? 'Individuais' : 'Coletivas'} por Linha`;
-    doc.text(title, 14, startY);
+      ? 'RELATÓRIO DE FERRAMENTAS' 
+      : `RELATÓRIO: FERRAMENTAS ${selectedToolType === 'individual' ? 'INDIVIDUAIS' : 'COLETIVAS'}`;
+    doc.text(title, 196, 22, { align: 'right' });
     
-    doc.setFontSize(11);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 14, startY + 8);
+    doc.setFontSize(9);
+    doc.setTextColor(6, 182, 212); // cyan-500
+    doc.setFont('courier', 'bold');
+    doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
+    doc.text(`SYS-ID: VOLGA-REP-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.setLineWidth(0.5);
-    doc.line(14, startY + 12, 196, startY + 12);
+    // Accent line
+    doc.setDrawColor(6, 182, 212); // cyan-500
+    doc.setLineWidth(1.5);
+    doc.line(0, 45, 210, 45);
 
-    let currentY = startY + 22;
+    let currentY = 55;
 
     filteredDepartments.forEach((dept, index) => {
       const deptData = reportData[dept.id];
@@ -309,7 +314,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setFontSize(14);
       doc.setTextColor(15, 23, 42); // slate-900
       doc.setFont('helvetica', 'bold');
-      const deptText = `Linha/Departamento: ${dept.name}`;
+      const deptText = `LINHA/DEPARTAMENTO: ${dept.name.toUpperCase()}`;
       doc.text(deptText, 14, currentY);
       
       // Find the original department to get expectedNewcomers
@@ -317,15 +322,15 @@ export default function Reports({ tools, departments, assignments, employees, co
       if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
         const textWidth = doc.getTextWidth(deptText);
         doc.setFontSize(10);
-        doc.setTextColor(22, 163, 74); // Green color
-        doc.setFont('helvetica', 'normal');
-        doc.text(`(+${originalDept.expectedNewcomers} novatos previstos)`, 14 + textWidth + 4, currentY);
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFont('courier', 'bold');
+        doc.text(`[+${originalDept.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, currentY);
       }
       
       currentY += 6;
 
-      const head = ['Ferramenta', 'Marca', 'Nec.', 'Atu.', 'Fal.'];
-      if (selectedToolType === 'all' || selectedToolType === 'collective') head.push('Postos');
+      const head = ['FERRAMENTA', 'MARCA', 'NEC.', 'ATU.', 'FAL.'];
+      if (selectedToolType === 'all' || selectedToolType === 'collective') head.push('POSTOS');
 
       const tableData = toolIds.map(toolId => {
         const tool = tools.find(t => t.id === toolId);
@@ -349,13 +354,13 @@ export default function Reports({ tools, departments, assignments, employees, co
         const missingQty = Math.max(0, reqQty - curQty);
 
         const row: any[] = [
-          tool?.name || 'Ferramenta Desconhecida',
-          tool?.brand || '-',
-          reqQty,
-          curQty,
-          missingQty
+          tool?.name.toUpperCase() || 'DESCONHECIDA',
+          tool?.brand.toUpperCase() || '-',
+          reqQty.toString(),
+          curQty.toString(),
+          missingQty.toString()
         ];
-        if (selectedToolType === 'all' || selectedToolType === 'collective') row.push(stationsText);
+        if (selectedToolType === 'all' || selectedToolType === 'collective') row.push(stationsText.toUpperCase());
         
         return row;
       });
@@ -365,18 +370,32 @@ export default function Reports({ tools, departments, assignments, employees, co
         head: [head],
         body: tableData,
         theme: 'grid',
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          cellPadding: 4,
+          lineColor: [203, 213, 225], // slate-300
+          lineWidth: 0.1,
+        },
         headStyles: { 
-          fillColor: [15, 118, 110], // teal-700 (Volga brand color)
-          textColor: [255, 255, 255],
-          fontSize: 10,
-          fontStyle: 'bold'
+          fillColor: [15, 23, 42], // slate-900
+          textColor: [6, 182, 212], // cyan-500
+          font: 'courier',
+          fontStyle: 'bold',
+          halign: 'center'
         },
         bodyStyles: {
-          fontSize: 9,
           textColor: [51, 65, 85] // slate-700
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252] // slate-50
+        },
+        columnStyles: {
+          0: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
+          1: { font: 'courier', halign: 'left' },
+          2: { font: 'courier', halign: 'center', fontStyle: 'bold' },
+          3: { font: 'courier', halign: 'center', fontStyle: 'bold' },
+          4: { font: 'courier', halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] }, // red-600 for missing
         },
         margin: { top: 15 },
       });
@@ -384,7 +403,17 @@ export default function Reports({ tools, departments, assignments, employees, co
       currentY = (doc as any).lastAutoTable.finalY + 15;
     });
 
-    doc.save('relatorio-ferramentas-por-linha.pdf');
+    // Add Footer with page numbers
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('courier', 'normal');
+      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+    }
+
+    doc.save(`relatorio-ferramentas-${new Date().getTime()}.pdf`);
   };
 
   const containerVariants = {

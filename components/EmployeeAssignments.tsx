@@ -33,6 +33,7 @@ export default function EmployeeAssignments({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -153,9 +154,10 @@ export default function EmployeeAssignments({
     const doc = new jsPDF();
     const logoBase64 = getLogoBase64();
     
-    let startY = 20;
+    // --- HEADER: Industrial / Tech Style ---
+    doc.setFillColor(15, 23, 42); // slate-900 background for header
+    doc.rect(0, 0, 210, 45, 'F');
 
-    // Header with Logo
     if (logoBase64) {
       try {
         const imgProps = doc.getImageProperties(logoBase64);
@@ -169,46 +171,49 @@ export default function EmployeeAssignments({
           logoWidth = (imgProps.width * logoHeight) / imgProps.height;
         }
 
-        doc.addImage(logoBase64, 'PNG', 14, 15, logoWidth, logoHeight, undefined, 'FAST');
-        startY = 15 + logoHeight + 10;
+        doc.addImage(logoBase64, 'PNG', 14, 12, logoWidth, logoHeight, undefined, 'FAST');
       } catch (e) {
         console.error('Error adding logo to PDF', e);
       }
     }
     
-    doc.setFontSize(18);
-    doc.setTextColor(15, 118, 110); // teal-700
+    doc.setFontSize(16);
+    doc.setTextColor(255, 255, 255); // white
     doc.setFont('helvetica', 'bold');
-    doc.text('TERMO DE RESPONSABILIDADE E ENTREGA', 105, startY, { align: 'center' });
+    doc.text('TERMO DE RESPONSABILIDADE', 196, 22, { align: 'right' });
     
-    doc.setFontSize(12);
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.setFont('helvetica', 'normal');
-    doc.text('CONTROLE DE FERRAMENTAS INDIVIDUAIS', 105, startY + 8, { align: 'center' });
-    
-    doc.setDrawColor(203, 213, 225); // slate-300
-    doc.setLineWidth(0.5);
-    doc.line(14, startY + 15, 196, startY + 15);
+    doc.setFontSize(9);
+    doc.setTextColor(6, 182, 212); // cyan-500
+    doc.setFont('courier', 'bold');
+    doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
+    doc.text(`SYS-ID: VOLGA-TRM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
+
+    // Accent line
+    doc.setDrawColor(6, 182, 212); // cyan-500
+    doc.setLineWidth(1.5);
+    doc.line(0, 45, 210, 45);
     
     // Employee Info
-    const infoY = startY + 25;
-    doc.setFontSize(11);
-    doc.setTextColor(30, 41, 59); // slate-800
+    const infoY = 55;
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont('helvetica', 'bold');
     doc.text('DADOS DO COLABORADOR', 14, infoY);
     
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setFont('courier', 'bold');
     doc.setTextColor(71, 85, 105); // slate-600
-    doc.text(`Nome: ${emp?.name || 'Desconhecido'}`, 14, infoY + 8);
-    doc.text(`Matrícula: ${emp?.employeeId || 'N/A'}`, 14, infoY + 15);
-    doc.text(`Departamento: ${dept?.name || 'Desconhecido'}`, 105, infoY + 8);
-    doc.text(`Data de Entrega: ${date}`, 105, infoY + 15);
+    doc.text(`NOME: ${emp?.name.toUpperCase() || 'DESCONHECIDO'}`, 14, infoY + 8);
+    doc.text(`MATRÍCULA: ${emp?.employeeId || 'N/A'}`, 14, infoY + 14);
+    doc.text(`DEPARTAMENTO: ${dept?.name.toUpperCase() || 'DESCONHECIDO'}`, 105, infoY + 8);
+    doc.text(`DATA DE ENTREGA: ${date}`, 105, infoY + 14);
     
     // Agreement Text
-    const textY = infoY + 30;
+    const textY = infoY + 25;
     const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa Volga, declaro ter recebido as ferramentas individuais abaixo relacionadas. A contar desta data, assumo a responsabilidade pela guarda e conservação das mesmas, comprometendo-me a devolvê-las em perfeito estado de funcionamento.\n\nEm caso de extravio ou danos por mau uso que acarretem a perda total ou parcial do bem, autorizo o desconto em folha de pagamento do valor correspondente ao prejuízo causado, fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
     
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(51, 65, 85); // slate-700
     const splitText = doc.splitTextToSize(agreementText, 182);
     doc.text(splitText, 14, textY);
@@ -217,35 +222,43 @@ export default function EmployeeAssignments({
     const tableData = (assignment.assignedTools || []).map(at => {
       const tool = tools.find(t => t.id === at.toolId);
       return [
-        tool?.brand || 'N/A',
-        tool?.name || 'N/A',
-        tool?.category || 'N/A',
+        tool?.brand.toUpperCase() || 'N/A',
+        tool?.name.toUpperCase() || 'N/A',
+        tool?.category.toUpperCase() || 'N/A',
         at.quantity.toString()
       ];
     });
 
     autoTable(doc, {
       startY: textY + (splitText.length * 5) + 10,
-      head: [['Marca', 'Ferramenta', 'Categoria', 'Quantidade']],
+      head: [['MARCA', 'FERRAMENTA', 'CATEGORIA', 'QTD.']],
       body: tableData,
       theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        cellPadding: 4,
+        lineColor: [203, 213, 225], // slate-300
+        lineWidth: 0.1,
+      },
       headStyles: { 
-        fillColor: [15, 118, 110], // teal-700
-        textColor: [255, 255, 255],
-        fontSize: 10,
+        fillColor: [15, 23, 42], // slate-900
+        textColor: [6, 182, 212], // cyan-500
+        font: 'courier',
         fontStyle: 'bold',
         halign: 'center'
       },
       bodyStyles: {
-        fontSize: 9,
-        textColor: [51, 65, 85],
-        halign: 'left'
+        textColor: [51, 65, 85], // slate-700
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252] // slate-50
       },
       columnStyles: {
-        3: { halign: 'center' }
+        0: { font: 'courier', halign: 'left' },
+        1: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
+        2: { font: 'courier', halign: 'left' },
+        3: { font: 'courier', halign: 'center', fontStyle: 'bold' }
       }
     });
 
@@ -254,29 +267,40 @@ export default function EmployeeAssignments({
     const missingTools = getMissingTools(assignment);
     if (missingTools.length > 0) {
       doc.setFontSize(12);
-      doc.setTextColor(180, 83, 9); // amber-700
+      doc.setTextColor(220, 38, 38); // red-600
+      doc.setFont('helvetica', 'bold');
       doc.text('FERRAMENTAS PENDENTES (A ENTREGAR)', 14, currentY + 15);
       
-      const missingTableData = missingTools.map(mt => [mt.toolName, mt.missingQty.toString()]);
+      const missingTableData = missingTools.map(mt => [mt.toolName.toUpperCase(), mt.missingQty.toString()]);
       
       autoTable(doc, {
         startY: currentY + 20,
-        head: [['Ferramenta', 'Quantidade Faltante']],
+        head: [['FERRAMENTA', 'QTD. FALTANTE']],
         body: missingTableData,
         theme: 'grid',
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          cellPadding: 4,
+          lineColor: [254, 202, 202], // red-200
+          lineWidth: 0.1,
+        },
         headStyles: { 
-          fillColor: [251, 191, 36], // amber-400
-          textColor: [30, 41, 59],
-          fontSize: 10,
+          fillColor: [127, 29, 29], // red-900
+          textColor: [248, 113, 113], // red-400
+          font: 'courier',
           fontStyle: 'bold',
           halign: 'center'
         },
         bodyStyles: {
-          fontSize: 9,
-          halign: 'left'
+          textColor: [153, 27, 27], // red-800
+        },
+        alternateRowStyles: {
+          fillColor: [254, 242, 242] // red-50
         },
         columnStyles: {
-          1: { halign: 'center' }
+          0: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
+          1: { font: 'courier', halign: 'center', fontStyle: 'bold' }
         }
       });
       currentY = (doc as any).lastAutoTable.finalY || currentY + 40;
@@ -286,16 +310,25 @@ export default function EmployeeAssignments({
     const finalY = currentY;
     
     // Signature lines
-    doc.setDrawColor(30, 41, 59);
+    doc.setDrawColor(15, 23, 42); // slate-900
+    doc.setLineWidth(0.5);
     doc.line(14, finalY + 40, 90, finalY + 40);
-    doc.text('Assinatura do Colaborador', 14, finalY + 45);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ASSINATURA DO COLABORADOR', 14, finalY + 45);
     
     doc.line(120, finalY + 40, 196, finalY + 40);
-    doc.text('Assinatura Responsável Volga', 120, finalY + 45);
+    doc.text('ASSINATURA RESPONSÁVEL VOLGA', 120, finalY + 45);
     
-    doc.setFontSize(8);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text(`Documento gerado em ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
+    // Add Footer with page numbers
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('courier', 'normal');
+      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+    }
 
     doc.save(`termo_ferramentas_${emp?.name.replace(/\s+/g, '_')}.pdf`);
   };

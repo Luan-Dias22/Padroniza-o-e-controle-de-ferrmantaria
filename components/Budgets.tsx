@@ -180,23 +180,50 @@ export default function Budgets({
     const doc = new jsPDF();
     const logoBase64 = getLogoBase64();
     
+    // --- HEADER: Industrial / Tech Style ---
+    doc.setFillColor(15, 23, 42); // slate-900 background for header
+    doc.rect(0, 0, 210, 45, 'F');
+
     if (logoBase64) {
-      doc.addImage(logoBase64, 'PNG', 14, 10, 40, 15);
+      try {
+        const imgProps = doc.getImageProperties(logoBase64);
+        const maxLogoWidth = 40;
+        const maxLogoHeight = 20;
+        let logoWidth = maxLogoWidth;
+        let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+
+        if (logoHeight > maxLogoHeight) {
+          logoHeight = maxLogoHeight;
+          logoWidth = (imgProps.width * logoHeight) / imgProps.height;
+        }
+
+        doc.addImage(logoBase64, 'PNG', 14, 12, logoWidth, logoHeight, undefined, 'FAST');
+      } catch (e) {
+        console.error('Error adding logo to PDF', e);
+      }
     }
 
-    doc.setFontSize(20);
-    doc.setTextColor(30, 58, 138);
-    let title = 'Relatório de Orçamentos por Linha';
-    if (toolCategoryFilter === 'collective') title += ' (Ferramentas Coletivas)';
-    if (toolCategoryFilter === 'individual') title += ' (Ferramentas Individuais)';
-    doc.text(title, 14, 35);
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255); // white
+    doc.setFont('helvetica', 'bold');
+    let title = 'RELATÓRIO DE ORÇAMENTOS';
+    if (toolCategoryFilter === 'collective') title += ' (COLETIVAS)';
+    if (toolCategoryFilter === 'individual') title += ' (INDIVIDUAIS)';
+    doc.text(title, 196, 22, { align: 'right' });
     
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 42);
+    doc.setFontSize(9);
+    doc.setTextColor(6, 182, 212); // cyan-500
+    doc.setFont('courier', 'bold');
+    doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
+    doc.text(`SYS-ID: VOLGA-BUD-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
+
+    // Accent line
+    doc.setDrawColor(6, 182, 212); // cyan-500
+    doc.setLineWidth(1.5);
+    doc.line(0, 45, 210, 45);
 
     let isFirstLine = true;
-    let yPos = 50;
+    let yPos = 55;
 
     Object.values(budgetData).forEach(line => {
       if (line.tools.length === 0) return;
@@ -206,28 +233,35 @@ export default function Budgets({
         yPos = 20;
       } else {
         isFirstLine = false;
-        yPos = 50;
+        yPos = 55;
       }
 
       doc.setFontSize(14);
-      doc.setTextColor(30, 58, 138);
-      doc.text(`Linha: ${line.name}`, 14, yPos);
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('helvetica', 'bold');
+      const lineText = `LINHA/DEPARTAMENTO: ${line.name.toUpperCase()}`;
+      doc.text(lineText, 14, yPos);
+      
       if (line.expectedNewcomers > 0) {
+        const textWidth = doc.getTextWidth(lineText);
         doc.setFontSize(10);
-        doc.setTextColor(22, 163, 74); // Green color
-        doc.text(`(+${line.expectedNewcomers} novatos previstos)`, 100, yPos);
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFont('courier', 'bold');
+        doc.text(`[+${line.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, yPos);
       }
       yPos += 8;
 
-      doc.setFontSize(11);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Custo Total Necessário: R$ ${line.requiredCost.toFixed(2)}`, 14, yPos);
-      doc.text(`Custo Total Faltante: R$ ${line.missingCost.toFixed(2)}`, 100, yPos);
-      yPos += 5;
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105); // slate-600
+      doc.setFont('courier', 'bold');
+      doc.text(`CUSTO TOTAL NECESSÁRIO: R$ ${line.requiredCost.toFixed(2)}`, 14, yPos);
+      doc.setTextColor(220, 38, 38); // red-600
+      doc.text(`CUSTO TOTAL FALTANTE: R$ ${line.missingCost.toFixed(2)}`, 100, yPos);
+      yPos += 6;
 
       const tableData = line.tools.map(t => [
-        t.tool.name,
-        t.tool.brand,
+        t.tool.name.toUpperCase(),
+        t.tool.brand.toUpperCase(),
         `R$ ${(t.tool.price || 0).toFixed(2)}`,
         t.required.toString(),
         t.missing.toString(),
@@ -237,16 +271,53 @@ export default function Budgets({
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Ferramenta', 'Marca', 'Valor Unit.', 'Qtd. Nec.', 'Qtd. Faltante', 'Custo Nec.', 'Custo Faltante']],
+        head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
         body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 3 },
+        theme: 'grid',
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          cellPadding: 4,
+          lineColor: [203, 213, 225], // slate-300
+          lineWidth: 0.1,
+        },
+        headStyles: { 
+          fillColor: [15, 23, 42], // slate-900
+          textColor: [6, 182, 212], // cyan-500
+          font: 'courier',
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        bodyStyles: {
+          textColor: [51, 65, 85] // slate-700
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // slate-50
+        },
+        columnStyles: {
+          0: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
+          1: { font: 'courier', halign: 'left' },
+          2: { font: 'courier', halign: 'right' },
+          3: { font: 'courier', halign: 'center', fontStyle: 'bold' },
+          4: { font: 'courier', halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] }, // red-600
+          5: { font: 'courier', halign: 'right' },
+          6: { font: 'courier', halign: 'right', fontStyle: 'bold', textColor: [220, 38, 38] } // red-600
+        },
         margin: { left: 14, right: 14 }
       });
 
       yPos = (doc as any).lastAutoTable.finalY + 15;
     });
+
+    // Add Footer with page numbers
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('courier', 'normal');
+      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+    }
 
     doc.save('orcamentos_linhas.pdf');
   };

@@ -269,7 +269,7 @@ export default function Dashboard({
                           {emp?.name || 'Desconhecido'}
                         </p>
                         <p className="text-xs text-slate-500 mt-1 font-mono">
-                          {dept?.name} // {new Date(assignment.dateAssigned).toLocaleDateString()}
+                          {dept?.name} | {new Date(assignment.dateAssigned).toLocaleDateString()}
                         </p>
                         {missingCount > 0 && (
                           <span className="inline-block mt-2 text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20 uppercase tracking-widest">
