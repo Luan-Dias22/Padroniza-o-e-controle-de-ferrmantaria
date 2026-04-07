@@ -154,15 +154,15 @@ export default function EmployeeAssignments({
     const doc = new jsPDF();
     const logoBase64 = getLogoBase64();
     
-    // --- HEADER: Industrial / Tech Style ---
-    doc.setFillColor(15, 23, 42); // slate-900 background for header
+    // --- HEADER: Industrial / Tech Style (Clean Version) ---
+    doc.setFillColor(248, 250, 252); // slate-50 background for header
     doc.rect(0, 0, 210, 45, 'F');
 
     if (logoBase64) {
       try {
         const imgProps = doc.getImageProperties(logoBase64);
-        const maxLogoWidth = 40;
-        const maxLogoHeight = 20;
+        const maxLogoWidth = 45;
+        const maxLogoHeight = 25;
         let logoWidth = maxLogoWidth;
         let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
 
@@ -171,25 +171,25 @@ export default function EmployeeAssignments({
           logoWidth = (imgProps.width * logoHeight) / imgProps.height;
         }
 
-        doc.addImage(logoBase64, 'PNG', 14, 12, logoWidth, logoHeight, undefined, 'FAST');
+        doc.addImage(logoBase64, 'PNG', 14, 10, logoWidth, logoHeight, undefined, 'FAST');
       } catch (e) {
         console.error('Error adding logo to PDF', e);
       }
     }
     
     doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255); // white
+    doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont('helvetica', 'bold');
     doc.text('TERMO DE RESPONSABILIDADE', 196, 22, { align: 'right' });
     
     doc.setFontSize(9);
-    doc.setTextColor(6, 182, 212); // cyan-500
+    doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
     doc.setFont('courier', 'bold');
     doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
     doc.text(`SYS-ID: VOLGA-TRM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 
     // Accent line
-    doc.setDrawColor(6, 182, 212); // cyan-500
+    doc.setDrawColor(15, 118, 110); // teal-700
     doc.setLineWidth(1.5);
     doc.line(0, 45, 210, 45);
     
@@ -237,14 +237,14 @@ export default function EmployeeAssignments({
       styles: {
         font: 'helvetica',
         fontSize: 8,
-        cellPadding: 4,
+        cellPadding: 3,
         lineColor: [203, 213, 225], // slate-300
         lineWidth: 0.1,
+        valign: 'middle'
       },
       headStyles: { 
-        fillColor: [15, 23, 42], // slate-900
-        textColor: [6, 182, 212], // cyan-500
-        font: 'courier',
+        fillColor: [15, 118, 110], // teal-700
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center'
       },
@@ -255,10 +255,10 @@ export default function EmployeeAssignments({
         fillColor: [248, 250, 252] // slate-50
       },
       columnStyles: {
-        0: { font: 'courier', halign: 'left' },
-        1: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
-        2: { font: 'courier', halign: 'left' },
-        3: { font: 'courier', halign: 'center', fontStyle: 'bold' }
+        0: { halign: 'left' },
+        1: { fontStyle: 'bold', halign: 'left' },
+        2: { halign: 'left' },
+        3: { halign: 'center', fontStyle: 'bold' }
       }
     });
 
@@ -281,14 +281,14 @@ export default function EmployeeAssignments({
         styles: {
           font: 'helvetica',
           fontSize: 8,
-          cellPadding: 4,
+          cellPadding: 3,
           lineColor: [254, 202, 202], // red-200
           lineWidth: 0.1,
+          valign: 'middle'
         },
         headStyles: { 
           fillColor: [127, 29, 29], // red-900
           textColor: [248, 113, 113], // red-400
-          font: 'courier',
           fontStyle: 'bold',
           halign: 'center'
         },
@@ -299,8 +299,8 @@ export default function EmployeeAssignments({
           fillColor: [254, 242, 242] // red-50
         },
         columnStyles: {
-          0: { font: 'helvetica', fontStyle: 'bold', halign: 'left' },
-          1: { font: 'courier', halign: 'center', fontStyle: 'bold' }
+          0: { fontStyle: 'bold', halign: 'left' },
+          1: { halign: 'center', fontStyle: 'bold' }
         }
       });
       currentY = (doc as any).lastAutoTable.finalY || currentY + 40;
