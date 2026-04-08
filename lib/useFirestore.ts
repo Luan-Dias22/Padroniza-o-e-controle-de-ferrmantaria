@@ -82,16 +82,22 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       const items: T[] = [];
       snapshot.forEach((doc) => {
-        // Strip out the uid we added for security rules before returning to the app
         const { uid, ...rest } = doc.data();
         items.push({ id: doc.id, ...rest } as T);
       });
 
-      // If Firestore is empty but we have local data (like mock data) and haven't merged yet,
-      // keep the local data so the user can sync it to their new account.
-      if (items.length === 0 && !hasMerged && data.length > 0) {
-        // Keep current data (mock data)
+      // Logic to prevent losing data on first login:
+      // If cloud is empty AND it's the first time we check (hasMerged is false)
+      if (items.length === 0 && !hasMerged) {
+        // If our current state is also empty, try to at least show the template data
+        if (data.length === 0 && initialValue.length > 0) {
+          setData(initialValue);
+        }
+        // Otherwise, we keep the current 'data' (which is the mock data) 
+        // so the user can see it and click "Sync" to save it to their account.
       } else {
+        // If there is data in the cloud, or we've already merged once, 
+        // we follow the cloud's state (which is the source of truth).
         setData(items);
       }
       

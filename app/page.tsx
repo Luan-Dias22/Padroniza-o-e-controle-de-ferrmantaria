@@ -79,6 +79,16 @@ export default function App() {
     }
   };
 
+  const restoreTemplateAll = () => {
+    setTools(mockTools);
+    setStandardLists(mockStandardLists);
+    setEmployees(mockEmployees);
+    setDepartments(mockDepartments);
+    setAssignments(mockAssignments);
+    setCollectiveLines([]);
+    setCollectiveStations([]);
+  };
+
   const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit));
 
   const handleLogin = async () => {
@@ -383,7 +393,7 @@ export default function App() {
               />
             )}
             {activeTab === 'settings' && (
-              <Settings onSync={syncAllData} />
+              <Settings onSync={syncAllData} onRestoreTemplate={restoreTemplateAll} />
             )}
             {activeTab === 'budgets' && (
               <Budgets 

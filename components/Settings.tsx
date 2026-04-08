@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function Settings({ onSync }: { onSync?: () => Promise<boolean> }) {
+export default function Settings({ onSync, onRestoreTemplate }: { 
+  onSync?: () => Promise<boolean>,
+  onRestoreTemplate?: () => void 
+}) {
   const [logo, setLogo] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return getLogoBase64();
@@ -183,6 +186,29 @@ export default function Settings({ onSync }: { onSync?: () => Promise<boolean> }
                 )}
               </AnimatePresence>
             </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 shadow-inner mt-6"
+          >
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-400" />
+              Recuperação de Emergência
+            </h2>
+            <p className="text-slate-400 text-sm mb-6">
+              Se o seu aplicativo estiver totalmente vazio após o login, use este botão para recarregar os dados de exemplo (template). Depois de carregar, não esqueça de clicar em &quot;Sincronizar&quot; acima para salvá-los na sua conta.
+            </p>
+
+            <button
+              onClick={onRestoreTemplate}
+              className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-all text-sm font-medium"
+            >
+              <Zap className="w-4 h-4" />
+              Restaurar Dados do Template (Exemplo)
+            </button>
           </motion.div>
         </div>
       </div>
