@@ -58,6 +58,7 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
   const [data, setData] = useState<T[]>(initialValue);
   const [isInitialized, setIsInitialized] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasMerged, setHasMerged] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -65,6 +66,7 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       if (!user) {
         setData(initialValue);
         setIsInitialized(true);
+        setHasMerged(false);
       }
     });
     return () => unsubscribeAuth();
@@ -84,14 +86,24 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
         const { uid, ...rest } = doc.data();
         items.push({ id: doc.id, ...rest } as T);
       });
-      setData(items);
+
+      // If Firestore is empty but we have local data (like mock data) and haven't merged yet,
+      // keep the local data so the user can sync it to their new account.
+      if (items.length === 0 && !hasMerged && data.length > 0) {
+        // Keep current data (mock data)
+      } else {
+        setData(items);
+      }
+      
       setIsInitialized(true);
+      setHasMerged(true);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, path);
     });
 
     return () => unsubscribe();
-  }, [userId, collectionName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, collectionName, hasMerged]);
 
   const setValue = async (value: T[] | ((val: T[]) => T[])) => {
     if (!userId) {
@@ -143,5 +155,10 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
     }
   };
 
-  return [data, setValue, isInitialized] as const;
+  const syncToFirestore = async () => {
+    if (!userId) return;
+    await setValue([...data]);
+  };
+
+  return [data, setValue, isInitialized, syncToFirestore] as const;
 }

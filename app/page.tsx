@@ -53,13 +53,31 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const [tools, setTools, toolsInit] = useFirestore<Tool>('tools', mockTools);
-  const [standardLists, setStandardLists, listsInit] = useFirestore<StandardToolList>('standardToolLists', mockStandardLists);
-  const [employees, setEmployees, empInit] = useFirestore<Employee>('employees', mockEmployees);
-  const [departments, setDepartments, deptInit] = useFirestore<Department>('departments', mockDepartments);
-  const [assignments, setAssignments, assignInit] = useFirestore<Assignment>('assignments', mockAssignments);
-  const [collectiveLines, setCollectiveLines, linesInit] = useFirestore<CollectiveLine>('collectiveLines', []);
-  const [collectiveStations, setCollectiveStations, stationsInit] = useFirestore<CollectiveStation>('collectiveStations', []);
+  const [tools, setTools, toolsInit, syncTools] = useFirestore<Tool>('tools', mockTools);
+  const [standardLists, setStandardLists, listsInit, syncLists] = useFirestore<StandardToolList>('standardToolLists', mockStandardLists);
+  const [employees, setEmployees, empInit, syncEmployees] = useFirestore<Employee>('employees', mockEmployees);
+  const [departments, setDepartments, deptInit, syncDepts] = useFirestore<Department>('departments', mockDepartments);
+  const [assignments, setAssignments, assignInit, syncAssignments] = useFirestore<Assignment>('assignments', mockAssignments);
+  const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', []);
+  const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', []);
+
+  const syncAllData = async () => {
+    try {
+      await Promise.all([
+        syncTools(),
+        syncLists(),
+        syncEmployees(),
+        syncDepts(),
+        syncAssignments(),
+        syncLines(),
+        syncStations()
+      ]);
+      return true;
+    } catch (error) {
+      console.error("Error syncing all data:", error);
+      return false;
+    }
+  };
 
   const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit));
 
@@ -365,7 +383,7 @@ export default function App() {
               />
             )}
             {activeTab === 'settings' && (
-              <Settings />
+              <Settings onSync={syncAllData} />
             )}
             {activeTab === 'budgets' && (
               <Budgets 
