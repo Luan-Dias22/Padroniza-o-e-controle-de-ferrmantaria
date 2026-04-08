@@ -282,7 +282,7 @@ export default function Reports({ tools, departments, assignments, employees, co
     
     doc.setFontSize(9);
     doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
-    doc.setFont('courier', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
     doc.text(`SYS-ID: VOLGA-REP-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 

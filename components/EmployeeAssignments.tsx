@@ -184,7 +184,7 @@ export default function EmployeeAssignments({
     
     doc.setFontSize(9);
     doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
-    doc.setFont('courier', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
     doc.text(`SYS-ID: VOLGA-TRM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 
@@ -201,7 +201,7 @@ export default function EmployeeAssignments({
     doc.text('DADOS DO COLABORADOR', 14, infoY);
     
     doc.setFontSize(10);
-    doc.setFont('courier', 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105); // slate-600
     doc.text(`NOME: ${emp?.name.toUpperCase() || 'DESCONHECIDO'}`, 14, infoY + 8);
     doc.text(`MATRÍCULA: ${emp?.employeeId || 'N/A'}`, 14, infoY + 14);
@@ -282,25 +282,25 @@ export default function EmployeeAssignments({
           font: 'helvetica',
           fontSize: 8,
           cellPadding: 3,
-          lineColor: [254, 202, 202], // red-200
+          lineColor: [203, 213, 225], // slate-300
           lineWidth: 0.1,
           valign: 'middle'
         },
         headStyles: { 
-          fillColor: [127, 29, 29], // red-900
-          textColor: [248, 113, 113], // red-400
+          fillColor: [15, 118, 110], // teal-700
+          textColor: [255, 255, 255],
           fontStyle: 'bold',
           halign: 'center'
         },
         bodyStyles: {
-          textColor: [153, 27, 27], // red-800
+          textColor: [51, 65, 85], // slate-700
         },
         alternateRowStyles: {
-          fillColor: [254, 242, 242] // red-50
+          fillColor: [248, 250, 252] // slate-50
         },
         columnStyles: {
           0: { fontStyle: 'bold', halign: 'left' },
-          1: { halign: 'center', fontStyle: 'bold' }
+          1: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] } // Keep red for the number only
         }
       });
       currentY = (doc as any).lastAutoTable.finalY || currentY + 40;
@@ -326,7 +326,7 @@ export default function EmployeeAssignments({
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // slate-400
-      doc.setFont('courier', 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
     }
 
