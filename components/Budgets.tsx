@@ -173,7 +173,42 @@ export default function Budgets({
       });
     }
 
-    return data;
+    // Sort the budget data based on the requested order
+    const sortedData = Object.entries(data).sort(([, a], [, b]) => {
+      const getWeight = (name: string) => {
+        const lowerName = name.toLowerCase().trim();
+        
+        if (lowerName.startsWith('linha 1 ') || lowerName === 'linha 1') return 1;
+        if (lowerName.startsWith('linha 2 ') || lowerName === 'linha 2') return 2;
+        if (lowerName.startsWith('linha 3 ') || lowerName === 'linha 3') return 3;
+        if (lowerName.startsWith('linha 4 ') || lowerName === 'linha 4') return 4;
+        if (lowerName.startsWith('linha 6 ') || lowerName === 'linha 6') return 6;
+        if (lowerName.startsWith('linha 9 ') || lowerName === 'linha 9') return 9;
+        if (lowerName.startsWith('linha 10 ') || lowerName === 'linha 10') return 10;
+        
+        if (lowerName.includes('qualidade eletrica') || lowerName.includes('qualidade elétrica')) return 20;
+        if (lowerName.includes('qualidade mecanica') || lowerName.includes('qualidade mecânica')) return 21;
+        if (lowerName.includes('qualidade final')) return 22;
+        if (lowerName.includes('fabrica de cabos') || lowerName.includes('fábrica de cabos')) return 23;
+        
+        const match = lowerName.match(/^linha\s+(\d+)/);
+        if (match) {
+          return 100 + parseInt(match[1], 10);
+        }
+        
+        return 999;
+      };
+
+      const weightA = getWeight(a.name);
+      const weightB = getWeight(b.name);
+
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return Object.fromEntries(sortedData);
   }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, toolCategoryFilter]);
 
   const generatePDF = () => {

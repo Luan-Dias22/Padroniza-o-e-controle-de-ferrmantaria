@@ -179,7 +179,11 @@ export default function Reports({ tools, departments, assignments, employees, co
         if (lowerName.startsWith('linha 6 ') || lowerName === 'linha 6') return 6;
         if (lowerName.startsWith('linha 9 ') || lowerName === 'linha 9') return 9;
         if (lowerName.startsWith('linha 10 ') || lowerName === 'linha 10') return 10;
-        if (lowerName.includes('fábrica de cabos') || lowerName.includes('fabrica de cabos')) return 11;
+        
+        if (lowerName.includes('qualidade eletrica') || lowerName.includes('qualidade elétrica')) return 20;
+        if (lowerName.includes('qualidade mecanica') || lowerName.includes('qualidade mecânica')) return 21;
+        if (lowerName.includes('qualidade final')) return 22;
+        if (lowerName.includes('fabrica de cabos') || lowerName.includes('fábrica de cabos')) return 23;
         
         const match = lowerName.match(/^linha\s+(\d+)/);
         if (match) {

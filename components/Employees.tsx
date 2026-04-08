@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Employee, Department, Assignment, Tool, StandardToolList } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, Users, Building2, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -40,6 +40,44 @@ export default function Employees({
     message: '',
     onConfirm: () => {}
   });
+
+  const sortedDepartments = useMemo(() => {
+    return [...departments].sort((a, b) => {
+      const getWeight = (name: string) => {
+        const lowerName = name.toLowerCase().trim();
+        
+        // Specific order requested by user
+        if (lowerName.startsWith('linha 1 ') || lowerName === 'linha 1') return 1;
+        if (lowerName.startsWith('linha 2 ') || lowerName === 'linha 2') return 2;
+        if (lowerName.startsWith('linha 3 ') || lowerName === 'linha 3') return 3;
+        if (lowerName.startsWith('linha 4 ') || lowerName === 'linha 4') return 4;
+        if (lowerName.startsWith('linha 6 ') || lowerName === 'linha 6') return 6;
+        if (lowerName.startsWith('linha 9 ') || lowerName === 'linha 9') return 9;
+        if (lowerName.startsWith('linha 10 ') || lowerName === 'linha 10') return 10;
+        
+        if (lowerName.includes('qualidade eletrica') || lowerName.includes('qualidade elétrica')) return 20;
+        if (lowerName.includes('qualidade mecanica') || lowerName.includes('qualidade mecânica')) return 21;
+        if (lowerName.includes('qualidade final')) return 22;
+        if (lowerName.includes('fabrica de cabos') || lowerName.includes('fábrica de cabos')) return 23;
+        
+        // Fallback for other "Linha X"
+        const match = lowerName.match(/^linha\s+(\d+)/);
+        if (match) {
+          return 100 + parseInt(match[1], 10);
+        }
+        
+        return 999;
+      };
+
+      const weightA = getWeight(a.name);
+      const weightB = getWeight(b.name);
+
+      if (weightA !== weightB) {
+        return weightA - weightB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [departments]);
 
   const handleSubmitEmployee = (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,11 +229,11 @@ export default function Employees({
             </form>
           </div>
           <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
-            {departments.length === 0 ? (
+            {sortedDepartments.length === 0 ? (
               <p className="text-center text-slate-500 p-4 text-sm font-mono">Nenhum departamento criado.</p>
             ) : (
               <ul className="space-y-2">
-                {departments.map(dept => (
+                {sortedDepartments.map(dept => (
                   <motion.li 
                     key={dept.id} 
                     initial={{ opacity: 0, x: -10 }}
@@ -324,7 +362,7 @@ export default function Employees({
                 className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
               >
                 <option value="">-- Departamento --</option>
-                {departments.map(d => (
+                {sortedDepartments.map(d => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
