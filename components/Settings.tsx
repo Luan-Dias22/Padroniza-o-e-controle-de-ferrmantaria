@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap, Bug } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 import { motion, AnimatePresence } from 'motion/react';
+import firebaseConfig from '@/firebase-applet-config.json';
 
 export default function Settings({ onSync, onRestoreTemplate }: { 
   onSync?: () => Promise<boolean>,
   onRestoreTemplate?: () => void 
 }) {
+  const [showDebug, setShowDebug] = useState(false);
   const [logo, setLogo] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return getLogoBase64();
@@ -210,6 +212,32 @@ export default function Settings({ onSync, onRestoreTemplate }: {
               Restaurar Dados do Template (Exemplo)
             </button>
           </motion.div>
+
+          <div className="mt-12 pt-6 border-t border-slate-800/50">
+            <button 
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-slate-600 hover:text-slate-400 text-xs flex items-center gap-2 transition-colors"
+            >
+              <Bug className="w-3 h-3" />
+              {showDebug ? 'Ocultar Informações de Diagnóstico' : 'Mostrar Informações de Diagnóstico'}
+            </button>
+            
+            <AnimatePresence>
+              {showDebug && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4 p-4 bg-black/40 rounded-lg border border-slate-800 font-mono text-[10px] text-slate-500 overflow-hidden"
+                >
+                  <p className="mb-2 text-cyan-500/70 uppercase tracking-widest font-bold">Configuração Ativa:</p>
+                  <pre>{JSON.stringify(firebaseConfig, null, 2)}</pre>
+                  <p className="mt-4 mb-2 text-cyan-500/70 uppercase tracking-widest font-bold">Ambiente:</p>
+                  <p>URL: {typeof window !== 'undefined' ? window.location.origin : 'Server-side'}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </motion.div>
