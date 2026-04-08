@@ -44,6 +44,7 @@
         "name": { "type": "string" },
         "standardListId": { "type": "string" },
         "expectedNewcomers": { "type": "number" },
+        "requiredHeadcount": { "type": "number" },
         "uid": { "type": "string" }
       },
       "required": ["name", "uid"]

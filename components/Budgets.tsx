@@ -134,7 +134,7 @@ export default function Budgets({
         if (!standardList) return;
 
         const deptEmployees = (employees || []).filter(e => e.departmentId === dept.id);
-        const deptEmployeesCount = deptEmployees.length + (dept.expectedNewcomers || 0);
+        const deptEmployeesCount = Math.max(deptEmployees.length + (dept.expectedNewcomers || 0), dept.requiredHeadcount || 0);
         
         // Calculate available tools from assignments
         const availableTools: Record<string, number> = {};
@@ -315,7 +315,7 @@ export default function Budgets({
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // slate-400
-      doc.setFont('courier', 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
     }
 

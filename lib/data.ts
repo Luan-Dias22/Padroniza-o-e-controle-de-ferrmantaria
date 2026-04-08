@@ -1,6 +1,6 @@
 export type Tool = { id: string, brand: string, name: string, category: string, description: string, price?: number };
 export type StandardToolList = { id: string, name: string, tools: { toolId: string, quantity: number }[], isLocked?: boolean };
-export type Department = { id: string, name: string, standardListId?: string, expectedNewcomers?: number };
+export type Department = { id: string, name: string, standardListId?: string, expectedNewcomers?: number, requiredHeadcount?: number };
 export type Employee = { id: string, employeeId: string, name: string, departmentId: string };
 export type Assignment = { id: string, employeeId: string, departmentId: string, assignedTools: { toolId: string, quantity: number }[], dateAssigned: string };
 

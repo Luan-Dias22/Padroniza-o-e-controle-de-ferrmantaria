@@ -30,7 +30,8 @@ export default function Reports({ tools, departments, assignments, employees, co
       requiredIndividual: Record<string, number>,
       total: Record<string, number>,
       stations: Record<string, string[]>,
-      stationDetails: Record<string, { name: string, missing: number }[]>
+      stationDetails: Record<string, { name: string, missing: number, required: number, current: number }[]>,
+      standardQtyPerBox: Record<string, number>
     }> = {};
 
     // Initialize data structure for all departments
@@ -42,7 +43,8 @@ export default function Reports({ tools, departments, assignments, employees, co
         requiredIndividual: {},
         total: {},
         stations: {},
-        stationDetails: {}
+        stationDetails: {},
+        standardQtyPerBox: {}
       };
       
       // Add tools from new collectiveStations collection
@@ -62,8 +64,10 @@ export default function Reports({ tools, departments, assignments, employees, co
               }
               if (!data[dept.id].stations[tool.toolId].includes(s.name)) {
                 data[dept.id].stations[tool.toolId].push(s.name);
-                const missing = Math.max(0, (tool.requiredQuantity ?? tool.quantity) - tool.quantity);
-                data[dept.id].stationDetails[tool.toolId].push({ name: s.name, missing });
+                const required = tool.requiredQuantity ?? tool.quantity;
+                const current = tool.quantity;
+                const missing = Math.max(0, required - current);
+                data[dept.id].stationDetails[tool.toolId].push({ name: s.name, missing, required, current });
               }
             }
           });
@@ -86,7 +90,8 @@ export default function Reports({ tools, departments, assignments, employees, co
         requiredIndividual: {},
         total: {},
         stations: {},
-        stationDetails: {}
+        stationDetails: {},
+        standardQtyPerBox: {}
       };
 
       (collectiveStations || [])
@@ -104,8 +109,10 @@ export default function Reports({ tools, departments, assignments, employees, co
               }
               if (!data[lineId].stations[tool.toolId].includes(s.name)) {
                 data[lineId].stations[tool.toolId].push(s.name);
-                const missing = Math.max(0, (tool.requiredQuantity ?? tool.quantity) - tool.quantity);
-                data[lineId].stationDetails[tool.toolId].push({ name: s.name, missing });
+                const required = tool.requiredQuantity ?? tool.quantity;
+                const current = tool.quantity;
+                const missing = Math.max(0, required - current);
+                data[lineId].stationDetails[tool.toolId].push({ name: s.name, missing, required, current });
               }
             }
           });
@@ -130,7 +137,8 @@ export default function Reports({ tools, departments, assignments, employees, co
       const standardList = (standardLists || []).find(l => l.id === dept.standardListId);
       if (!standardList) return;
 
-      const deptEmployeesCount = (employees || []).filter(e => e.departmentId === dept.id).length + (dept.expectedNewcomers || 0);
+      const currentEmployeesCount = (employees || []).filter(e => e.departmentId === dept.id).length;
+      const deptEmployeesCount = Math.max(currentEmployeesCount + (dept.expectedNewcomers || 0), dept.requiredHeadcount || 0);
       
       (standardList.tools || []).forEach(tool => {
         const requiredQty = tool.quantity * deptEmployeesCount;
@@ -138,6 +146,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         // but for individual tools we need to factor this into the "Nec." (Necessary) column.
         // Let's add a new field to track required individual tools.
         data[dept.id].requiredIndividual[tool.toolId] = requiredQty;
+        data[dept.id].standardQtyPerBox[tool.toolId] = tool.quantity;
         
         // Ensure the tool is in the total list so it shows up in the report even if not assigned yet
         if (data[dept.id].total[tool.toolId] === undefined) {
@@ -317,52 +326,94 @@ export default function Reports({ tools, departments, assignments, employees, co
       const deptText = `LINHA/DEPARTAMENTO: ${dept.name.toUpperCase()}`;
       doc.text(deptText, 14, currentY);
       
-      // Find the original department to get expectedNewcomers
+      // Find the original department to get expectedNewcomers and requiredHeadcount
       const originalDept = departments.find(d => d.id === dept.id);
-      if (originalDept && originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
-        const textWidth = doc.getTextWidth(deptText);
-        doc.setFontSize(10);
-        doc.setTextColor(16, 185, 129); // emerald-500
-        doc.setFont('courier', 'bold');
-        doc.text(`[+${originalDept.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, currentY);
+      let badgeX = 14 + doc.getTextWidth(deptText) + 4;
+      
+      if (originalDept) {
+        if (originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
+          doc.setFontSize(9);
+          doc.setTextColor(16, 185, 129); // emerald-500
+          doc.setFont('helvetica', 'bold');
+          const badgeText = `[+${originalDept.expectedNewcomers} NOVATOS]`;
+          doc.text(badgeText, badgeX, currentY);
+          badgeX += doc.getTextWidth(badgeText) + 3;
+        }
+        
+        if (originalDept.requiredHeadcount && originalDept.requiredHeadcount > 0) {
+          doc.setFontSize(9);
+          doc.setTextColor(15, 118, 110); // teal-700
+          doc.setFont('helvetica', 'bold');
+          doc.text(`[META: ${originalDept.requiredHeadcount} FUNC.]`, badgeX, currentY);
+        }
       }
       
       currentY += 6;
 
-      const head = ['FERRAMENTA', 'MARCA', 'NEC.', 'ATU.', 'FAL.'];
-      if (selectedToolType === 'all' || selectedToolType === 'collective') head.push('POSTOS');
+      const head = ['FERRAMENTA', 'MARCA', 'QTD/CAIXA', 'NEC.', 'ATU.', 'FAL.'];
+      if (selectedToolType === 'all') head.push('POSTOS');
+      if (selectedToolType === 'collective') {
+        head.splice(1, 0, 'POSTO'); // Insert POSTO after FERRAMENTA
+        // Remove QTD/CAIXA for collective as it doesn't apply the same way
+        const boxIdx = head.indexOf('QTD/CAIXA');
+        if (boxIdx > -1) head.splice(boxIdx, 1);
+      }
 
-      const tableData = toolIds.map(toolId => {
+      const tableData: any[][] = [];
+      
+      toolIds.forEach(toolId => {
         const tool = tools.find(t => t.id === toolId);
         const stations = deptData.stationDetails?.[toolId] || [];
-        const stationsText = stations.length > 0 
-          ? stations.map(s => `${s.name}${s.missing > 0 ? ` (Falta ${s.missing})` : ''}`).join(', ') 
-          : '-';
-        const individualQty = deptData.individual[toolId] || 0;
-        const collectiveQty = deptData.collective[toolId] || 0;
-        const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
-        const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
-
-        const reqQty = selectedToolType === 'all' 
-          ? (requiredIndividualQty + requiredCollectiveQty)
-          : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
-
-        const curQty = selectedToolType === 'all'
-          ? (individualQty + collectiveQty)
-          : (selectedToolType === 'individual' ? individualQty : collectiveQty);
-
-        const missingQty = Math.max(0, reqQty - curQty);
-
-        const row: any[] = [
-          tool?.name.toUpperCase() || 'DESCONHECIDA',
-          tool?.brand.toUpperCase() || '-',
-          reqQty.toString(),
-          curQty.toString(),
-          missingQty.toString()
-        ];
-        if (selectedToolType === 'all' || selectedToolType === 'collective') row.push(stationsText.toUpperCase());
         
-        return row;
+        if (selectedToolType === 'collective' && stations.length > 0) {
+          // Expand rows for collective tools by station
+          stations.forEach(s => {
+            tableData.push([
+              tool?.name.toUpperCase() || 'DESCONHECIDA',
+              s.name.toUpperCase(),
+              tool?.brand.toUpperCase() || '-',
+              s.required.toString(),
+              s.current.toString(),
+              s.missing.toString()
+            ]);
+          });
+        } else {
+          // Grouped view for individual or combined
+          const stationsText = stations.length > 0 
+            ? stations.map(s => `${s.name}${s.missing > 0 ? ` (Falta ${s.missing})` : ''}`).join(', ') 
+            : '-';
+          
+          const individualQty = deptData.individual[toolId] || 0;
+          const collectiveQty = deptData.collective[toolId] || 0;
+          const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
+          const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
+          const standardQty = deptData.standardQtyPerBox[toolId] || 0;
+
+          const reqQty = selectedToolType === 'all' 
+            ? (requiredIndividualQty + requiredCollectiveQty)
+            : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
+
+          const curQty = selectedToolType === 'all'
+            ? (individualQty + collectiveQty)
+            : (selectedToolType === 'individual' ? individualQty : collectiveQty);
+
+          const missingQty = Math.max(0, reqQty - curQty);
+
+          const row: any[] = [
+            tool?.name.toUpperCase() || 'DESCONHECIDA',
+            tool?.brand.toUpperCase() || '-',
+            standardQty > 0 ? standardQty.toString() : '-',
+            reqQty.toString(),
+            curQty.toString(),
+            missingQty.toString()
+          ];
+          
+          if (selectedToolType === 'all') {
+            row.push(stationsText.toUpperCase());
+          }
+          
+          tableData.push(row);
+        }
       });
 
       autoTable(doc, {
@@ -390,12 +441,21 @@ export default function Reports({ tools, departments, assignments, employees, co
         alternateRowStyles: {
           fillColor: [248, 250, 252] // slate-50
         },
-        columnStyles: {
+        columnStyles: selectedToolType === 'collective' ? {
           0: { fontStyle: 'bold', halign: 'left' },
           1: { halign: 'left' },
-          2: { halign: 'center' },
+          2: { halign: 'left' },
           3: { halign: 'center' },
-          4: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] }, // red-600 for missing
+          4: { halign: 'center' },
+          5: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] },
+        } : {
+          0: { fontStyle: 'bold', halign: 'left' },
+          1: { halign: 'left' },
+          2: { halign: 'center' }, // QTD/CAIXA
+          3: { halign: 'center' },
+          4: { halign: 'center' },
+          5: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38] },
+          6: { halign: 'left' }, // POSTOS
         },
         margin: { top: 15 },
       });
@@ -409,7 +469,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // slate-400
-      doc.setFont('courier', 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
     }
 

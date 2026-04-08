@@ -24,6 +24,7 @@ export default function Employees({
   const [editingDeptId, setEditingDeptId] = useState<string | null>(null);
   const [editDeptName, setEditDeptName] = useState('');
   const [editDeptNewcomers, setEditDeptNewcomers] = useState<number>(0);
+  const [editDeptRequiredHeadcount, setEditDeptRequiredHeadcount] = useState<number>(0);
 
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
@@ -108,7 +109,12 @@ export default function Employees({
 
   const handleUpdateDepartment = () => {
     if (!editDeptName.trim() || !editingDeptId) return;
-    setDepartments(departments.map(d => d.id === editingDeptId ? { ...d, name: editDeptName.trim(), expectedNewcomers: editDeptNewcomers } : d));
+    setDepartments(departments.map(d => d.id === editingDeptId ? { 
+      ...d, 
+      name: editDeptName.trim(), 
+      expectedNewcomers: editDeptNewcomers,
+      requiredHeadcount: editDeptRequiredHeadcount
+    } : d));
     setEditingDeptId(null);
   };
 
@@ -205,17 +211,29 @@ export default function Employees({
                           className="w-full p-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:border-emerald-500"
                           placeholder="Nome do departamento"
                         />
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider whitespace-nowrap">Novatos previstos:</span>
-                          <input 
-                            type="number"
-                            min="0"
-                            value={editDeptNewcomers} 
-                            onChange={e => setEditDeptNewcomers(parseInt(e.target.value) || 0)}
-                            className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:border-emerald-500"
-                          />
-                          <div className="flex-1"></div>
-                          <button onClick={handleUpdateDepartment} className="text-emerald-400 p-1.5 hover:bg-emerald-500/10 rounded-lg transition-colors"><Check className="w-4 h-4" /></button>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider whitespace-nowrap">Novatos previstos:</span>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={editDeptNewcomers} 
+                              onChange={e => setEditDeptNewcomers(parseInt(e.target.value) || 0)}
+                              className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider whitespace-nowrap">Funcionários Nec.:</span>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={editDeptRequiredHeadcount} 
+                              onChange={e => setEditDeptRequiredHeadcount(parseInt(e.target.value) || 0)}
+                              className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:border-emerald-500"
+                            />
+                            <div className="flex-1"></div>
+                            <button onClick={handleUpdateDepartment} className="text-emerald-400 p-1.5 hover:bg-emerald-500/10 rounded-lg transition-colors"><Check className="w-4 h-4" /></button>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -223,7 +241,12 @@ export default function Employees({
                         <div className="flex items-center justify-between w-full">
                           <span className="font-medium text-sm text-slate-200">{dept.name}</span>
                           <div className="flex gap-1">
-                            <button onClick={() => { setEditingDeptId(dept.id); setEditDeptName(dept.name); setEditDeptNewcomers(dept.expectedNewcomers || 0); }} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
+                            <button onClick={() => { 
+                              setEditingDeptId(dept.id); 
+                              setEditDeptName(dept.name); 
+                              setEditDeptNewcomers(dept.expectedNewcomers || 0);
+                              setEditDeptRequiredHeadcount(dept.requiredHeadcount || 0);
+                            }} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button onClick={() => handleDeleteDepartment(dept.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
@@ -234,6 +257,11 @@ export default function Employees({
                         {(dept.expectedNewcomers || 0) > 0 && (
                           <span className="text-[10px] font-mono text-emerald-400 mt-2 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 w-fit uppercase tracking-widest">
                             +{dept.expectedNewcomers} novato(s) previsto(s)
+                          </span>
+                        )}
+                        {(dept.requiredHeadcount || 0) > 0 && (
+                          <span className="text-[10px] font-mono text-cyan-400 mt-1 bg-cyan-500/10 px-2 py-1 rounded border border-cyan-500/20 w-fit uppercase tracking-widest">
+                            Meta: {dept.requiredHeadcount} funcionário(s)
                           </span>
                         )}
                       </div>

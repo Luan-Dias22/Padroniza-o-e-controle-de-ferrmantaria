@@ -27,6 +27,8 @@ service cloud.firestore {
     // Fields:
     //   - name: string (required)
     //   - standardListId: string (optional)
+    //   - expectedNewcomers: number (optional)
+    //   - requiredHeadcount: number (optional)
     //   - uid: string (required, immutable)
     //
     // Collection: users/{userId}/employees
@@ -116,10 +118,11 @@ service cloud.firestore {
     }
 
     function isValidDepartment(data) {
-      return hasOnlyAllowedFields(['name', 'uid'], ['standardListId', 'expectedNewcomers', 'id']) &&
+      return hasOnlyAllowedFields(['name', 'uid'], ['standardListId', 'expectedNewcomers', 'requiredHeadcount', 'id']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              (!('standardListId' in data) || (data.standardListId is string && data.standardListId.size() < 100)) &&
              (!('expectedNewcomers' in data) || (data.expectedNewcomers is number && data.expectedNewcomers >= 0)) &&
+             (!('requiredHeadcount' in data) || (data.requiredHeadcount is number && data.requiredHeadcount >= 0)) &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
