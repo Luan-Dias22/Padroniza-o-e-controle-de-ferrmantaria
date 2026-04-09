@@ -3,6 +3,7 @@ import { Department, StandardToolList, Tool } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, Link as LinkIcon, Lock, Unlock, Search, ListChecks } from 'lucide-react';
 import { motion } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
+import { sortByName } from '@/lib/utils';
 
 export default function StandardToolLists({ 
   departments, setDepartments, tools, standardLists, setStandardLists 
@@ -190,7 +191,7 @@ export default function StandardToolLists({
               <p className="text-center text-slate-500 p-4 text-sm font-mono">Nenhum kit criado.</p>
             ) : (
               <ul className="space-y-2">
-                {standardLists.map(kit => (
+                {[...standardLists].sort((a, b) => sortByName(a.name, b.name)).map(kit => (
                   <motion.li 
                     key={kit.id} 
                     initial={{ opacity: 0, x: -10 }}
@@ -380,7 +381,7 @@ export default function StandardToolLists({
             <p className="text-slate-500 text-sm font-mono">Nenhum departamento registrado. Crie departamentos na aba Colaboradores.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {departments.map((dept, idx) => (
+              {[...departments].sort((a, b) => sortByName(a.name, b.name)).map((dept, idx) => (
                 <motion.div 
                   key={dept.id} 
                   initial={{ opacity: 0, y: 10 }}
