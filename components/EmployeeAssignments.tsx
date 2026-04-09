@@ -7,6 +7,7 @@ import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getLogoBase64 } from '@/lib/pdfUtils';
+import { sortByName } from '@/lib/utils';
 
 export default function EmployeeAssignments({
   employees, setEmployees, departments, tools, standardLists, assignments, setAssignments
@@ -628,7 +629,7 @@ export default function EmployeeAssignments({
                 className="text-sm p-2 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all appearance-none w-full sm:w-auto"
               >
                 <option value="">Todos os Departamentos</option>
-                {departments.map(d => (
+                {[...departments].sort((a, b) => sortByName(a.name, b.name)).map(d => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>

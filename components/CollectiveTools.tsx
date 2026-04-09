@@ -5,6 +5,7 @@ import { CollectiveStation, CollectiveLine, Tool } from '@/lib/data';
 import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
+import { sortByName } from '@/lib/utils';
 
 export default function CollectiveTools({
   lines, setLines,
@@ -260,7 +261,7 @@ export default function CollectiveTools({
           >
             Todas as Linhas
           </button>
-          {lines.map(line => (
+          {[...lines].sort((a, b) => sortByName(a.name, b.name)).map(line => (
             <button 
               key={line.id}
               onClick={() => setSelectedLineId(line.id)}
@@ -491,7 +492,7 @@ export default function CollectiveTools({
                     required
                   >
                     <option value="" disabled>Selecione uma linha</option>
-                    {lines.map(line => (
+                    {[...lines].sort((a, b) => sortByName(a.name, b.name)).map(line => (
                       <option key={line.id} value={line.id}>{line.name}</option>
                     ))}
                   </select>
