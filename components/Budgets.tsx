@@ -301,7 +301,7 @@ const handleExportExcel = (budgetData: any) => {
           l.name.toLowerCase().includes('linha 1') && 
           l.name.toLowerCase().includes(itemName.toLowerCase())
         );
-        return found ? found.requiredCost : 0;
+        return found ? (found as any).requiredCost : 0;
       };
 
       let totalLinha1 = 0;
