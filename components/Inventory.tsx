@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation } from '@/lib/data';
+import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList } from '@/lib/data';
 import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
@@ -10,10 +10,11 @@ interface InventoryProps {
   collectiveLines: CollectiveLine[];
   collectiveStations: CollectiveStation[];
   stockEntries: StockEntry[];
+  standardLists: StandardToolList[];
   setStockEntries: (entries: StockEntry[]) => void;
 }
 
-export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, setStockEntries }: InventoryProps) {
+export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, setStockEntries }: InventoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedToolId, setSelectedToolId] = useState('');
   const [selectedLineId, setSelectedLineId] = useState('');
@@ -48,7 +49,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const filteredLines = stockType === 'collective' 
     ? allLines.filter(line => collectiveStations.some(s => s.line === line.name))
-    : allLines;
+    : allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId));
 
   const handleAddStock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,6 +178,12 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   type="button"
                   onClick={() => {
                     setStockType('individual');
+                    // Check if current selected line is still valid for individual
+                    const isStillAvailable = allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId)).some(l => l.id === selectedLineId);
+                    if (!isStillAvailable) {
+                      setSelectedLineId('');
+                      setSelectedStation('');
+                    }
                   }}
                   className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
                     stockType === 'individual'

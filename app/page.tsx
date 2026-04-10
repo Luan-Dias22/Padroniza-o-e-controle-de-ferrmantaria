@@ -405,6 +405,7 @@ export default function App() {
                 collectiveLines={collectiveLines}
                 collectiveStations={collectiveStations}
                 stockEntries={stockEntries}
+                standardLists={standardLists}
                 setStockEntries={setStockEntries}
               />
             )}
