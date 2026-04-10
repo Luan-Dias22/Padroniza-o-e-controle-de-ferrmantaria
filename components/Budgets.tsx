@@ -170,7 +170,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
           l.name.toLowerCase().includes('linha 1') && 
           l.name.toLowerCase().includes(itemName.toLowerCase())
         );
-        return found ? found.requiredCost : 0;
+        return found ? (found as any).requiredCost : 0;
       };
 
       let totalLinha1 = 0;
@@ -784,7 +784,7 @@ export default function Budgets({
                             l.name.toLowerCase().includes('linha 1') && 
                             l.name.toLowerCase().includes(item.toLowerCase())
                           );
-                          const cost = found ? found.requiredCost : 0;
+                          const cost = found ? (found as any).requiredCost : 0;
                           return (
                             <tr key={item}>
                               <td className="p-2 text-slate-400">Linha 1 {item}</td>
@@ -809,7 +809,7 @@ export default function Budgets({
                                 l.name.toLowerCase().includes('linha 1') && 
                                 l.name.toLowerCase().includes(item.toLowerCase())
                               );
-                              return acc + (found ? found.requiredCost : 0);
+                              return acc + (found ? (found as any).requiredCost : 0);
                             }, 0).toFixed(2)}
                           </th>
                         </tr>
