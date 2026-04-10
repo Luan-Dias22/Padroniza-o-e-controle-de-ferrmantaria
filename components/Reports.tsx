@@ -155,6 +155,9 @@ export default function Reports({ tools, departments, assignments, employees, co
       if (se.type === 'individual') {
         data[se.lineId].stockIndividual[se.toolId] = (data[se.lineId].stockIndividual[se.toolId] || 0) + se.quantity;
       } else {
+        // Add to collective count for the line/dept
+        data[se.lineId].collective[se.toolId] = (data[se.lineId].collective[se.toolId] || 0) + se.quantity;
+
         if (se.station) {
           if (!data[se.lineId].stockStation[se.toolId]) data[se.lineId].stockStation[se.toolId] = {};
           data[se.lineId].stockStation[se.toolId][se.station] = (data[se.lineId].stockStation[se.toolId][se.station] || 0) + se.quantity;
@@ -164,6 +167,20 @@ export default function Reports({ tools, departments, assignments, employees, co
       }
       
       data[se.lineId].total[se.toolId] = (data[se.lineId].total[se.toolId] || 0) + se.quantity;
+    });
+
+    // Update stationDetails with stock quantities
+    Object.keys(data).forEach(id => {
+      const deptData = data[id];
+      Object.keys(deptData.stationDetails).forEach(toolId => {
+        deptData.stationDetails[toolId].forEach(detail => {
+          const stockQty = deptData.stockStation[toolId]?.[detail.name] || 0;
+          if (stockQty > 0) {
+            detail.current += stockQty;
+            detail.missing = Math.max(0, detail.required - detail.current);
+          }
+        });
+      });
     });
 
     // Calculate required individual tools based on employees and standard lists

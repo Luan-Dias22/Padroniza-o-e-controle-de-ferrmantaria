@@ -396,6 +396,7 @@ export default function App() {
                 stations={collectiveStations}
                 setStations={setCollectiveStations}
                 tools={tools}
+                stockEntries={stockEntries}
               />
             )}
             {activeTab === 'inventory' && (

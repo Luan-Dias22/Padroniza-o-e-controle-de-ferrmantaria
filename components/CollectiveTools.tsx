@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { CollectiveStation, CollectiveLine, Tool } from '@/lib/data';
+import { CollectiveStation, CollectiveLine, Tool, StockEntry } from '@/lib/data';
 import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
@@ -10,11 +10,13 @@ import { sortByName } from '@/lib/utils';
 export default function CollectiveTools({
   lines, setLines,
   stations, setStations,
-  tools
+  tools,
+  stockEntries = []
 }: {
   lines: CollectiveLine[], setLines: (lines: CollectiveLine[]) => void,
   stations: CollectiveStation[], setStations: (stations: CollectiveStation[]) => void,
-  tools: Tool[]
+  tools: Tool[],
+  stockEntries?: StockEntry[]
 }) {
   const [selectedLineId, setSelectedLineId] = useState<string>('all');
   const [isStationModalOpen, setIsStationModalOpen] = useState(false);
@@ -342,7 +344,12 @@ export default function CollectiveTools({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-slate-300">
-                            {station.tools.reduce((acc, t) => acc + t.quantity, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
+                            {station.tools.reduce((acc, t) => {
+                              const stockQty = stockEntries
+                                .filter(se => se.type === 'collective' && se.station === station.name && se.toolId === t.toolId)
+                                .reduce((sum, se) => sum + se.quantity, 0);
+                              return acc + t.quantity + stockQty;
+                            }, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
                           </span>
                           <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{station.tools.length} tipos</span>
                         </div>
@@ -694,20 +701,28 @@ export default function CollectiveTools({
                         </tr>
                       </thead>
                       <tbody>
-                        {viewingStation.tools.map((t, idx) => (
-                          <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                            <td className="p-4 font-medium text-slate-200">{t.name}</td>
-                            <td className="p-4 text-slate-400 text-xs font-mono uppercase tracking-wider">{t.category}</td>
-                            <td className="p-4 text-center">
-                              <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-lg text-sm font-mono border ${t.quantity < (t.requiredQuantity ?? t.quantity) ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                                {t.quantity}
-                              </span>
-                            </td>
-                            <td className="p-4 text-center text-slate-400 font-mono font-bold">
-                              {t.requiredQuantity ?? t.quantity}
-                            </td>
-                          </tr>
-                        ))}
+                        {viewingStation.tools.map((t, idx) => {
+                          const stockQty = stockEntries
+                            .filter(se => se.type === 'collective' && se.station === viewingStation.name && se.toolId === t.toolId)
+                            .reduce((sum, se) => sum + se.quantity, 0);
+                          const currentQty = t.quantity + stockQty;
+                          const requiredQty = t.requiredQuantity ?? t.quantity;
+                          
+                          return (
+                            <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
+                              <td className="p-4 font-medium text-slate-200">{t.name}</td>
+                              <td className="p-4 text-slate-400 text-xs font-mono uppercase tracking-wider">{t.category}</td>
+                              <td className="p-4 text-center">
+                                <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-lg text-sm font-mono border ${currentQty < requiredQty ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                  {currentQty}
+                                </span>
+                              </td>
+                              <td className="p-4 text-center text-slate-400 font-mono font-bold">
+                                {requiredQty}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
