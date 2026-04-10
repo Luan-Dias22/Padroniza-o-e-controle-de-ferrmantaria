@@ -215,6 +215,23 @@ export default function Reports({ tools, departments, assignments, employees, co
     return true;
   });
 
+  const dropdownEntities = useMemo(() => {
+    if (selectedToolType === 'all') return allReportEntities;
+    
+    return allReportEntities.filter(entity => {
+      if (selectedToolType === 'individual') {
+        const data = reportData[entity.id];
+        return data && (Object.keys(data.individual).length > 0 || Object.keys(data.requiredIndividual).length > 0);
+      }
+      
+      if (selectedToolType === 'collective') {
+        return (collectiveStations || []).some(s => s.line === entity.name);
+      }
+      
+      return true;
+    });
+  }, [allReportEntities, selectedToolType, reportData, collectiveStations]);
+
   const summaryData = useMemo(() => {
     let indCurrent = 0;
     let indMissing = 0;
@@ -825,13 +842,35 @@ export default function Reports({ tools, departments, assignments, employees, co
             className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todas as Linhas</option>
-            {allReportEntities.map(dept => (
+            {dropdownEntities.map(dept => (
               <option key={dept.id} value={dept.id}>{dept.name}</option>
             ))}
           </select>
           <select
             value={selectedToolType}
-            onChange={(e) => setSelectedToolType(e.target.value as any)}
+            onChange={(e) => {
+              const newType = e.target.value as any;
+              setSelectedToolType(newType);
+              
+              // If current department is not in the new filtered list, reset to 'all'
+              if (selectedDepartment !== 'all') {
+                const isStillValid = allReportEntities.filter(entity => {
+                  if (newType === 'all') return true;
+                  if (newType === 'individual') {
+                    const data = reportData[entity.id];
+                    return data && (Object.keys(data.individual).length > 0 || Object.keys(data.requiredIndividual).length > 0);
+                  }
+                  if (newType === 'collective') {
+                    return (collectiveStations || []).some(s => s.line === entity.name);
+                  }
+                  return true;
+                }).some(e => e.id === selectedDepartment);
+                
+                if (!isStillValid) {
+                  setSelectedDepartment('all');
+                }
+              }
+            }}
             className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todos os Tipos</option>
