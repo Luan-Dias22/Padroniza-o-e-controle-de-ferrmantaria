@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap, Package } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
@@ -13,8 +13,9 @@ import Reports from '@/components/Reports';
 import CollectiveTools from '@/components/CollectiveTools';
 import Settings from '@/components/Settings';
 import Budgets from '@/components/Budgets';
+import Inventory from '@/components/Inventory';
 import { useFirestore } from '@/lib/useFirestore';
-import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation } from '@/lib/data';
+import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation, StockEntry } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 
@@ -60,6 +61,7 @@ export default function App() {
   const [assignments, setAssignments, assignInit, syncAssignments] = useFirestore<Assignment>('assignments', mockAssignments);
   const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', []);
   const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', []);
+  const [stockEntries, setStockEntries, stockInit, syncStock] = useFirestore<StockEntry>('stockEntries', []);
 
   const syncAllData = async () => {
     try {
@@ -70,7 +72,8 @@ export default function App() {
         syncDepts(),
         syncAssignments(),
         syncLines(),
-        syncStations()
+        syncStations(),
+        syncStock()
       ]);
       return true;
     } catch (error) {
@@ -87,9 +90,10 @@ export default function App() {
     setAssignments(mockAssignments);
     setCollectiveLines([]);
     setCollectiveStations([]);
+    setStockEntries([]);
   };
 
-  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit));
+  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit));
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -119,6 +123,7 @@ export default function App() {
     { id: 'employees', label: 'Colaboradores', icon: Building2 },
     { id: 'assignments', label: 'Atribuições', icon: Users },
     { id: 'collective', label: 'Ferramentas Coletivas', icon: LayoutGrid },
+    { id: 'inventory', label: 'Estoque', icon: Package },
     { id: 'budgets', label: 'Orçamentos', icon: Calculator },
     { id: 'reports', label: 'Relatórios', icon: FileText },
     { id: 'settings', label: 'Configurações', icon: SettingsIcon },
@@ -381,6 +386,7 @@ export default function App() {
                 collectiveStations={collectiveStations}
                 standardLists={standardLists}
                 collectiveLines={collectiveLines}
+                stockEntries={stockEntries}
               />
             )}
             {activeTab === 'collective' && (
@@ -390,6 +396,16 @@ export default function App() {
                 stations={collectiveStations}
                 setStations={setCollectiveStations}
                 tools={tools}
+              />
+            )}
+            {activeTab === 'inventory' && (
+              <Inventory 
+                tools={tools}
+                departments={departments}
+                collectiveLines={collectiveLines}
+                collectiveStations={collectiveStations}
+                stockEntries={stockEntries}
+                setStockEntries={setStockEntries}
               />
             )}
             {activeTab === 'settings' && (
@@ -405,6 +421,7 @@ export default function App() {
                 collectiveStations={collectiveStations}
                 standardLists={standardLists}
                 collectiveLines={collectiveLines}
+                stockEntries={stockEntries}
               />
             )}
           </motion.div>

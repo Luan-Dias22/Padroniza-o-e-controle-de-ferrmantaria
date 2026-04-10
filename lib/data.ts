@@ -16,6 +16,16 @@ export type CollectiveLine = {
   name: string;
 };
 
+export type StockEntry = {
+  id: string;
+  toolId: string;
+  lineId: string; // Can be department id or collective line id
+  quantity: number;
+  date: string;
+  type?: 'individual' | 'collective';
+  station?: string;
+};
+
 export const mockTools: Tool[] = [
   { id: 't1', brand: 'Bosch', name: 'Furadeira Elétrica', category: 'ferramenta elétrica', description: 'Furadeira sem fio 20V' },
   { id: 't2', brand: 'Gedore', name: 'Chave de Torque', category: 'ferramenta manual', description: 'Encaixe de 1/2 polegada' },

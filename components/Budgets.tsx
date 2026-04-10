@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine, StockEntry } from '@/lib/data';
 import { Calculator, Download, Save, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx-js-style';
 import { getLogoBase64 } from '@/lib/pdfUtils';
 import { sortByName } from '@/lib/utils';
 
@@ -16,10 +17,11 @@ interface BudgetsProps {
   collectiveStations: CollectiveStation[];
   standardLists: StandardToolList[];
   collectiveLines: CollectiveLine[];
+  stockEntries?: StockEntry[];
 }
 
 export default function Budgets({ 
-  tools, setTools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines 
+  tools, setTools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries 
 }: BudgetsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
@@ -95,6 +97,12 @@ export default function Budgets({
           });
         });
 
+        // Add stock entries to available tools
+        (stockEntries || []).filter(se => se.lineId === lineId && se.type !== 'individual').forEach(se => {
+          if (!lineTools[se.toolId]) lineTools[se.toolId] = { required: 0, available: 0 };
+          lineTools[se.toolId].available += se.quantity;
+        });
+
         Object.keys(lineTools).forEach(toolId => {
           const tool = tools.find(t => t.id === toolId);
           if (tool) {
@@ -145,6 +153,11 @@ export default function Budgets({
           });
         });
 
+        // Add stock entries to available tools
+        (stockEntries || []).filter(se => se.lineId === dept.id && se.type !== 'collective').forEach(se => {
+          availableTools[se.toolId] = (availableTools[se.toolId] || 0) + se.quantity;
+        });
+
         (standardList.tools || []).forEach(t => {
           const tool = tools.find(tool => tool.id === t.toolId);
           if (tool) {
@@ -178,7 +191,7 @@ export default function Budgets({
     const sortedData = Object.entries(data).sort(([, a], [, b]) => sortByName(a.name, b.name));
 
     return Object.fromEntries(sortedData);
-  }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, toolCategoryFilter]);
+  }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, toolCategoryFilter, stockEntries]);
 
   const generatePDF = () => {
     const doc = new jsPDF();
@@ -273,10 +286,14 @@ export default function Budgets({
         `R$ ${t.costMissing.toFixed(2)}`
       ]);
 
+      const totalReq = line.tools.reduce((acc, t) => acc + t.required, 0);
+      const totalMissing = line.tools.reduce((acc, t) => acc + t.missing, 0);
+
       autoTable(doc, {
         startY: yPos,
         head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
         body: tableData,
+        foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), `R$ ${line.requiredCost.toFixed(2)}`, `R$ ${line.missingCost.toFixed(2)}`]],
         theme: 'grid',
         styles: {
           font: 'helvetica',
@@ -291,6 +308,11 @@ export default function Budgets({
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           halign: 'center'
+        },
+        footStyles: {
+          fillColor: [241, 245, 249], // slate-100
+          textColor: [15, 23, 42], // slate-900
+          fontStyle: 'bold',
         },
         bodyStyles: {
           textColor: [51, 65, 85] // slate-700
@@ -324,6 +346,124 @@ export default function Budgets({
     }
 
     doc.save('orcamentos_linhas.pdf');
+  };
+
+  const handleExportExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const wsData: any[][] = [];
+
+    // Add headers
+    const headers = [
+      'LINHA / DEPARTAMENTO',
+      'FERRAMENTA',
+      'MARCA',
+      'VALOR UNITÁRIO',
+      'QTD. NECESSÁRIA',
+      'QTD. FALTANTE',
+      'CUSTO NECESSÁRIO'
+    ];
+    wsData.push(headers);
+
+    Object.entries(budgetData).forEach(([lineId, line]) => {
+      line.tools.forEach(t => {
+        wsData.push([
+          line.name.toUpperCase(),
+          t.tool.name.toUpperCase(),
+          t.tool.brand.toUpperCase(),
+          t.tool.price || 0,
+          t.required,
+          t.missing,
+          t.costRequired
+        ]);
+      });
+
+      // Add a total row for the line
+      const totalReq = line.tools.reduce((acc, t) => acc + t.required, 0);
+      const totalMissing = line.tools.reduce((acc, t) => acc + t.missing, 0);
+      wsData.push([
+        `TOTAL ${line.name.toUpperCase()}`,
+        '',
+        '',
+        '',
+        totalReq,
+        totalMissing,
+        line.requiredCost
+      ]);
+      // Add an empty row for spacing
+      wsData.push([]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Apply styles
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:G1');
+    
+    // Header style
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "000000" } },
+      fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue from the image
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+
+    // Body style
+    const bodyStyle = {
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      const rowData = wsData[R];
+      // Skip styling for completely empty rows (spacing rows)
+      if (!rowData || rowData.length === 0) continue;
+
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        let cell = ws[cellAddress];
+        
+        if (!cell) {
+          cell = { v: '', t: 's' };
+          ws[cellAddress] = cell;
+        }
+
+        if (R === 0) {
+          cell.s = headerStyle;
+        } else {
+          cell.s = bodyStyle;
+
+          // Apply currency formatting to the relevant columns (D, G)
+          if (C === 3 && typeof cell.v === 'number') { // Column D (Valor Unitário)
+            cell.z = '"R$" #,##0.00';
+          }
+          if (C === 6 && typeof cell.v === 'number') { // Column G (Custo Necessário)
+            cell.z = '"R$" #,##0.00';
+          }
+        }
+      }
+    }
+
+    // Auto-size columns
+    ws['!cols'] = [
+      { wch: 25 }, // Linha
+      { wch: 35 }, // Ferramenta
+      { wch: 15 }, // Marca
+      { wch: 18 }, // Valor Unit
+      { wch: 18 }, // Qtd Nec
+      { wch: 18 }, // Qtd Fal
+      { wch: 20 }, // Custo Nec
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Orçamentos');
+    XLSX.writeFile(wb, `orcamentos_linhas_${new Date().getTime()}.xlsx`);
   };
 
   const filteredTools = tools.filter(t => 
@@ -368,13 +508,22 @@ export default function Budgets({
             <option value="collective">Apenas Coletivas</option>
             <option value="individual">Apenas Individuais</option>
           </select>
-          <button
-            onClick={generatePDF}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
-          >
-            <Download className="w-4 h-4" />
-            Gerar PDF
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleExportExcel}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              Excel
+            </button>
+            <button
+              onClick={generatePDF}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              PDF
+            </button>
+          </div>
         </div>
       </div>
 

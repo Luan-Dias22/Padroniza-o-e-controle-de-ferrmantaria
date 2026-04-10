@@ -62,6 +62,17 @@ service cloud.firestore {
     //   - tools: list of objects (required)
     //   - uid: string (required, immutable)
     //
+    // Collection: users/{userId}/stockEntries
+    // Document ID: auto-generated
+    // Fields:
+    //   - toolId: string (required)
+    //   - lineId: string (required)
+    //   - quantity: number (required)
+    //   - date: string (required)
+    //   - uid: string (required, immutable)
+    //   - type: string (required)
+    //   - station: string (optional)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -157,6 +168,17 @@ service cloud.firestore {
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
 
+    function isValidStockEntry(data) {
+      return hasOnlyAllowedFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type'], ['id', 'station']) &&
+             data.toolId is string && data.toolId.size() > 0 && data.toolId.size() < 100 &&
+             data.lineId is string && data.lineId.size() > 0 && data.lineId.size() < 100 &&
+             data.quantity is number && data.quantity > 0 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.type in ['individual', 'collective'] &&
+             (!('station' in data) || (data.station is string && data.station.size() < 100));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -207,6 +229,13 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && hasRequiredFields(['name', 'line', 'tools', 'uid']) && isValidCollectiveStation(request.resource.data) && uidUnchanged();
         allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveStation(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId) && isDocOwner();
+      }
+
+      match /stockEntries/{entryId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && hasRequiredFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type']) && isValidStockEntry(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isDocOwner() && isValidStockEntry(request.resource.data) && uidNotModified();
         allow delete: if isOwner(userId) && isDocOwner();
       }
     }

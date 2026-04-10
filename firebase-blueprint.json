@@ -117,6 +117,21 @@
         "uid": { "type": "string" }
       },
       "required": ["name", "line", "tools", "uid"]
+    },
+    "StockEntry": {
+      "title": "StockEntry",
+      "description": "An entry of stock added to a line or department",
+      "type": "object",
+      "properties": {
+        "toolId": { "type": "string" },
+        "lineId": { "type": "string" },
+        "quantity": { "type": "number" },
+        "date": { "type": "string" },
+        "uid": { "type": "string" },
+        "type": { "type": "string", "enum": ["individual", "collective"] },
+        "station": { "type": "string" }
+      },
+      "required": ["toolId", "lineId", "quantity", "date", "uid", "type"]
     }
   },
   "firestore": {
@@ -147,6 +162,10 @@
     "users/{userId}/collectiveStations/{stationId}": {
       "schema": { "$ref": "#/entities/CollectiveStation" },
       "description": "Collective stations owned by the user"
+    },
+    "users/{userId}/stockEntries/{entryId}": {
+      "schema": { "$ref": "#/entities/StockEntry" },
+      "description": "Stock entries owned by the user"
     }
   }
 }

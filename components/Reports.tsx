@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine } from '@/lib/data';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine, StockEntry } from '@/lib/data';
 import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx-js-style';
 import { getLogoBase64 } from '@/lib/pdfUtils';
 import { motion } from 'motion/react';
 import { sortByName } from '@/lib/utils';
@@ -15,9 +16,10 @@ interface ReportsProps {
   collectiveStations: CollectiveStation[];
   standardLists: StandardToolList[];
   collectiveLines: CollectiveLine[];
+  stockEntries?: StockEntry[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedToolType, setSelectedToolType] = useState<'all' | 'individual' | 'collective'>('all');
@@ -27,6 +29,9 @@ export default function Reports({ tools, departments, assignments, employees, co
     const data: Record<string, { 
       individual: Record<string, number>, 
       collective: Record<string, number>,
+      stockIndividual: Record<string, number>,
+      stockCollective: Record<string, number>,
+      stockStation: Record<string, Record<string, number>>,
       requiredCollective: Record<string, number>,
       requiredIndividual: Record<string, number>,
       total: Record<string, number>,
@@ -40,6 +45,9 @@ export default function Reports({ tools, departments, assignments, employees, co
       data[dept.id] = {
         individual: {},
         collective: {},
+        stockIndividual: {},
+        stockCollective: {},
+        stockStation: {},
         requiredCollective: {},
         requiredIndividual: {},
         total: {},
@@ -87,6 +95,9 @@ export default function Reports({ tools, departments, assignments, employees, co
       data[lineId] = {
         individual: {},
         collective: {},
+        stockIndividual: {},
+        stockCollective: {},
+        stockStation: {},
         requiredCollective: {},
         requiredIndividual: {},
         total: {},
@@ -97,6 +108,12 @@ export default function Reports({ tools, departments, assignments, employees, co
 
       (collectiveStations || [])
         .filter(s => s.line === line.name)
+        .sort((a, b) => {
+          const numA = parseInt(a.name.match(/\d+/)?.[0] || '0', 10);
+          const numB = parseInt(b.name.match(/\d+/)?.[0] || '0', 10);
+          if (numA !== numB) return numA - numB;
+          return a.name.localeCompare(b.name);
+        })
         .forEach(s => {
           (s.tools || []).forEach(tool => {
             if (tool.toolId) {
@@ -131,6 +148,24 @@ export default function Reports({ tools, departments, assignments, employees, co
       });
     });
 
+    // Aggregate stock entries
+    (stockEntries || []).forEach(se => {
+      if (!data[se.lineId]) return;
+      
+      if (se.type === 'individual') {
+        data[se.lineId].stockIndividual[se.toolId] = (data[se.lineId].stockIndividual[se.toolId] || 0) + se.quantity;
+      } else {
+        if (se.station) {
+          if (!data[se.lineId].stockStation[se.toolId]) data[se.lineId].stockStation[se.toolId] = {};
+          data[se.lineId].stockStation[se.toolId][se.station] = (data[se.lineId].stockStation[se.toolId][se.station] || 0) + se.quantity;
+        } else {
+          data[se.lineId].stockCollective[se.toolId] = (data[se.lineId].stockCollective[se.toolId] || 0) + se.quantity;
+        }
+      }
+      
+      data[se.lineId].total[se.toolId] = (data[se.lineId].total[se.toolId] || 0) + se.quantity;
+    });
+
     // Calculate required individual tools based on employees and standard lists
     (departments || []).forEach(dept => {
       if (!dept.standardListId || !data[dept.id]) return;
@@ -157,7 +192,7 @@ export default function Reports({ tools, departments, assignments, employees, co
     });
 
     return data;
-  }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines]);
+  }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines, stockEntries]);
 
   // Combine departments and collective lines for filtering and display
   const allReportEntities = useMemo(() => {
@@ -337,17 +372,30 @@ export default function Reports({ tools, departments, assignments, employees, co
       toolIds.forEach(toolId => {
         const tool = tools.find(t => t.id === toolId);
         const stations = deptData.stationDetails?.[toolId] || [];
+        const stockQty = deptData.stock[toolId] || 0;
         
         if (selectedToolType === 'collective' && stations.length > 0) {
           // Expand rows for collective tools by station
+          let remainingStock = stockQty;
+          
           stations.forEach(s => {
+            let currentForStation = s.current;
+            let missingForStation = s.missing;
+            
+            if (remainingStock > 0 && missingForStation > 0) {
+              const allocated = Math.min(remainingStock, missingForStation);
+              currentForStation += allocated;
+              missingForStation -= allocated;
+              remainingStock -= allocated;
+            }
+
             tableData.push([
               tool?.name.toUpperCase() || 'DESCONHECIDA',
               s.name.toUpperCase(),
               tool?.brand.toUpperCase() || '-',
               s.required.toString(),
-              s.current.toString(),
-              s.missing.toString()
+              currentForStation.toString(),
+              missingForStation.toString()
             ]);
           });
         } else {
@@ -358,6 +406,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           
           const individualQty = deptData.individual[toolId] || 0;
           const collectiveQty = deptData.collective[toolId] || 0;
+          const stockQty = deptData.stock[toolId] || 0;
           const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
           const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
           const standardQty = deptData.standardQtyPerBox[toolId] || 0;
@@ -367,8 +416,8 @@ export default function Reports({ tools, departments, assignments, employees, co
             : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
           const curQty = selectedToolType === 'all'
-            ? (individualQty + collectiveQty)
-            : (selectedToolType === 'individual' ? individualQty : collectiveQty);
+            ? (individualQty + collectiveQty + stockQty)
+            : (selectedToolType === 'individual' ? individualQty + stockQty : collectiveQty + stockQty);
 
           const missingQty = Math.max(0, reqQty - curQty);
 
@@ -388,6 +437,25 @@ export default function Reports({ tools, departments, assignments, employees, co
           tableData.push(row);
         }
       });
+
+      // Sort tableData by Posto (Station) for better visualization
+      if (selectedToolType === 'collective') {
+        tableData.sort((a, b) => {
+          const postoA = a[1] || '';
+          const postoB = b[1] || '';
+          const cmp = postoA.localeCompare(postoB);
+          if (cmp !== 0) return cmp;
+          return (a[0] || '').localeCompare(b[0] || ''); // Tool name
+        });
+      } else if (selectedToolType === 'all') {
+        tableData.sort((a, b) => {
+          const postoA = a[6] || '';
+          const postoB = b[6] || '';
+          const cmp = postoA.localeCompare(postoB);
+          if (cmp !== 0) return cmp;
+          return (a[0] || '').localeCompare(b[0] || ''); // Tool name
+        });
+      }
 
       autoTable(doc, {
         startY: currentY,
@@ -447,6 +515,203 @@ export default function Reports({ tools, departments, assignments, employees, co
     }
 
     doc.save(`relatorio-ferramentas-${new Date().getTime()}.pdf`);
+  };
+
+  const handleExportExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const wsData: any[][] = [];
+
+    // Add headers
+    const headers = [
+      'LINHA / DEPARTAMENTO',
+      'FERRAMENTA',
+      'MARCA',
+      'CATEGORIA',
+      'QTD. NECESSÁRIA',
+      'QTD. ATUAL',
+      'QTD. FALTANTE'
+    ];
+    if (selectedToolType === 'collective' || selectedToolType === 'all') {
+      headers.splice(2, 0, 'POSTO DE MONTAGEM');
+    }
+    wsData.push(headers);
+
+    filteredDepartments.forEach(dept => {
+      const deptData = reportData[dept.id];
+      if (!deptData) return;
+
+      const toolIds = Object.keys(deptData.requiredIndividual).concat(Object.keys(deptData.requiredCollective));
+      const uniqueToolIds = Array.from(new Set(toolIds));
+
+      const deptRows: any[][] = [];
+
+      uniqueToolIds.forEach(toolId => {
+        const tool = tools.find(t => t.id === toolId);
+        const individualQty = deptData.individual[toolId] || 0;
+        const collectiveQty = deptData.collective[toolId] || 0;
+        const stockIndQty = deptData.stockIndividual[toolId] || 0;
+        const stockColQty = deptData.stockCollective[toolId] || 0;
+        const stockStationData = deptData.stockStation[toolId] || {};
+        const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
+        const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
+        const stations = deptData.stationDetails?.[toolId] || [];
+
+        if (selectedToolType === 'collective' && stations.length > 0) {
+          // Distribute stock across stations to reduce missing
+          let remainingStock = stockColQty;
+          
+          stations.forEach(s => {
+            let currentForStation = s.current + (stockStationData[s.name] || 0);
+            let missingForStation = Math.max(0, s.required - currentForStation);
+            
+            if (remainingStock > 0 && missingForStation > 0) {
+              const allocated = Math.min(remainingStock, missingForStation);
+              currentForStation += allocated;
+              missingForStation -= allocated;
+              remainingStock -= allocated;
+            }
+
+            deptRows.push([
+              dept.name.toUpperCase(),
+              tool?.name.toUpperCase() || 'DESCONHECIDA',
+              s.name.toUpperCase(),
+              tool?.brand.toUpperCase() || '-',
+              tool?.category.toUpperCase() || '-',
+              s.required,
+              currentForStation,
+              missingForStation
+            ]);
+          });
+        } else {
+          const reqQty = selectedToolType === 'all' 
+            ? (requiredIndividualQty + requiredCollectiveQty)
+            : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
+
+          const curQty = selectedToolType === 'all'
+            ? (individualQty + collectiveQty + stockQty)
+            : (selectedToolType === 'individual' ? individualQty + stockQty : collectiveQty + stockQty);
+
+          const missingQty = Math.max(0, reqQty - curQty);
+          
+          if (reqQty === 0 && curQty === 0) return;
+
+          const row: any[] = [
+            dept.name.toUpperCase(),
+            tool?.name.toUpperCase() || 'DESCONHECIDA',
+          ];
+
+          if (selectedToolType === 'all' || selectedToolType === 'collective') {
+            const stationsText = stations.length > 0 
+              ? stations.map(s => `${s.name}${s.missing > 0 ? ` (Falta ${s.missing})` : ''}`).join(', ') 
+              : '-';
+            row.push(stationsText.toUpperCase());
+          }
+
+          row.push(
+            tool?.brand.toUpperCase() || '-',
+            tool?.category.toUpperCase() || '-',
+            reqQty,
+            curQty,
+            missingQty
+          );
+          
+          deptRows.push(row);
+        }
+      });
+
+      // Sort rows by Posto (Station) if applicable
+      if (selectedToolType === 'collective') {
+        deptRows.sort((a, b) => {
+          const postoA = a[2] || '';
+          const postoB = b[2] || '';
+          const cmp = postoA.localeCompare(postoB);
+          if (cmp !== 0) return cmp;
+          return (a[1] || '').localeCompare(b[1] || ''); // Tool name
+        });
+      } else if (selectedToolType === 'all') {
+        deptRows.sort((a, b) => {
+          const postoA = a[2] || '';
+          const postoB = b[2] || '';
+          const cmp = postoA.localeCompare(postoB);
+          if (cmp !== 0) return cmp;
+          return (a[1] || '').localeCompare(b[1] || ''); // Tool name
+        });
+      }
+
+      wsData.push(...deptRows);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // Apply styles
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:H1');
+    
+    // Header style
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "000000" } },
+      fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+
+    // Body style
+    const bodyStyle = {
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      const rowData = wsData[R];
+      if (!rowData || rowData.length === 0) continue;
+
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        let cell = ws[cellAddress];
+        
+        if (!cell) {
+          cell = { v: '', t: 's' };
+          ws[cellAddress] = cell;
+        }
+
+        if (R === 0) {
+          cell.s = headerStyle;
+        } else {
+          cell.s = bodyStyle;
+        }
+      }
+    }
+
+    // Auto-size columns
+    const colWidths = headers.map(() => ({ wch: 20 }));
+    colWidths[0] = { wch: 30 }; // Linha
+    colWidths[1] = { wch: 45 }; // Ferramenta
+    if (selectedToolType === 'collective' || selectedToolType === 'all') {
+      colWidths[2] = { wch: 35 }; // Posto
+      colWidths[3] = { wch: 20 }; // Marca
+      colWidths[4] = { wch: 20 }; // Categoria
+      colWidths[5] = { wch: 18 }; // Qtd Nec
+      colWidths[6] = { wch: 18 }; // Qtd Atu
+      colWidths[7] = { wch: 18 }; // Qtd Fal
+    } else {
+      colWidths[2] = { wch: 20 }; // Marca
+      colWidths[3] = { wch: 20 }; // Categoria
+      colWidths[4] = { wch: 18 }; // Qtd Nec
+      colWidths[5] = { wch: 18 }; // Qtd Atu
+      colWidths[6] = { wch: 18 }; // Qtd Fal
+    }
+    ws['!cols'] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+    XLSX.writeFile(wb, `relatorio-ferramentas-${new Date().getTime()}.xlsx`);
   };
 
   const containerVariants = {
@@ -523,12 +788,20 @@ export default function Reports({ tools, departments, assignments, employees, co
             </div>
           </div>
 
-          <button
-            onClick={handleExportPDF}
-            className="px-4 py-2.5 h-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] w-full lg:w-auto"
-          >
-            <Download className="w-4 h-4" /> Exportar PDF
-          </button>
+          <div className="flex items-center gap-2 w-full lg:w-auto">
+            <button
+              onClick={handleExportExcel}
+              className="px-4 py-2.5 h-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] flex-1 lg:flex-none"
+            >
+              <Download className="w-4 h-4" /> Excel
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="px-4 py-2.5 h-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] flex-1 lg:flex-none"
+            >
+              <Download className="w-4 h-4" /> PDF
+            </button>
+          </div>
         </div>
       </div>
 
@@ -617,6 +890,7 @@ export default function Reports({ tools, departments, assignments, employees, co
                     <thead>
                       <tr className="bg-slate-950/50 border-b border-slate-800 text-slate-400 text-sm">
                         <th className="p-4 font-semibold">Ferramenta</th>
+                        {selectedToolType === 'collective' && <th className="p-4 font-semibold">Posto</th>}
                         <th className="p-4 font-semibold">Marca</th>
                         <th className="p-4 font-semibold text-center">
                           <div className="flex flex-col items-center">
@@ -636,37 +910,98 @@ export default function Reports({ tools, departments, assignments, employees, co
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {toolIds.map(toolId => {
-                        const tool = tools.find(t => t.id === toolId);
-                        const individualQty = deptData.individual[toolId] || 0;
-                        const collectiveQty = deptData.collective[toolId] || 0;
-                        const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
-                        const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
-                        
-                        const reqQty = selectedToolType === 'all' 
-                          ? (requiredIndividualQty + requiredCollectiveQty)
-                          : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
+                      {(() => {
+                        const rows: any[] = [];
+                        toolIds.forEach(toolId => {
+                          const tool = tools.find(t => t.id === toolId);
+                          const individualQty = deptData.individual[toolId] || 0;
+                          const collectiveQty = deptData.collective[toolId] || 0;
+                          const stockIndQty = deptData.stockIndividual[toolId] || 0;
+                          const stockColQty = deptData.stockCollective[toolId] || 0;
+                          const stockStationData = deptData.stockStation[toolId] || {};
+                          const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
+                          const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
+                          const stations = deptData.stationDetails?.[toolId] || [];
 
-                        const curQty = selectedToolType === 'all'
-                          ? (individualQty + collectiveQty)
-                          : (selectedToolType === 'individual' ? individualQty : collectiveQty);
+                          if (selectedToolType === 'collective' && stations.length > 0) {
+                            let remainingStock = stockColQty;
+                            
+                            stations.forEach(s => {
+                              let currentForStation = s.current + (stockStationData[s.name] || 0);
+                              let missingForStation = Math.max(0, s.required - currentForStation);
+                              
+                              if (remainingStock > 0 && missingForStation > 0) {
+                                const allocated = Math.min(remainingStock, missingForStation);
+                                currentForStation += allocated;
+                                missingForStation -= allocated;
+                                remainingStock -= allocated;
+                              }
 
-                        const missingQty = Math.max(0, reqQty - curQty);
-                        const stations = deptData.stations?.[toolId] || [];
+                              rows.push({
+                                id: `${toolId}-${s.name}`,
+                                tool,
+                                station: { ...s, current: currentForStation, missing: missingForStation },
+                                reqQty: s.required,
+                                curQty: currentForStation,
+                                missingQty: missingForStation,
+                                isExpanded: true
+                              });
+                            });
+                          } else {
+                            const reqQty = selectedToolType === 'all' 
+                              ? (requiredIndividualQty + requiredCollectiveQty)
+                              : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
-                        return (
+                            const curQty = selectedToolType === 'all'
+                              ? (individualQty + stockIndQty + collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0))
+                              : (selectedToolType === 'individual' ? individualQty + stockIndQty : collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0));
+
+                            const missingQty = Math.max(0, reqQty - curQty);
+                            
+                            rows.push({
+                              id: toolId,
+                              tool,
+                              station: null,
+                              stationsList: stations,
+                              reqQty,
+                              curQty,
+                              missingQty,
+                              isExpanded: false
+                            });
+                          }
+                        });
+
+                        if (selectedToolType === 'collective') {
+                          rows.sort((a, b) => {
+                            const postoA = a.station?.name || '';
+                            const postoB = b.station?.name || '';
+                            const cmp = postoA.localeCompare(postoB);
+                            if (cmp !== 0) return cmp;
+                            return (a.tool?.name || '').localeCompare(b.tool?.name || '');
+                          });
+                        } else if (selectedToolType === 'all') {
+                          rows.sort((a, b) => {
+                            const postoA = a.stationsList?.[0]?.name || '';
+                            const postoB = b.stationsList?.[0]?.name || '';
+                            const cmp = postoA.localeCompare(postoB);
+                            if (cmp !== 0) return cmp;
+                            return (a.tool?.name || '').localeCompare(b.tool?.name || '');
+                          });
+                        }
+
+                        return rows.map(row => (
                           <motion.tr 
                             whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.5)' }}
-                            key={toolId} 
+                            key={row.id} 
                             className="transition-colors"
                           >
                             <td className="p-4">
-                              <p className="text-slate-200 font-medium">{tool?.name || 'Ferramenta Desconhecida'}</p>
+                              <p className="text-slate-200 font-medium">{row.tool?.name || 'Ferramenta Desconhecida'}</p>
                               <div className="flex flex-col gap-1 mt-1">
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{tool?.category}</p>
-                                {(selectedToolType === 'all' || selectedToolType === 'collective') && stations.length > 0 && (
+                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{row.tool?.category}</p>
+                                {!row.isExpanded && (selectedToolType === 'all' || selectedToolType === 'collective') && row.stationsList?.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mt-2">
-                                    {deptData.stationDetails[toolId].map((detail, idx) => (
+                                    {row.stationsList.map((detail: any, idx: number) => (
                                       <span key={idx} className={`text-[10px] px-2 py-0.5 rounded-md border ${detail.missing > 0 ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
                                         Posto: {detail.name} {detail.missing > 0 && `(Falta ${detail.missing})`}
                                       </span>
@@ -675,26 +1010,34 @@ export default function Reports({ tools, departments, assignments, employees, co
                                 )}
                               </div>
                             </td>
-                            <td className="p-4 text-slate-400">{tool?.brand || '-'}</td>
+                            {selectedToolType === 'collective' && (
+                              <td className="p-4">
+                                <span className="px-2.5 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
+                                  {row.station?.name || '-'}
+                                </span>
+                              </td>
+                            )}
+                            <td className="p-4 text-slate-400">{row.tool?.brand || '-'}</td>
                             <td className="p-4 text-center">
                               <span className="text-sm text-slate-300 font-medium">
-                                {reqQty}
+                                {row.reqQty}
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={`text-sm font-medium ${curQty < reqQty ? 'text-amber-400' : 'text-slate-300'}`}>
-                                {curQty}
+                              <span className={`text-sm font-medium ${row.curQty < row.reqQty ? 'text-amber-400' : 'text-slate-300'}`}>
+                                {row.curQty}
                               </span>
                             </td>
                             <td className="p-4 text-center bg-cyan-950/20">
-                              <span className={`inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full font-bold text-sm px-2 border ${missingQty > 0 ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_rgba(248,113,113,0.2)]' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'}`}>
-                                {missingQty}
+                              <span className={`inline-flex items-center justify-center min-w-[2rem] h-8 rounded-full font-bold text-sm px-2 border ${row.missingQty > 0 ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_10px_rgba(248,113,113,0.2)]' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'}`}>
+                                {row.missingQty}
                               </span>
                             </td>
                           </motion.tr>
-                        );
-                      })}
+                        ));
+                      })()}
                     </tbody>
+
                   </table>
                 </div>
               </motion.div>
