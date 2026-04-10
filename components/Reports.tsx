@@ -372,15 +372,17 @@ export default function Reports({ tools, departments, assignments, employees, co
       toolIds.forEach(toolId => {
         const tool = tools.find(t => t.id === toolId);
         const stations = deptData.stationDetails?.[toolId] || [];
-        const stockQty = deptData.stock[toolId] || 0;
+        const stockIndQty = deptData.stockIndividual[toolId] || 0;
+        const stockColQty = deptData.stockCollective[toolId] || 0;
+        const stockStationData = deptData.stockStation[toolId] || {};
         
         if (selectedToolType === 'collective' && stations.length > 0) {
           // Expand rows for collective tools by station
-          let remainingStock = stockQty;
+          let remainingStock = stockColQty;
           
           stations.forEach(s => {
-            let currentForStation = s.current;
-            let missingForStation = s.missing;
+            let currentForStation = s.current + (stockStationData[s.name] || 0);
+            let missingForStation = Math.max(0, s.required - currentForStation);
             
             if (remainingStock > 0 && missingForStation > 0) {
               const allocated = Math.min(remainingStock, missingForStation);
@@ -406,7 +408,6 @@ export default function Reports({ tools, departments, assignments, employees, co
           
           const individualQty = deptData.individual[toolId] || 0;
           const collectiveQty = deptData.collective[toolId] || 0;
-          const stockQty = deptData.stock[toolId] || 0;
           const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
           const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
           const standardQty = deptData.standardQtyPerBox[toolId] || 0;
@@ -416,8 +417,8 @@ export default function Reports({ tools, departments, assignments, employees, co
             : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
           const curQty = selectedToolType === 'all'
-            ? (individualQty + collectiveQty + stockQty)
-            : (selectedToolType === 'individual' ? individualQty + stockQty : collectiveQty + stockQty);
+            ? (individualQty + stockIndQty + collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0))
+            : (selectedToolType === 'individual' ? individualQty + stockIndQty : collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0));
 
           const missingQty = Math.max(0, reqQty - curQty);
 
@@ -588,8 +589,8 @@ export default function Reports({ tools, departments, assignments, employees, co
             : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
           const curQty = selectedToolType === 'all'
-            ? (individualQty + collectiveQty + stockQty)
-            : (selectedToolType === 'individual' ? individualQty + stockQty : collectiveQty + stockQty);
+            ? (individualQty + stockIndQty + collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0))
+            : (selectedToolType === 'individual' ? individualQty + stockIndQty : collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0));
 
           const missingQty = Math.max(0, reqQty - curQty);
           
