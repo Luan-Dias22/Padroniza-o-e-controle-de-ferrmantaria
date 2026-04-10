@@ -20,6 +20,376 @@ interface BudgetsProps {
   stockEntries?: StockEntry[];
 }
 
+const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
+  const doc = new jsPDF();
+  const logoBase64 = getLogoBase64();
+  
+  // --- HEADER: Industrial / Tech Style (Clean Version) ---
+  doc.setFillColor(248, 250, 252); // slate-50 background for header
+  doc.rect(0, 0, 210, 45, 'F');
+
+  if (logoBase64) {
+    try {
+      const imgProps = doc.getImageProperties(logoBase64);
+      const maxLogoWidth = 45;
+      const maxLogoHeight = 25;
+      let logoWidth = maxLogoWidth;
+      let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
+
+      if (logoHeight > maxLogoHeight) {
+        logoHeight = maxLogoHeight;
+        logoWidth = (imgProps.width * logoHeight) / imgProps.height;
+      }
+
+      doc.addImage(logoBase64, 'PNG', 14, 10, logoWidth, logoHeight, undefined, 'FAST');
+    } catch (e) {
+      console.error('Error adding logo to PDF', e);
+    }
+  }
+
+  doc.setFontSize(18);
+  doc.setTextColor(15, 23, 42); // slate-900
+  doc.setFont('helvetica', 'bold');
+  let title = 'RELATÓRIO DE ORÇAMENTOS';
+  if (toolCategoryFilter === 'collective') title += ' (COLETIVAS)';
+  if (toolCategoryFilter === 'individual') title += ' (INDIVIDUAIS)';
+  doc.text(title, 196, 22, { align: 'right' });
+  
+  doc.setFontSize(9);
+  doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
+  doc.setFont('helvetica', 'bold');
+  doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
+  doc.text(`SYS-ID: VOLGA-BUD-0001`, 196, 33, { align: 'right' });
+
+  // Accent line
+  doc.setDrawColor(15, 118, 110); // teal-700
+  doc.setLineWidth(1.5);
+  doc.line(0, 45, 210, 45);
+
+  let isFirstLine = true;
+  let yPos = 55;
+
+  const budgetArray = Object.values(budgetData);
+
+  budgetArray.forEach((line: any) => {
+    if (line.tools.length === 0) return;
+
+    if (!isFirstLine) {
+      doc.addPage();
+      yPos = 20;
+    } else {
+      isFirstLine = false;
+      yPos = 55;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFont('helvetica', 'bold');
+    const lineText = `LINHA/DEPARTAMENTO: ${line.name.toUpperCase()}`;
+    doc.text(lineText, 14, yPos);
+    
+    if (line.expectedNewcomers > 0) {
+      const textWidth = doc.getTextWidth(lineText);
+      doc.setFontSize(10);
+      doc.setTextColor(16, 185, 129); // emerald-500
+      doc.setFont('courier', 'bold');
+      doc.text(`[+${line.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, yPos);
+    }
+    yPos += 8;
+
+    const tableData = line.tools.map((t: any) => [
+      t.tool.name.toUpperCase(),
+      t.tool.brand.toUpperCase(),
+      `R$ ${(t.tool.price || 0).toFixed(2)}`,
+      t.required.toString(),
+      t.missing.toString(),
+      `R$ ${t.costRequired.toFixed(2)}`,
+      `R$ ${t.costMissing.toFixed(2)}`
+    ]);
+
+    const totalReq = line.tools.reduce((acc: number, t: any) => acc + t.required, 0);
+    const totalMissing = line.tools.reduce((acc: number, t: any) => acc + t.missing, 0);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
+      body: tableData,
+      foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), `R$ ${line.requiredCost.toFixed(2)}`, `R$ ${line.missingCost.toFixed(2)}`]],
+      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 7,
+        cellPadding: 2,
+        lineColor: [203, 213, 225], // slate-300
+        lineWidth: 0.1,
+        valign: 'middle'
+      },
+      headStyles: { 
+        fillColor: [15, 118, 110], // teal-700
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      footStyles: {
+        fillColor: [241, 245, 249], // slate-100
+        textColor: [15, 23, 42], // slate-900
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        textColor: [51, 65, 85] // slate-700
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // slate-50
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'left', cellWidth: 45 },
+        1: { halign: 'left', cellWidth: 25 },
+        2: { halign: 'right', cellWidth: 25 },
+        3: { halign: 'center', fontStyle: 'bold', cellWidth: 15 },
+        4: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38], cellWidth: 15 }, // red-600
+        5: { halign: 'right', cellWidth: 25 },
+        6: { halign: 'right', fontStyle: 'bold', textColor: [220, 38, 38], cellWidth: 25 } // red-600
+      },
+      margin: { left: 14, right: 14 }
+    });
+
+    // Investment Table (Only for Linha 1 Fine Comb)
+    const isFineComb = line.name.toLowerCase().includes('linha 1') && line.name.toLowerCase().includes('fine comb');
+    
+    if (isFineComb) {
+      const investmentItems = [
+        'Bancada Principal',
+        'Bancada Auxiliar',
+        'Implantação de barra',
+        'Cabeamento',
+        'Fine Comb'
+      ];
+
+      const getLineCost = (itemName: string) => {
+        const found = budgetArray.find((l: any) => 
+          l.name.toLowerCase().includes('linha 1') && 
+          l.name.toLowerCase().includes(itemName.toLowerCase())
+        );
+        return found ? found.requiredCost : 0;
+      };
+
+      let totalLinha1 = 0;
+      const investmentTableData = investmentItems.map(item => {
+        const cost = getLineCost(item);
+        totalLinha1 += cost;
+        return [
+          `Linha 1 ${item}`,
+          `R$ ${cost.toFixed(2)}`
+        ];
+      });
+
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 10,
+        head: [[`Investimento Linha 1`, 'Custo']],
+        body: investmentTableData,
+        foot: [['Total', `R$ ${totalLinha1.toFixed(2)}`]],
+        theme: 'grid',
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          cellPadding: 3,
+          lineColor: [0, 0, 0],
+          lineWidth: 0.5,
+          valign: 'middle'
+        },
+        headStyles: {
+          fillColor: [255, 255, 255],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          halign: 'left',
+          fontSize: 12
+        },
+        footStyles: {
+          fillColor: [255, 255, 255],
+          textColor: [0, 0, 0],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 12
+        },
+        bodyStyles: {
+          textColor: [0, 0, 0]
+        },
+        columnStyles: {
+          0: { cellWidth: 120 },
+          1: { halign: 'right', cellWidth: 62 }
+        },
+        margin: { left: 14, right: 14 },
+        pageBreak: 'avoid'
+      });
+    }
+
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+  });
+
+  // Add Footer with page numbers
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.setFont('helvetica', 'normal');
+    doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+  }
+
+  doc.save('orcamentos_linhas.pdf');
+};
+
+const handleExportExcel = (budgetData: any) => {
+  const wb = XLSX.utils.book_new();
+  const wsData: any[][] = [];
+  const budgetArray = Object.values(budgetData);
+
+  // Add headers
+  const headers = [
+    'LINHA / DEPARTAMENTO',
+    'FERRAMENTA',
+    'MARCA',
+    'VALOR UNITÁRIO',
+    'QTD. NECESSÁRIA',
+    'QTD. FALTANTE',
+    'CUSTO NECESSÁRIO'
+  ];
+  wsData.push(headers);
+
+  budgetArray.forEach((line: any) => {
+    line.tools.forEach((t: any) => {
+      wsData.push([
+        line.name.toUpperCase(),
+        t.tool.name.toUpperCase(),
+        t.tool.brand.toUpperCase(),
+        t.tool.price || 0,
+        t.required,
+        t.missing,
+        t.costRequired
+      ]);
+    });
+
+    // Add a total row for the line
+    const totalReq = line.tools.reduce((acc: number, t: any) => acc + t.required, 0);
+    const totalMissing = line.tools.reduce((acc: number, t: any) => acc + t.missing, 0);
+    wsData.push([
+      `TOTAL ${line.name.toUpperCase()}`,
+      '',
+      '',
+      '',
+      totalReq,
+      totalMissing,
+      line.requiredCost
+    ]);
+    
+    // Add Investment Table (Only for Linha 1 Fine Comb)
+    const isFineComb = line.name.toLowerCase().includes('linha 1') && line.name.toLowerCase().includes('fine comb');
+    
+    if (isFineComb) {
+      wsData.push([]); // Spacing
+      wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO']);
+      const investmentItems = [
+        'Bancada Principal',
+        'Bancada Auxiliar',
+        'Implantação de barra',
+        'Cabeamento',
+        'Fine Comb'
+      ];
+
+      const getLineCost = (itemName: string) => {
+        const found = budgetArray.find((l: any) => 
+          l.name.toLowerCase().includes('linha 1') && 
+          l.name.toLowerCase().includes(itemName.toLowerCase())
+        );
+        return found ? found.requiredCost : 0;
+      };
+
+      let totalLinha1 = 0;
+      investmentItems.forEach(item => {
+        const cost = getLineCost(item);
+        totalLinha1 += cost;
+        wsData.push([`Linha 1 ${item}`, cost]);
+      });
+      wsData.push(['TOTAL', totalLinha1]);
+    }
+
+    // Add an empty row for spacing
+    wsData.push([]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Apply styles
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:G1');
+  
+  // Header style
+  const headerStyle = {
+    font: { bold: true, color: { rgb: "000000" } },
+    fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue from the image
+    alignment: { horizontal: "center", vertical: "center" },
+    border: {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } }
+    }
+  };
+
+  // Body style
+  const bodyStyle = {
+    border: {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } }
+    }
+  };
+
+  for (let R = range.s.r; R <= range.e.r; ++R) {
+    const rowData = wsData[R];
+    // Skip styling for completely empty rows (spacing rows)
+    if (!rowData || rowData.length === 0) continue;
+
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+      let cell = ws[cellAddress];
+      
+      if (!cell) {
+        cell = { v: '', t: 's' };
+        ws[cellAddress] = cell;
+      }
+
+      if (R === 0) {
+        cell.s = headerStyle;
+      } else {
+        cell.s = bodyStyle;
+
+        // Apply currency formatting to the relevant columns (D, G)
+        if (C === 3 && typeof cell.v === 'number') { // Column D (Valor Unitário)
+          cell.z = '"R$" #,##0.00';
+        }
+        if (C === 6 && typeof cell.v === 'number') { // Column G (Custo Necessário)
+          cell.z = '"R$" #,##0.00';
+        }
+      }
+    }
+  }
+
+  // Auto-size columns
+  ws['!cols'] = [
+    { wch: 25 }, // Linha
+    { wch: 35 }, // Ferramenta
+    { wch: 15 }, // Marca
+    { wch: 18 }, // Valor Unit
+    { wch: 18 }, // Qtd Nec
+    { wch: 18 }, // Qtd Fal
+    { wch: 20 }, // Custo Nec
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Orçamentos');
+  XLSX.writeFile(wb, `orcamentos_linhas_${new Date().getTime()}.xlsx`);
+};
+
 export default function Budgets({ 
   tools, setTools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries 
 }: BudgetsProps) {
@@ -193,279 +563,6 @@ export default function Budgets({
     return Object.fromEntries(sortedData);
   }, [tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, toolCategoryFilter, stockEntries]);
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    const logoBase64 = getLogoBase64();
-    
-    // --- HEADER: Industrial / Tech Style (Clean Version) ---
-    doc.setFillColor(248, 250, 252); // slate-50 background for header
-    doc.rect(0, 0, 210, 45, 'F');
-
-    if (logoBase64) {
-      try {
-        const imgProps = doc.getImageProperties(logoBase64);
-        const maxLogoWidth = 45;
-        const maxLogoHeight = 25;
-        let logoWidth = maxLogoWidth;
-        let logoHeight = (imgProps.height * logoWidth) / imgProps.width;
-
-        if (logoHeight > maxLogoHeight) {
-          logoHeight = maxLogoHeight;
-          logoWidth = (imgProps.width * logoHeight) / imgProps.height;
-        }
-
-        doc.addImage(logoBase64, 'PNG', 14, 10, logoWidth, logoHeight, undefined, 'FAST');
-      } catch (e) {
-        console.error('Error adding logo to PDF', e);
-      }
-    }
-
-    doc.setFontSize(18);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFont('helvetica', 'bold');
-    let title = 'RELATÓRIO DE ORÇAMENTOS';
-    if (toolCategoryFilter === 'collective') title += ' (COLETIVAS)';
-    if (toolCategoryFilter === 'individual') title += ' (INDIVIDUAIS)';
-    doc.text(title, 196, 22, { align: 'right' });
-    
-    doc.setFontSize(9);
-    doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
-    doc.setFont('helvetica', 'bold');
-    doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
-    doc.text(`SYS-ID: VOLGA-BUD-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
-
-    // Accent line
-    doc.setDrawColor(15, 118, 110); // teal-700
-    doc.setLineWidth(1.5);
-    doc.line(0, 45, 210, 45);
-
-    let isFirstLine = true;
-    let yPos = 55;
-
-    Object.values(budgetData).forEach(line => {
-      if (line.tools.length === 0) return;
-
-      if (!isFirstLine) {
-        doc.addPage();
-        yPos = 20;
-      } else {
-        isFirstLine = false;
-        yPos = 55;
-      }
-
-      doc.setFontSize(14);
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('helvetica', 'bold');
-      const lineText = `LINHA/DEPARTAMENTO: ${line.name.toUpperCase()}`;
-      doc.text(lineText, 14, yPos);
-      
-      if (line.expectedNewcomers > 0) {
-        const textWidth = doc.getTextWidth(lineText);
-        doc.setFontSize(10);
-        doc.setTextColor(16, 185, 129); // emerald-500
-        doc.setFont('courier', 'bold');
-        doc.text(`[+${line.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, yPos);
-      }
-      yPos += 8;
-
-      doc.setFontSize(10);
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.setFont('courier', 'bold');
-      doc.text(`CUSTO TOTAL NECESSÁRIO: R$ ${line.requiredCost.toFixed(2)}`, 14, yPos);
-      doc.setTextColor(220, 38, 38); // red-600
-      doc.text(`CUSTO TOTAL FALTANTE: R$ ${line.missingCost.toFixed(2)}`, 100, yPos);
-      yPos += 6;
-
-      const tableData = line.tools.map(t => [
-        t.tool.name.toUpperCase(),
-        t.tool.brand.toUpperCase(),
-        `R$ ${(t.tool.price || 0).toFixed(2)}`,
-        t.required.toString(),
-        t.missing.toString(),
-        `R$ ${t.costRequired.toFixed(2)}`,
-        `R$ ${t.costMissing.toFixed(2)}`
-      ]);
-
-      const totalReq = line.tools.reduce((acc, t) => acc + t.required, 0);
-      const totalMissing = line.tools.reduce((acc, t) => acc + t.missing, 0);
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
-        body: tableData,
-        foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), `R$ ${line.requiredCost.toFixed(2)}`, `R$ ${line.missingCost.toFixed(2)}`]],
-        theme: 'grid',
-        styles: {
-          font: 'helvetica',
-          fontSize: 7,
-          cellPadding: 2,
-          lineColor: [203, 213, 225], // slate-300
-          lineWidth: 0.1,
-          valign: 'middle'
-        },
-        headStyles: { 
-          fillColor: [15, 118, 110], // teal-700
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center'
-        },
-        footStyles: {
-          fillColor: [241, 245, 249], // slate-100
-          textColor: [15, 23, 42], // slate-900
-          fontStyle: 'bold',
-        },
-        bodyStyles: {
-          textColor: [51, 65, 85] // slate-700
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252] // slate-50
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold', halign: 'left', cellWidth: 45 },
-          1: { halign: 'left', cellWidth: 25 },
-          2: { halign: 'right', cellWidth: 25 },
-          3: { halign: 'center', fontStyle: 'bold', cellWidth: 15 },
-          4: { halign: 'center', fontStyle: 'bold', textColor: [220, 38, 38], cellWidth: 15 }, // red-600
-          5: { halign: 'right', cellWidth: 25 },
-          6: { halign: 'right', fontStyle: 'bold', textColor: [220, 38, 38], cellWidth: 25 } // red-600
-        },
-        margin: { left: 14, right: 14 }
-      });
-
-      yPos = (doc as any).lastAutoTable.finalY + 15;
-    });
-
-    // Add Footer with page numbers
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.setFont('helvetica', 'normal');
-      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
-    }
-
-    doc.save('orcamentos_linhas.pdf');
-  };
-
-  const handleExportExcel = () => {
-    const wb = XLSX.utils.book_new();
-    const wsData: any[][] = [];
-
-    // Add headers
-    const headers = [
-      'LINHA / DEPARTAMENTO',
-      'FERRAMENTA',
-      'MARCA',
-      'VALOR UNITÁRIO',
-      'QTD. NECESSÁRIA',
-      'QTD. FALTANTE',
-      'CUSTO NECESSÁRIO'
-    ];
-    wsData.push(headers);
-
-    Object.entries(budgetData).forEach(([lineId, line]) => {
-      line.tools.forEach(t => {
-        wsData.push([
-          line.name.toUpperCase(),
-          t.tool.name.toUpperCase(),
-          t.tool.brand.toUpperCase(),
-          t.tool.price || 0,
-          t.required,
-          t.missing,
-          t.costRequired
-        ]);
-      });
-
-      // Add a total row for the line
-      const totalReq = line.tools.reduce((acc, t) => acc + t.required, 0);
-      const totalMissing = line.tools.reduce((acc, t) => acc + t.missing, 0);
-      wsData.push([
-        `TOTAL ${line.name.toUpperCase()}`,
-        '',
-        '',
-        '',
-        totalReq,
-        totalMissing,
-        line.requiredCost
-      ]);
-      // Add an empty row for spacing
-      wsData.push([]);
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Apply styles
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:G1');
-    
-    // Header style
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "000000" } },
-      fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue from the image
-      alignment: { horizontal: "center", vertical: "center" },
-      border: {
-        top: { style: "thin", color: { rgb: "000000" } },
-        bottom: { style: "thin", color: { rgb: "000000" } },
-        left: { style: "thin", color: { rgb: "000000" } },
-        right: { style: "thin", color: { rgb: "000000" } }
-      }
-    };
-
-    // Body style
-    const bodyStyle = {
-      border: {
-        top: { style: "thin", color: { rgb: "000000" } },
-        bottom: { style: "thin", color: { rgb: "000000" } },
-        left: { style: "thin", color: { rgb: "000000" } },
-        right: { style: "thin", color: { rgb: "000000" } }
-      }
-    };
-
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      const rowData = wsData[R];
-      // Skip styling for completely empty rows (spacing rows)
-      if (!rowData || rowData.length === 0) continue;
-
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        let cell = ws[cellAddress];
-        
-        if (!cell) {
-          cell = { v: '', t: 's' };
-          ws[cellAddress] = cell;
-        }
-
-        if (R === 0) {
-          cell.s = headerStyle;
-        } else {
-          cell.s = bodyStyle;
-
-          // Apply currency formatting to the relevant columns (D, G)
-          if (C === 3 && typeof cell.v === 'number') { // Column D (Valor Unitário)
-            cell.z = '"R$" #,##0.00';
-          }
-          if (C === 6 && typeof cell.v === 'number') { // Column G (Custo Necessário)
-            cell.z = '"R$" #,##0.00';
-          }
-        }
-      }
-    }
-
-    // Auto-size columns
-    ws['!cols'] = [
-      { wch: 25 }, // Linha
-      { wch: 35 }, // Ferramenta
-      { wch: 15 }, // Marca
-      { wch: 18 }, // Valor Unit
-      { wch: 18 }, // Qtd Nec
-      { wch: 18 }, // Qtd Fal
-      { wch: 20 }, // Custo Nec
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Orçamentos');
-    XLSX.writeFile(wb, `orcamentos_linhas_${new Date().getTime()}.xlsx`);
-  };
-
   const filteredTools = tools.filter(t => 
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.brand.toLowerCase().includes(searchQuery.toLowerCase())
@@ -510,14 +607,14 @@ export default function Budgets({
           </select>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              onClick={handleExportExcel}
+              onClick={() => handleExportExcel(budgetData)}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
             >
               <Download className="w-4 h-4" />
               Excel
             </button>
             <button
-              onClick={generatePDF}
+              onClick={() => generatePDF(budgetData, toolCategoryFilter)}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
             >
               <Download className="w-4 h-4" />
@@ -528,24 +625,26 @@ export default function Budgets({
       </div>
 
       <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
-        <div className="p-5 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/80">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar ferramentas para definir preço..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
-            />
+        <div className="p-5 border-b border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-900/80">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar ferramentas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
+              />
+            </div>
+            <button
+              onClick={handleSavePrices}
+              className="flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto justify-center"
+            >
+              <Save className="w-4 h-4" />
+              Salvar Preços
+            </button>
           </div>
-          <button
-            onClick={handleSavePrices}
-            className="flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto justify-center"
-          >
-            <Save className="w-4 h-4" />
-            Salvar Preços
-          </button>
         </div>
 
         <div className="overflow-x-auto custom-scrollbar max-h-96">
@@ -640,8 +739,8 @@ export default function Budgets({
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest">Detalhamento</h4>
-                <div className="max-h-60 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                <h4 className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest">Detalhamento Ferramentas</h4>
+                <div className="max-h-40 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                   {line.tools.map((t, idx) => (
                     <div key={idx} className="flex justify-between items-center text-sm p-3 bg-slate-950/30 border border-slate-800/50 hover:border-slate-700 rounded-xl transition-colors">
                       <div className="flex-1">
@@ -660,6 +759,65 @@ export default function Budgets({
                   ))}
                 </div>
               </div>
+
+              {line.name.toLowerCase().includes('linha 1') && line.name.toLowerCase().includes('fine comb') && (
+                <div className="mt-6 pt-6 border-t border-slate-800">
+                  <h4 className="text-[10px] font-mono font-semibold text-slate-500 uppercase tracking-widest mb-3">Investimento da Linha 1</h4>
+                  <div className="bg-slate-950/30 rounded-xl border border-slate-800 overflow-hidden">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="bg-slate-900/50 text-slate-500 font-mono uppercase tracking-tighter">
+                          <th className="p-2">Item</th>
+                          <th className="p-2 text-right">Custo</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50">
+                        {[
+                          'Bancada Principal',
+                          'Bancada Auxiliar',
+                          'Implantação de barra',
+                          'Cabeamento',
+                          'Fine Comb'
+                        ].map(item => {
+                          const budgetArray = Object.values(budgetData);
+                          const found = budgetArray.find((l: any) => 
+                            l.name.toLowerCase().includes('linha 1') && 
+                            l.name.toLowerCase().includes(item.toLowerCase())
+                          );
+                          const cost = found ? found.requiredCost : 0;
+                          return (
+                            <tr key={item}>
+                              <td className="p-2 text-slate-400">Linha 1 {item}</td>
+                              <td className="p-2 text-right text-slate-300 font-mono">R$ {cost.toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-slate-900/50 border-t border-slate-800">
+                        <tr>
+                          <th className="p-2 text-slate-200">Total</th>
+                          <th className="p-2 text-right text-emerald-400 font-mono">
+                            R$ {[
+                              'Bancada Principal',
+                              'Bancada Auxiliar',
+                              'Implantação de barra',
+                              'Cabeamento',
+                              'Fine Comb'
+                            ].reduce((acc, item) => {
+                              const budgetArray = Object.values(budgetData);
+                              const found = budgetArray.find((l: any) => 
+                                l.name.toLowerCase().includes('linha 1') && 
+                                l.name.toLowerCase().includes(item.toLowerCase())
+                              );
+                              return acc + (found ? found.requiredCost : 0);
+                            }, 0).toFixed(2)}
+                          </th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
             </motion.div>
           );
         })}

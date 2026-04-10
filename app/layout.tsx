@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Padronização e controle Ferramentaria',
+  title: 'Tool Manager - Padronização e Controle',
   description: 'Sistema de padronização e controle de ferramentaria',
 };
 

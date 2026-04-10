@@ -165,7 +165,7 @@ export default function App() {
           >
             <Wrench className="w-10 h-10" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">ToolManager <span className="text-cyan-400">OS</span></h1>
+          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Tool Manager <span className="text-cyan-400">OS</span></h1>
           <p className="text-slate-400 mb-8 text-sm">Sistema avançado de gestão e padronização de ferramentaria.</p>
           
           {loginError && (
@@ -248,7 +248,7 @@ export default function App() {
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
               <Wrench className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-white">ToolManager</span>
+            <span className="font-bold text-lg tracking-tight text-white">Tool Manager</span>
           </div>
           <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
