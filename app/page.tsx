@@ -161,9 +161,22 @@ export default function App() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-            className="w-20 h-20 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
+            className="w-24 h-24 relative mx-auto mb-6"
           >
-            <Wrench className="w-10 h-10" />
+            <Image 
+              src="/logo.png" 
+              alt="Logo" 
+              fill 
+              className="object-contain"
+              onError={(e) => {
+                const target = e.target as any;
+                target.style.display = 'none';
+                target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden w-full h-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-2xl items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+              <Wrench className="w-12 h-12" />
+            </div>
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Tool Manager <span className="text-cyan-400">OS</span></h1>
           <p className="text-slate-400 mb-8 text-sm">Sistema avançado de gestão e padronização de ferramentaria.</p>
@@ -211,9 +224,22 @@ export default function App() {
 
       {/* Mobile Header */}
       <div className="md:hidden bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 flex justify-between items-center sticky top-0 z-30">
-        <div className="font-bold text-lg flex items-center gap-2 text-white">
-          <Wrench className="w-5 h-5 text-cyan-400" />
-          ToolManager <span className="text-cyan-400 text-xs align-top">OS</span>
+        <div className="font-bold text-lg flex items-center gap-3 text-white">
+          <div className="w-8 h-8 relative">
+            <Image 
+              src="/logo.png" 
+              alt="Logo" 
+              fill 
+              className="object-contain"
+              onError={(e) => {
+                const target = e.target as any;
+                target.style.display = 'none';
+                target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <Wrench className="hidden w-full h-full text-cyan-400" />
+          </div>
+          Tool Manager <span className="text-cyan-400 text-xs align-top">OS</span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-300 hover:text-white">
           <Menu className="w-6 h-6" />
@@ -245,8 +271,22 @@ export default function App() {
       >
         <div className="p-5 flex items-center justify-between border-b border-slate-800/50">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
-              <Wrench className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 relative flex-shrink-0">
+              <Image 
+                src="/logo.png" 
+                alt="Logo" 
+                fill 
+                className="object-contain"
+                onError={(e) => {
+                  // Fallback to icon if image fails to load
+                  const target = e.target as any;
+                  target.style.display = 'none';
+                  target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="hidden w-full h-full bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+                <Wrench className="w-5 h-5 text-white" />
+              </div>
             </div>
             <span className="font-bold text-lg tracking-tight text-white">Tool Manager</span>
           </div>
