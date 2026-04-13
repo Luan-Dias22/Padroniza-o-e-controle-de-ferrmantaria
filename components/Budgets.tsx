@@ -172,27 +172,27 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
         );
         const req = found ? (found as any).requiredCost : 0;
         const miss = found ? (found as any).missingCost : 0;
-        return { required: req, current: req - miss };
+        return { required: req, missing: miss };
       };
 
       let totalReqLinha1 = 0;
-      let totalCurrLinha1 = 0;
+      let totalMissLinha1 = 0;
       const investmentTableData = investmentItems.map(item => {
         const costs = getLineCosts(item);
         totalReqLinha1 += costs.required;
-        totalCurrLinha1 += costs.current;
+        totalMissLinha1 += costs.missing;
         return [
           `Linha 1 ${item}`,
           `R$ ${costs.required.toFixed(2)}`,
-          `R$ ${costs.current.toFixed(2)}`
+          `R$ ${costs.missing.toFixed(2)}`
         ];
       });
 
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
-        head: [[`Investimento Linha 1`, 'Custo Necessário', 'Custo Atual']],
+        head: [[`Investimento Linha 1`, 'Custo Necessário', 'Custo Faltante']],
         body: investmentTableData,
-        foot: [['Total', `R$ ${totalReqLinha1.toFixed(2)}`, `R$ ${totalCurrLinha1.toFixed(2)}`]],
+        foot: [['Total', `R$ ${totalReqLinha1.toFixed(2)}`, `R$ ${totalMissLinha1.toFixed(2)}`]],
         theme: 'grid',
         styles: {
           font: 'helvetica',
@@ -293,7 +293,7 @@ const handleExportExcel = (budgetData: any) => {
     
     if (isFineComb) {
       wsData.push([]); // Spacing
-      wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO NECESSÁRIO', 'CUSTO ATUAL']);
+      wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO NECESSÁRIO', 'CUSTO FALTANTE']);
       const investmentItems = [
         'Bancada Principal',
         'Bancada Auxiliar',
@@ -309,18 +309,18 @@ const handleExportExcel = (budgetData: any) => {
         );
         const req = found ? (found as any).requiredCost : 0;
         const miss = found ? (found as any).missingCost : 0;
-        return { required: req, current: req - miss };
+        return { required: req, missing: miss };
       };
 
       let totalReqLinha1 = 0;
-      let totalCurrLinha1 = 0;
+      let totalMissLinha1 = 0;
       investmentItems.forEach(item => {
         const costs = getLineCosts(item);
         totalReqLinha1 += costs.required;
-        totalCurrLinha1 += costs.current;
-        wsData.push([`Linha 1 ${item}`, costs.required, costs.current]);
+        totalMissLinha1 += costs.missing;
+        wsData.push([`Linha 1 ${item}`, costs.required, costs.missing]);
       });
-      wsData.push(['TOTAL', totalReqLinha1, totalCurrLinha1]);
+      wsData.push(['TOTAL', totalReqLinha1, totalMissLinha1]);
     }
 
     // Add an empty row for spacing
@@ -779,7 +779,7 @@ export default function Budgets({
                         <tr className="bg-slate-900/50 text-slate-500 font-mono uppercase tracking-tighter">
                           <th className="p-2 text-left">Item</th>
                           <th className="p-2 text-right">Custo Necessário</th>
-                          <th className="p-2 text-right">Custo Atual</th>
+                          <th className="p-2 text-right">Custo Faltante</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
@@ -797,12 +797,11 @@ export default function Budgets({
                           );
                           const reqCost = found ? (found as any).requiredCost : 0;
                           const missCost = found ? (found as any).missingCost : 0;
-                          const currCost = reqCost - missCost;
                           return (
                             <tr key={item}>
                               <td className="p-2 text-slate-400">Linha 1 {item}</td>
                               <td className="p-2 text-right text-slate-300 font-mono">R$ {reqCost.toFixed(2)}</td>
-                              <td className="p-2 text-right text-cyan-400 font-mono">R$ {currCost.toFixed(2)}</td>
+                              <td className="p-2 text-right text-red-400 font-mono">R$ {missCost.toFixed(2)}</td>
                             </tr>
                           );
                         })}
@@ -826,7 +825,7 @@ export default function Budgets({
                               return acc + (found ? (found as any).requiredCost : 0);
                             }, 0).toFixed(2)}
                           </th>
-                          <th className="p-2 text-right text-cyan-400 font-mono">
+                          <th className="p-2 text-right text-red-400 font-mono">
                             R$ {[
                               'Bancada Principal',
                               'Bancada Auxiliar',
@@ -839,9 +838,8 @@ export default function Budgets({
                                 l.name.toLowerCase().includes('linha 1') && 
                                 l.name.toLowerCase().includes(item.toLowerCase())
                               );
-                              const reqCost = found ? (found as any).requiredCost : 0;
                               const missCost = found ? (found as any).missingCost : 0;
-                              return acc + (reqCost - missCost);
+                              return acc + missCost;
                             }, 0).toFixed(2)}
                           </th>
                         </tr>
