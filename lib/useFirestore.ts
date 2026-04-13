@@ -104,12 +104,19 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       setIsInitialized(true);
       setHasMerged(true);
     }, (error) => {
+      // Don't throw on transient errors like 'CANCELLED' or 'unavailable'
+      // as the SDK will handle retries automatically.
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('CANCELLED') || errorMessage.includes('unavailable')) {
+        console.warn(`Firestore transient error (${collectionName}):`, errorMessage);
+        return;
+      }
       handleFirestoreError(error, OperationType.LIST, path);
     });
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, collectionName, hasMerged]);
+  }, [userId, collectionName]);
 
   const setValue = async (value: T[] | ((val: T[]) => T[])) => {
     if (!userId) {

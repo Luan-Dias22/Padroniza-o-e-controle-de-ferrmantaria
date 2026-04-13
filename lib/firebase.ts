@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -9,6 +9,22 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Firestore with the specific database ID
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Validate Connection to Firestore
+async function testConnection() {
+  try {
+    // This will fail if the databaseId or projectId is incorrect
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firestore connection test successful");
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Firestore connection failed: The client is offline. This often indicates an incorrect Firebase configuration (Project ID or Database ID).");
+    } else {
+      console.warn("Firestore connection test produced an expected error (document not found), but connection was established:", error);
+    }
+  }
+}
+testConnection();
 
 // Initialize Firebase Auth
 export const auth = getAuth(app);

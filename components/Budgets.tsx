@@ -165,29 +165,34 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
         'Fine Comb'
       ];
 
-      const getLineCost = (itemName: string) => {
+      const getLineCosts = (itemName: string) => {
         const found = budgetArray.find((l: any) => 
           l.name.toLowerCase().includes('linha 1') && 
           l.name.toLowerCase().includes(itemName.toLowerCase())
         );
-        return found ? (found as any).requiredCost : 0;
+        const req = found ? (found as any).requiredCost : 0;
+        const miss = found ? (found as any).missingCost : 0;
+        return { required: req, current: req - miss };
       };
 
-      let totalLinha1 = 0;
+      let totalReqLinha1 = 0;
+      let totalCurrLinha1 = 0;
       const investmentTableData = investmentItems.map(item => {
-        const cost = getLineCost(item);
-        totalLinha1 += cost;
+        const costs = getLineCosts(item);
+        totalReqLinha1 += costs.required;
+        totalCurrLinha1 += costs.current;
         return [
           `Linha 1 ${item}`,
-          `R$ ${cost.toFixed(2)}`
+          `R$ ${costs.required.toFixed(2)}`,
+          `R$ ${costs.current.toFixed(2)}`
         ];
       });
 
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
-        head: [[`Investimento Linha 1`, 'Custo']],
+        head: [[`Investimento Linha 1`, 'Custo Necessário', 'Custo Atual']],
         body: investmentTableData,
-        foot: [['Total', `R$ ${totalLinha1.toFixed(2)}`]],
+        foot: [['Total', `R$ ${totalReqLinha1.toFixed(2)}`, `R$ ${totalCurrLinha1.toFixed(2)}`]],
         theme: 'grid',
         styles: {
           font: 'helvetica',
@@ -208,15 +213,16 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
           fillColor: [255, 255, 255],
           textColor: [0, 0, 0],
           fontStyle: 'bold',
-          halign: 'center',
+          halign: 'right',
           fontSize: 12
         },
         bodyStyles: {
           textColor: [0, 0, 0]
         },
         columnStyles: {
-          0: { cellWidth: 120 },
-          1: { halign: 'right', cellWidth: 62 }
+          0: { cellWidth: 80 },
+          1: { halign: 'right', cellWidth: 51 },
+          2: { halign: 'right', cellWidth: 51 }
         },
         margin: { left: 14, right: 14 },
         pageBreak: 'avoid'
@@ -233,7 +239,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // slate-400
     doc.setFont('helvetica', 'normal');
-    doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+    doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 196, 285, { align: 'right' });
   }
 
   doc.save('orcamentos_linhas.pdf');
@@ -287,7 +293,7 @@ const handleExportExcel = (budgetData: any) => {
     
     if (isFineComb) {
       wsData.push([]); // Spacing
-      wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO']);
+      wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO NECESSÁRIO', 'CUSTO ATUAL']);
       const investmentItems = [
         'Bancada Principal',
         'Bancada Auxiliar',
@@ -296,21 +302,25 @@ const handleExportExcel = (budgetData: any) => {
         'Fine Comb'
       ];
 
-      const getLineCost = (itemName: string) => {
+      const getLineCosts = (itemName: string) => {
         const found = budgetArray.find((l: any) => 
           l.name.toLowerCase().includes('linha 1') && 
           l.name.toLowerCase().includes(itemName.toLowerCase())
         );
-        return found ? (found as any).requiredCost : 0;
+        const req = found ? (found as any).requiredCost : 0;
+        const miss = found ? (found as any).missingCost : 0;
+        return { required: req, current: req - miss };
       };
 
-      let totalLinha1 = 0;
+      let totalReqLinha1 = 0;
+      let totalCurrLinha1 = 0;
       investmentItems.forEach(item => {
-        const cost = getLineCost(item);
-        totalLinha1 += cost;
-        wsData.push([`Linha 1 ${item}`, cost]);
+        const costs = getLineCosts(item);
+        totalReqLinha1 += costs.required;
+        totalCurrLinha1 += costs.current;
+        wsData.push([`Linha 1 ${item}`, costs.required, costs.current]);
       });
-      wsData.push(['TOTAL', totalLinha1]);
+      wsData.push(['TOTAL', totalReqLinha1, totalCurrLinha1]);
     }
 
     // Add an empty row for spacing
@@ -767,8 +777,9 @@ export default function Budgets({
                     <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="bg-slate-900/50 text-slate-500 font-mono uppercase tracking-tighter">
-                          <th className="p-2">Item</th>
-                          <th className="p-2 text-right">Custo</th>
+                          <th className="p-2 text-left">Item</th>
+                          <th className="p-2 text-right">Custo Necessário</th>
+                          <th className="p-2 text-right">Custo Atual</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
@@ -784,18 +795,21 @@ export default function Budgets({
                             l.name.toLowerCase().includes('linha 1') && 
                             l.name.toLowerCase().includes(item.toLowerCase())
                           );
-                          const cost = found ? (found as any).requiredCost : 0;
+                          const reqCost = found ? (found as any).requiredCost : 0;
+                          const missCost = found ? (found as any).missingCost : 0;
+                          const currCost = reqCost - missCost;
                           return (
                             <tr key={item}>
                               <td className="p-2 text-slate-400">Linha 1 {item}</td>
-                              <td className="p-2 text-right text-slate-300 font-mono">R$ {cost.toFixed(2)}</td>
+                              <td className="p-2 text-right text-slate-300 font-mono">R$ {reqCost.toFixed(2)}</td>
+                              <td className="p-2 text-right text-cyan-400 font-mono">R$ {currCost.toFixed(2)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                       <tfoot className="bg-slate-900/50 border-t border-slate-800">
                         <tr>
-                          <th className="p-2 text-slate-200">Total</th>
+                          <th className="p-2 text-slate-200 text-left">Total</th>
                           <th className="p-2 text-right text-emerald-400 font-mono">
                             R$ {[
                               'Bancada Principal',
@@ -810,6 +824,24 @@ export default function Budgets({
                                 l.name.toLowerCase().includes(item.toLowerCase())
                               );
                               return acc + (found ? (found as any).requiredCost : 0);
+                            }, 0).toFixed(2)}
+                          </th>
+                          <th className="p-2 text-right text-cyan-400 font-mono">
+                            R$ {[
+                              'Bancada Principal',
+                              'Bancada Auxiliar',
+                              'Implantação de barra',
+                              'Cabeamento',
+                              'Fine Comb'
+                            ].reduce((acc, item) => {
+                              const budgetArray = Object.values(budgetData);
+                              const found = budgetArray.find((l: any) => 
+                                l.name.toLowerCase().includes('linha 1') && 
+                                l.name.toLowerCase().includes(item.toLowerCase())
+                              );
+                              const reqCost = found ? (found as any).requiredCost : 0;
+                              const missCost = found ? (found as any).missingCost : 0;
+                              return acc + (reqCost - missCost);
                             }, 0).toFixed(2)}
                           </th>
                         </tr>
