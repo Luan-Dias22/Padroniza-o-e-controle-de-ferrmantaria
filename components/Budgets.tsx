@@ -20,6 +20,26 @@ interface BudgetsProps {
   stockEntries?: StockEntry[];
 }
 
+const budgetOrder = [
+  "Linha 1 (Bancada principal Nova)",
+  "Linha 1 (Bancada principal Existente)",
+  "Linha 1 (Bancada Auxiliar)",
+  "Linha 1 (Implantação de barra)",
+  "Linha 1 (Cabeamento)",
+  "Linha 1 (Fine comb)",
+  "Linha 2 (Montagem/Cabeamento)",
+  "Linha 3 (Montagem)",
+  "Linha 4 (Montagem)",
+  "Linha 6 (Montagem)",
+  "Linha 9 (Gaveta)",
+  "Linha 10 (Cabeamento caixa BT)",
+  "Linha 10 (Montagem caixa BT)",
+  "Teste (Inspeção de qualidade Elétrica BT)",
+  "Teste (Inspeção de qualidade Elétrica MT)",
+  "Teste (Inspeção de qualidade Mecânica)",
+  "Teste (Inspeção de qualidade Final)"
+];
+
 const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
   const doc = new jsPDF();
   const logoBase64 = getLogoBase64();
@@ -56,10 +76,10 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
   doc.text(title, 196, 22, { align: 'right' });
   
   doc.setFontSize(9);
-  doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
+  doc.setTextColor(15, 118, 110); // teal-700
   doc.setFont('helvetica', 'bold');
   doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
-  doc.text(`SYS-ID: VOLGA-BUD-0001`, 196, 33, { align: 'right' });
+  doc.text(`SYS-ID: BUD-0001`, 196, 33, { align: 'right' });
 
   // Accent line
   doc.setDrawColor(15, 118, 110); // teal-700
@@ -69,7 +89,14 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
   let isFirstLine = true;
   let yPos = 55;
 
-  const budgetArray = Object.values(budgetData);
+  const budgetArray = Object.values(budgetData).sort((a: any, b: any) => {
+    const indexA = budgetOrder.indexOf(a.name);
+    const indexB = budgetOrder.indexOf(b.name);
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   budgetArray.forEach((line: any) => {
     if (line.tools.length === 0) return;
@@ -239,7 +266,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // slate-400
     doc.setFont('helvetica', 'normal');
-    doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 196, 285, { align: 'right' });
+    doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA TOOLMANAGER`, 196, 285, { align: 'right' });
   }
 
   doc.save('orcamentos_linhas.pdf');
@@ -248,7 +275,14 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
 const handleExportExcel = (budgetData: any) => {
   const wb = XLSX.utils.book_new();
   const wsData: any[][] = [];
-  const budgetArray = Object.values(budgetData);
+  const budgetArray = Object.values(budgetData).sort((a: any, b: any) => {
+    const indexA = budgetOrder.indexOf(a.name);
+    const indexB = budgetOrder.indexOf(b.name);
+    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+    if (indexA !== -1) return -1;
+    if (indexB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   // Add headers
   const headers = [
@@ -712,7 +746,14 @@ export default function Budgets({
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.values(budgetData).map((line, idx) => {
+        {Object.values(budgetData).sort((a: any, b: any) => {
+          const indexA = budgetOrder.indexOf(a.name);
+          const indexB = budgetOrder.indexOf(b.name);
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return a.name.localeCompare(b.name);
+        }).map((line: any, idx) => {
           if (line.tools.length === 0) return null;
           
           return (

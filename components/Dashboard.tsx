@@ -88,7 +88,7 @@ export default function Dashboard({
             <Activity className="w-8 h-8 text-cyan-400" />
             Painel de Controle
           </h1>
-          <p className="text-slate-400 mt-1 font-mono text-sm">SISTEMA_VOLGA // STATUS: ONLINE</p>
+          <p className="text-slate-400 mt-1 font-mono text-sm">SISTEMA // STATUS: ONLINE</p>
         </div>
         <div className="flex gap-3">
           <button 

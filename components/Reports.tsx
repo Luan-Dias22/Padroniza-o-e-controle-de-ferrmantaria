@@ -19,6 +19,21 @@ interface ReportsProps {
   stockEntries?: StockEntry[];
 }
 
+const reportsOrder = [
+  "Linha 1 (Bancada principal Nova)",
+  "Linha 1 (Bancada principal Existente)",
+  "Linha 1 (Bancada Auxiliar)",
+  "Linha 1 (Implantação de barra)",
+  "Linha 1 (Cabeamento)",
+  "Linha 1 (Fine comb)",
+  "Linha 2 (CV15)",
+  "Linha 3 (SM6)",
+  "Linha 4 (Busway)",
+  "Linha 6 (Pix Easy)",
+  "Linha 9 (Cabeamento/Montagem Gaveta)",
+  "Fábrica de Cabos"
+];
+
 export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -221,7 +236,14 @@ export default function Reports({ tools, departments, assignments, employees, co
       }
     });
     
-    return entities.sort((a, b) => sortByName(a.name, b.name));
+    return entities.sort((a, b) => {
+      const indexA = reportsOrder.indexOf(a.name);
+      const indexB = reportsOrder.indexOf(b.name);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return sortByName(a.name, b.name);
+    });
   }, [departments, collectiveLines]);
 
   const filteredDepartments = allReportEntities.filter(dept => {
@@ -332,10 +354,10 @@ export default function Reports({ tools, departments, assignments, employees, co
     doc.text(title, 196, 22, { align: 'right' });
     
     doc.setFontSize(9);
-    doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
+    doc.setTextColor(15, 118, 110); // teal-700
     doc.setFont('helvetica', 'bold');
     doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
-    doc.text(`SYS-ID: VOLGA-REP-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
+    doc.text(`SYS-ID: REP-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 
     // Accent line
     doc.setDrawColor(15, 118, 110); // teal-700
@@ -506,7 +528,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           valign: 'middle'
         },
         headStyles: { 
-          fillColor: [15, 118, 110], // teal-700 (Volga Teal)
+          fillColor: [15, 118, 110], // teal-700
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           halign: 'center'
@@ -546,7 +568,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // slate-400
       doc.setFont('helvetica', 'normal');
-      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA TOOLMANAGER`, 105, 285, { align: 'center' });
     }
 
     doc.save(`relatorio-ferramentas-${new Date().getTime()}.pdf`);

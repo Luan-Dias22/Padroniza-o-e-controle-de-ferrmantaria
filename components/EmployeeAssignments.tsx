@@ -184,10 +184,10 @@ export default function EmployeeAssignments({
     doc.text('TERMO DE RESPONSABILIDADE', 196, 22, { align: 'right' });
     
     doc.setFontSize(9);
-    doc.setTextColor(15, 118, 110); // teal-700 (Volga Teal)
+    doc.setTextColor(15, 118, 110); // teal-700
     doc.setFont('helvetica', 'bold');
     doc.text(`DATA: ${new Date().toLocaleDateString('pt-BR')} | HORA: ${new Date().toLocaleTimeString('pt-BR')}`, 196, 28, { align: 'right' });
-    doc.text(`SYS-ID: VOLGA-TRM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
+    doc.text(`SYS-ID: TRM-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`, 196, 33, { align: 'right' });
 
     // Accent line
     doc.setDrawColor(15, 118, 110); // teal-700
@@ -211,7 +211,7 @@ export default function EmployeeAssignments({
     
     // Agreement Text
     const textY = infoY + 25;
-    const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa Volga, declaro ter recebido as ferramentas individuais abaixo relacionadas. A contar desta data, assumo a responsabilidade pela guarda e conservação das mesmas, comprometendo-me a devolvê-las em perfeito estado de funcionamento.\n\nEm caso de extravio ou danos por mau uso que acarretem a perda total ou parcial do bem, autorizo o desconto em folha de pagamento do valor correspondente ao prejuízo causado, fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
+    const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa, declaro ter recebido as ferramentas individuais abaixo relacionadas. A contar desta data, assumo a responsabilidade pela guarda e conservação das mesmas, comprometendo-me a devolvê-las em perfeito estado de funcionamento.\n\nEm caso de extravio ou danos por mau uso que acarretem a perda total ou parcial do bem, autorizo o desconto em folha de pagamento do valor correspondente ao prejuízo causado, fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -319,7 +319,7 @@ export default function EmployeeAssignments({
     doc.text('ASSINATURA DO COLABORADOR', 14, finalY + 45);
     
     doc.line(120, finalY + 40, 196, finalY + 40);
-    doc.text('ASSINATURA RESPONSÁVEL VOLGA', 120, finalY + 45);
+    doc.text('ASSINATURA DO RESPONSÁVEL', 120, finalY + 45);
     
     // Add Footer with page numbers
     const pageCount = (doc as any).internal.getNumberOfPages();
@@ -328,7 +328,7 @@ export default function EmployeeAssignments({
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // slate-400
       doc.setFont('helvetica', 'normal');
-      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA VOLGA TOOLMANAGER`, 105, 285, { align: 'center' });
+      doc.text(`PÁGINA ${i} DE ${pageCount} | GERADO PELO SISTEMA TOOLMANAGER`, 105, 285, { align: 'center' });
     }
 
     doc.save(`termo_ferramentas_${emp?.name.replace(/\s+/g, '_')}.pdf`);

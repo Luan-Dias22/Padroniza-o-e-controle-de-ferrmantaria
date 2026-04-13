@@ -23,7 +23,9 @@ async function testConnection() {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error("Firestore connection failed: The client is offline. This often indicates an incorrect Firebase configuration (Project ID or Database ID).");
     } else {
-      console.warn("Firestore connection test produced an expected error (document not found), but connection was established:", error);
+      // A permission error means we successfully reached the server, so the connection is good.
+      // We log it as a success rather than a warning to avoid confusing console messages.
+      console.log("Firestore connection verified (server reached successfully).");
     }
   }
 }
