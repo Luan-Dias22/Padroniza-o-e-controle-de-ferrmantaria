@@ -19,21 +19,6 @@ interface ReportsProps {
   stockEntries?: StockEntry[];
 }
 
-const reportsOrder = [
-  "Linha 1 (Bancada principal Nova)",
-  "Linha 1 (Bancada principal Existente)",
-  "Linha 1 (Bancada Auxiliar)",
-  "Linha 1 (Implantação de barra)",
-  "Linha 1 (Cabeamento)",
-  "Linha 1 (Fine comb)",
-  "Linha 2 (CV15)",
-  "Linha 3 (SM6)",
-  "Linha 4 (Busway)",
-  "Linha 6 (Pix Easy)",
-  "Linha 9 (Cabeamento/Montagem Gaveta)",
-  "Fábrica de Cabos"
-];
-
 export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -236,14 +221,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       }
     });
     
-    return entities.sort((a, b) => {
-      const indexA = reportsOrder.indexOf(a.name);
-      const indexB = reportsOrder.indexOf(b.name);
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return sortByName(a.name, b.name);
-    });
+    return entities.sort((a, b) => sortByName(a.name, b.name));
   }, [departments, collectiveLines]);
 
   const filteredDepartments = allReportEntities.filter(dept => {
