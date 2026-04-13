@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx-js-style';
 import { getLogoBase64 } from '@/lib/pdfUtils';
-import { sortByName } from '@/lib/utils';
+import { sortByName, formatCurrency } from '@/lib/utils';
 
 interface BudgetsProps {
   tools: Tool[];
@@ -100,11 +100,11 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     const tableData = line.tools.map((t: any) => [
       t.tool.name.toUpperCase(),
       t.tool.brand.toUpperCase(),
-      `R$ ${(t.tool.price || 0).toFixed(2)}`,
+      formatCurrency(t.tool.price || 0),
       t.required.toString(),
       t.missing.toString(),
-      `R$ ${t.costRequired.toFixed(2)}`,
-      `R$ ${t.costMissing.toFixed(2)}`
+      formatCurrency(t.costRequired),
+      formatCurrency(t.costMissing)
     ]);
 
     const totalReq = line.tools.reduce((acc: number, t: any) => acc + t.required, 0);
@@ -114,7 +114,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
       startY: yPos,
       head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
       body: tableData,
-      foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), `R$ ${line.requiredCost.toFixed(2)}`, `R$ ${line.missingCost.toFixed(2)}`]],
+      foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), formatCurrency(line.requiredCost), formatCurrency(line.missingCost)]],
       theme: 'grid',
       styles: {
         font: 'helvetica',
@@ -158,8 +158,8 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     
     if (isFineComb) {
       const investmentItems = [
-        'Bancada Principal',
         'Bancada Principal Nova',
+        'Bancada Principal Existente',
         'Bancada Auxiliar',
         'Implantação de barra',
         'Cabeamento',
@@ -167,12 +167,30 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
       ];
 
       const getLineCosts = (itemName: string) => {
-        const found = budgetArray.find((l: any) => 
-          l.name.toLowerCase().includes('linha 1') && 
-          l.name.toLowerCase().includes(itemName.toLowerCase())
-        );
-        const req = found ? (found as any).requiredCost : 0;
-        const miss = found ? (found as any).missingCost : 0;
+        const matches = budgetArray.filter((l: any) => {
+          const n = l.name.toLowerCase();
+          if (itemName === 'Bancada Principal Existente') {
+            return n.includes('bancada') && n.includes('principal') && !n.includes('nova');
+          }
+          if (itemName === 'Bancada Principal Nova') {
+            return n.includes('bancada') && n.includes('nova');
+          }
+          if (itemName === 'Bancada Auxiliar') {
+            return n.includes('bancada') && n.includes('auxiliar');
+          }
+          if (itemName === 'Implantação de barra') {
+            return (n.includes('implantação') || n.includes('implantacao')) && n.includes('barra');
+          }
+          if (itemName === 'Cabeamento') {
+            return (n.includes('linha 1') && n.includes('cabeamento')) || n === 'cabeamento';
+          }
+          if (itemName === 'Fine Comb') {
+            return n.includes('fine') && n.includes('comb');
+          }
+          return false;
+        });
+        const req = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
+        const miss = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
         return { required: req, missing: miss };
       };
 
@@ -184,8 +202,8 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
         totalMissLinha1 += costs.missing;
         return [
           `Linha 1 ${item}`,
-          `R$ ${costs.required.toFixed(2)}`,
-          `R$ ${costs.missing.toFixed(2)}`
+          formatCurrency(costs.required),
+          formatCurrency(costs.missing)
         ];
       });
 
@@ -193,7 +211,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
         startY: (doc as any).lastAutoTable.finalY + 10,
         head: [[`Investimento Linha 1`, 'Custo Necessário', 'Custo Faltante']],
         body: investmentTableData,
-        foot: [['Total', `R$ ${totalReqLinha1.toFixed(2)}`, `R$ ${totalMissLinha1.toFixed(2)}`]],
+        foot: [['Total', formatCurrency(totalReqLinha1), formatCurrency(totalMissLinha1)]],
         theme: 'grid',
         styles: {
           font: 'helvetica',
@@ -259,7 +277,7 @@ const handleExportExcel = (budgetData: any) => {
     'VALOR UNITÁRIO',
     'QTD. NECESSÁRIA',
     'QTD. FALTANTE',
-    'CUSTO NECESSÁRIO'
+    'CUSTO FALTANTE'
   ];
   wsData.push(headers);
 
@@ -272,7 +290,7 @@ const handleExportExcel = (budgetData: any) => {
         t.tool.price || 0,
         t.required,
         t.missing,
-        t.costRequired
+        t.costMissing
       ]);
     });
 
@@ -286,7 +304,7 @@ const handleExportExcel = (budgetData: any) => {
       '',
       totalReq,
       totalMissing,
-      line.requiredCost
+      line.missingCost
     ]);
     
     // Add Investment Table (Only for Linha 1 Fine Comb)
@@ -296,8 +314,8 @@ const handleExportExcel = (budgetData: any) => {
       wsData.push([]); // Spacing
       wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO NECESSÁRIO', 'CUSTO FALTANTE']);
       const investmentItems = [
-        'Bancada Principal',
         'Bancada Principal Nova',
+        'Bancada Principal Existente',
         'Bancada Auxiliar',
         'Implantação de barra',
         'Cabeamento',
@@ -305,12 +323,30 @@ const handleExportExcel = (budgetData: any) => {
       ];
 
       const getLineCosts = (itemName: string) => {
-        const found = budgetArray.find((l: any) => 
-          l.name.toLowerCase().includes('linha 1') && 
-          l.name.toLowerCase().includes(itemName.toLowerCase())
-        );
-        const req = found ? (found as any).requiredCost : 0;
-        const miss = found ? (found as any).missingCost : 0;
+        const matches = budgetArray.filter((l: any) => {
+          const n = l.name.toLowerCase();
+          if (itemName === 'Bancada Principal Existente') {
+            return n.includes('bancada') && n.includes('principal') && !n.includes('nova');
+          }
+          if (itemName === 'Bancada Principal Nova') {
+            return n.includes('bancada') && n.includes('nova');
+          }
+          if (itemName === 'Bancada Auxiliar') {
+            return n.includes('bancada') && n.includes('auxiliar');
+          }
+          if (itemName === 'Implantação de barra') {
+            return (n.includes('implantação') || n.includes('implantacao')) && n.includes('barra');
+          }
+          if (itemName === 'Cabeamento') {
+            return (n.includes('linha 1') && n.includes('cabeamento')) || n === 'cabeamento';
+          }
+          if (itemName === 'Fine Comb') {
+            return n.includes('fine') && n.includes('comb');
+          }
+          return false;
+        });
+        const req = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
+        const miss = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
         return { required: req, missing: miss };
       };
 
@@ -376,12 +412,23 @@ const handleExportExcel = (budgetData: any) => {
       } else {
         cell.s = bodyStyle;
 
-        // Apply currency formatting to the relevant columns (D, G)
-        if (C === 3 && typeof cell.v === 'number') { // Column D (Valor Unitário)
-          cell.z = '"R$" #,##0.00';
-        }
-        if (C === 6 && typeof cell.v === 'number') { // Column G (Custo Necessário)
-          cell.z = '"R$" #,##0.00';
+        // Apply formatting based on row type
+        if (rowData && rowData.length === 7) {
+          // Main table columns
+          if (C === 3 && typeof cell.v === 'number') { // Column D (Valor Unitário)
+            cell.z = '"R$" #,##0.00';
+          }
+          if (C === 6 && typeof cell.v === 'number') { // Column G (Custo Faltante)
+            cell.z = '"R$" #,##0.00';
+          }
+          if ((C === 4 || C === 5) && typeof cell.v === 'number') { // Columns E, F (Quantities)
+            cell.z = '#,##0'; // Numeric format
+          }
+        } else if (rowData && rowData.length === 3) {
+          // Investment table columns
+          if ((C === 1 || C === 2) && typeof cell.v === 'number') {
+            cell.z = '"R$" #,##0.00';
+          }
         }
       }
     }
@@ -395,7 +442,7 @@ const handleExportExcel = (budgetData: any) => {
     { wch: 18 }, // Valor Unit
     { wch: 18 }, // Qtd Nec
     { wch: 18 }, // Qtd Fal
-    { wch: 20 }, // Custo Nec
+    { wch: 20 }, // Custo Fal
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, 'Orçamentos');
@@ -739,13 +786,13 @@ export default function Budgets({
                 <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10">
                   <p className="text-[10px] font-mono text-blue-400/70 uppercase tracking-widest mb-1">Custo Necessário</p>
                   <p className="text-2xl font-bold text-blue-400 font-mono">
-                    R$ {line.requiredCost.toFixed(2)}
+                    {formatCurrency(line.requiredCost)}
                   </p>
                 </div>
                 <div className="bg-red-500/5 p-4 rounded-xl border border-red-500/10">
                   <p className="text-[10px] font-mono text-red-400/70 uppercase tracking-widest mb-1">Custo Faltante</p>
                   <p className="text-2xl font-bold text-red-400 font-mono">
-                    R$ {line.missingCost.toFixed(2)}
+                    {formatCurrency(line.missingCost)}
                   </p>
                 </div>
               </div>
@@ -757,14 +804,14 @@ export default function Budgets({
                     <div key={idx} className="flex justify-between items-center text-sm p-3 bg-slate-950/30 border border-slate-800/50 hover:border-slate-700 rounded-xl transition-colors">
                       <div className="flex-1">
                         <p className="font-medium text-slate-200">{t.tool.name}</p>
-                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mt-0.5">{t.tool.brand} • R$ {(t.tool.price || 0).toFixed(2)}</p>
+                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mt-0.5">{t.tool.brand} • {formatCurrency(t.tool.price || 0)}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-slate-400 text-xs">
                           <span className="font-bold text-slate-200">{t.missing}</span> faltam de {t.required}
                         </p>
                         <p className="text-xs font-mono font-bold text-red-400 mt-0.5">
-                          R$ {t.costMissing.toFixed(2)}
+                          {formatCurrency(t.costMissing)}
                         </p>
                       </div>
                     </div>
@@ -786,25 +833,43 @@ export default function Budgets({
                       </thead>
                       <tbody className="divide-y divide-slate-800/50">
                         {[
-                          'Bancada Principal',
                           'Bancada Principal Nova',
+                          'Bancada Principal Existente',
                           'Bancada Auxiliar',
                           'Implantação de barra',
                           'Cabeamento',
                           'Fine Comb'
                         ].map(item => {
                           const budgetArray = Object.values(budgetData);
-                          const found = budgetArray.find((l: any) => 
-                            l.name.toLowerCase().includes('linha 1') && 
-                            l.name.toLowerCase().includes(item.toLowerCase())
-                          );
-                          const reqCost = found ? (found as any).requiredCost : 0;
-                          const missCost = found ? (found as any).missingCost : 0;
+                          const matches = budgetArray.filter((l: any) => {
+                            const n = l.name.toLowerCase();
+                            if (item === 'Bancada Principal Existente') {
+                              return n.includes('bancada') && n.includes('principal') && !n.includes('nova');
+                            }
+                            if (item === 'Bancada Principal Nova') {
+                              return n.includes('bancada') && n.includes('nova');
+                            }
+                            if (item === 'Bancada Auxiliar') {
+                              return n.includes('bancada') && n.includes('auxiliar');
+                            }
+                            if (item === 'Implantação de barra') {
+                              return (n.includes('implantação') || n.includes('implantacao')) && n.includes('barra');
+                            }
+                            if (item === 'Cabeamento') {
+                              return (n.includes('linha 1') && n.includes('cabeamento')) || n === 'cabeamento';
+                            }
+                            if (item === 'Fine Comb') {
+                              return n.includes('fine') && n.includes('comb');
+                            }
+                            return false;
+                          });
+                          const reqCost = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
+                          const missCost = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
                           return (
                             <tr key={item}>
                               <td className="p-2 text-slate-400">Linha 1 {item}</td>
-                              <td className="p-2 text-right text-slate-300 font-mono">R$ {reqCost.toFixed(2)}</td>
-                              <td className="p-2 text-right text-red-400 font-mono">R$ {missCost.toFixed(2)}</td>
+                              <td className="p-2 text-right text-slate-300 font-mono">{formatCurrency(reqCost)}</td>
+                              <td className="p-2 text-right text-red-400 font-mono">{formatCurrency(missCost)}</td>
                             </tr>
                           );
                         })}
@@ -813,39 +878,74 @@ export default function Budgets({
                         <tr>
                           <th className="p-2 text-slate-200 text-left">Total</th>
                           <th className="p-2 text-right text-emerald-400 font-mono">
-                            R$ {[
-                              'Bancada Principal',
+                            {formatCurrency([
                               'Bancada Principal Nova',
+                              'Bancada Principal Existente',
                               'Bancada Auxiliar',
                               'Implantação de barra',
                               'Cabeamento',
                               'Fine Comb'
                             ].reduce((acc, item) => {
                               const budgetArray = Object.values(budgetData);
-                              const found = budgetArray.find((l: any) => 
-                                l.name.toLowerCase().includes('linha 1') && 
-                                l.name.toLowerCase().includes(item.toLowerCase())
-                              );
-                              return acc + (found ? (found as any).requiredCost : 0);
-                            }, 0).toFixed(2)}
+                              const matches = budgetArray.filter((l: any) => {
+                                const n = l.name.toLowerCase();
+                                if (item === 'Bancada Principal Existente') {
+                                  return n.includes('bancada') && n.includes('principal') && !n.includes('nova');
+                                }
+                                if (item === 'Bancada Principal Nova') {
+                                  return n.includes('bancada') && n.includes('nova');
+                                }
+                                if (item === 'Bancada Auxiliar') {
+                                  return n.includes('bancada') && n.includes('auxiliar');
+                                }
+                                if (item === 'Implantação de barra') {
+                                  return (n.includes('implantação') || n.includes('implantacao')) && n.includes('barra');
+                                }
+                                if (item === 'Cabeamento') {
+                                  return (n.includes('linha 1') && n.includes('cabeamento')) || n === 'cabeamento';
+                                }
+                                if (item === 'Fine Comb') {
+                                  return n.includes('fine') && n.includes('comb');
+                                }
+                                return false;
+                              });
+                              return acc + matches.reduce((sum, l: any) => sum + l.requiredCost, 0);
+                            }, 0))}
                           </th>
                           <th className="p-2 text-right text-red-400 font-mono">
-                            R$ {[
-                              'Bancada Principal',
+                            {formatCurrency([
                               'Bancada Principal Nova',
+                              'Bancada Principal Existente',
                               'Bancada Auxiliar',
                               'Implantação de barra',
                               'Cabeamento',
                               'Fine Comb'
                             ].reduce((acc, item) => {
                               const budgetArray = Object.values(budgetData);
-                              const found = budgetArray.find((l: any) => 
-                                l.name.toLowerCase().includes('linha 1') && 
-                                l.name.toLowerCase().includes(item.toLowerCase())
-                              );
-                              const missCost = found ? (found as any).missingCost : 0;
-                              return acc + missCost;
-                            }, 0).toFixed(2)}
+                              const matches = budgetArray.filter((l: any) => {
+                                const n = l.name.toLowerCase();
+                                if (item === 'Bancada Principal Existente') {
+                                  return n.includes('bancada') && n.includes('principal') && !n.includes('nova');
+                                }
+                                if (item === 'Bancada Principal Nova') {
+                                  return n.includes('bancada') && n.includes('nova');
+                                }
+                                if (item === 'Bancada Auxiliar') {
+                                  return n.includes('bancada') && n.includes('auxiliar');
+                                }
+                                if (item === 'Implantação de barra') {
+                                  return (n.includes('implantação') || n.includes('implantacao')) && n.includes('barra');
+                                }
+                                if (item === 'Cabeamento') {
+                                  return (n.includes('linha 1') && n.includes('cabeamento')) || n === 'cabeamento';
+                                }
+                                if (item === 'Fine Comb') {
+                                  return n.includes('fine') && n.includes('comb');
+                                }
+                                return false;
+                              });
+                              return acc + matches.reduce((sum, l: any) => sum + l.missingCost, 0);
+                            }, 0))}
                           </th>
                         </tr>
                       </tfoot>
