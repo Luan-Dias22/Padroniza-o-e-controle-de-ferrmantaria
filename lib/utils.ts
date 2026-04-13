@@ -14,7 +14,7 @@ export function sortByName(a: string, b: string) {
     if (n.includes('bancada principal')) return 10;
     if (n.includes('bancada auxiliar')) return 12;
     if (n.includes('implantação de barra') || n.includes('implantacao de barra')) return 13;
-    if (n.includes('linha 1 cabeamento') || n === 'cabeamento') return 14;
+    if (n.includes('cabeamento')) return 14;
     if (n.includes('fine comb')) return 15;
     
     // Other Linha 1 items not caught above

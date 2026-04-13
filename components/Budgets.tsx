@@ -159,6 +159,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     if (isFineComb) {
       const investmentItems = [
         'Bancada Principal',
+        'Bancada Principal Nova',
         'Bancada Auxiliar',
         'Implantação de barra',
         'Cabeamento',
@@ -296,6 +297,7 @@ const handleExportExcel = (budgetData: any) => {
       wsData.push([`INVESTIMENTO LINHA 1`, 'CUSTO NECESSÁRIO', 'CUSTO FALTANTE']);
       const investmentItems = [
         'Bancada Principal',
+        'Bancada Principal Nova',
         'Bancada Auxiliar',
         'Implantação de barra',
         'Cabeamento',
@@ -785,6 +787,7 @@ export default function Budgets({
                       <tbody className="divide-y divide-slate-800/50">
                         {[
                           'Bancada Principal',
+                          'Bancada Principal Nova',
                           'Bancada Auxiliar',
                           'Implantação de barra',
                           'Cabeamento',
@@ -812,6 +815,7 @@ export default function Budgets({
                           <th className="p-2 text-right text-emerald-400 font-mono">
                             R$ {[
                               'Bancada Principal',
+                              'Bancada Principal Nova',
                               'Bancada Auxiliar',
                               'Implantação de barra',
                               'Cabeamento',
@@ -828,6 +832,7 @@ export default function Budgets({
                           <th className="p-2 text-right text-red-400 font-mono">
                             R$ {[
                               'Bancada Principal',
+                              'Bancada Principal Nova',
                               'Bancada Auxiliar',
                               'Implantação de barra',
                               'Cabeamento',
