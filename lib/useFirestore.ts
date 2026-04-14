@@ -112,7 +112,17 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
 
     try {
       const path = `users/${userId}/${collectionName}`;
+      const userPath = `users/${userId}`;
       const colRef = collection(db, path);
+      
+      console.log(`Syncing ${collectionName} to Firestore path: ${path}`);
+
+      // Ensure the parent user document exists so it's visible in the console
+      await setDoc(doc(db, userPath), {
+        lastSync: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        uid: userId
+      }, { merge: true });
       
       const snapshot = await getDocs(colRef);
       const currentIds = new Set(snapshot.docs.map(d => d.id));

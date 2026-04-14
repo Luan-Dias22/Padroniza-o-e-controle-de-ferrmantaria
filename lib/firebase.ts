@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, setLogLevel } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer, setLogLevel, setDoc, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -16,16 +16,19 @@ setLogLevel('error');
 // Validate Connection to Firestore
 async function testConnection() {
   try {
-    // This will fail if the databaseId or projectId is incorrect
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log("Firestore connection test successful");
+    // Perform a test write to verify the connection and help the user find the database
+    const testDocRef = doc(db, 'connection_tests', 'last_test');
+    await setDoc(testDocRef, {
+      timestamp: serverTimestamp(),
+      message: "Conexão verificada com sucesso!",
+      databaseId: firebaseConfig.firestoreDatabaseId
+    });
+    console.log("Firestore connection test successful - Test document written to 'connection_tests/last_test'");
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error("Firestore connection failed: The client is offline. This often indicates an incorrect Firebase configuration (Project ID or Database ID).");
     } else {
-      // A permission error means we successfully reached the server, so the connection is good.
-      // We log it as a success rather than a warning to avoid confusing console messages.
-      console.log("Firestore connection verified (server reached successfully).");
+      console.log("Firestore connection verified (server reached successfully).", error);
     }
   }
 }

@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap, Bug, Users } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap, Bug, Users, Download, FileUp, Database } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import firebaseConfig from '@/firebase-applet-config.json';
 
-export default function Settings({ onSync, onSyncToGuest, onRestoreTemplate, isGuest = false }: { 
+export default function Settings({ onSync, onSyncToGuest, onGetBackup, onRestoreBackup, isGuest = false }: { 
   onSync?: () => Promise<boolean>,
   onSyncToGuest?: () => Promise<boolean>,
-  onRestoreTemplate?: () => void,
+  onGetBackup?: () => any,
+  onRestoreBackup?: (data: any) => boolean,
   isGuest?: boolean
 }) {
   const [showDebug, setShowDebug] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [logo, setLogo] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       return getLogoBase64();
@@ -21,6 +23,8 @@ export default function Settings({ onSync, onSyncToGuest, onRestoreTemplate, isG
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [guestSyncStatus, setGuestSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [backupStatus, setBackupStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   const handleSync = async () => {
     if (!onSync) return;
@@ -42,6 +46,58 @@ export default function Settings({ onSync, onSyncToGuest, onRestoreTemplate, isG
     if (success) {
       setTimeout(() => setGuestSyncStatus('idle'), 3000);
     }
+  };
+
+  const handleDownloadBackup = () => {
+    if (!onGetBackup) return;
+    try {
+      const data = onGetBackup();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-ferramentaria-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setBackupStatus('success');
+      setTimeout(() => setBackupStatus('idle'), 3000);
+    } catch (error) {
+      console.error("Backup error:", error);
+      setBackupStatus('error');
+      setTimeout(() => setBackupStatus('idle'), 3000);
+    }
+  };
+
+  const handleUploadBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onRestoreBackup) return;
+
+    setRestoreStatus('loading');
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        const success = onRestoreBackup(json);
+        setRestoreStatus(success ? 'success' : 'error');
+        if (success) {
+          setTimeout(() => setRestoreStatus('idle'), 3000);
+        }
+      } catch (error) {
+        console.error("Restore error:", error);
+        setRestoreStatus('error');
+        setTimeout(() => setRestoreStatus('idle'), 3000);
+      }
+    };
+    reader.onerror = () => {
+      setRestoreStatus('error');
+      setTimeout(() => setRestoreStatus('idle'), 3000);
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (e.target) e.target.value = '';
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -287,26 +343,102 @@ export default function Settings({ onSync, onSyncToGuest, onRestoreTemplate, isG
             className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-6 shadow-inner mt-6"
           >
             <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-400" />
-              Recuperação de Emergência
+              <Database className="w-5 h-5 text-amber-400" />
+              Backup e Restauração
             </h2>
             <p className="text-slate-400 text-sm mb-6">
-              Se o seu aplicativo estiver totalmente vazio após o login, use este botão para recarregar os dados de exemplo (template). Depois de carregar, não esqueça de clicar em &quot;Sincronizar&quot; acima para salvá-los na sua conta.
+              Exporte todos os seus dados para um arquivo de segurança ou restaure um backup anterior. 
+              Isso inclui ferramentas, funcionários, atribuições e histórico de estoque.
             </p>
 
-            {!isGuest ? (
-              <button
-                onClick={onRestoreTemplate}
-                className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-all text-sm font-medium"
-              >
-                <Zap className="w-4 h-4" />
-                Restaurar Dados do Template (Exemplo)
-              </button>
-            ) : (
-              <p className="text-sm text-slate-500 italic">
-                A restauração de template está desabilitada no modo convidado.
-              </p>
-            )}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {!isGuest ? (
+                <>
+                  <button
+                    onClick={handleDownloadBackup}
+                    className="flex items-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition-all text-sm font-medium w-full sm:w-auto justify-center"
+                  >
+                    <Download className="w-4 h-4" />
+                    Gerar Arquivo de Backup
+                  </button>
+
+                  <div className="relative w-full sm:w-auto">
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleUploadBackup}
+                      className="hidden"
+                      ref={fileInputRef}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={restoreStatus === 'loading'}
+                      className={`
+                        flex items-center gap-2 px-5 py-3 rounded-xl transition-all text-sm font-medium w-full sm:w-auto justify-center
+                        ${restoreStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
+                          restoreStatus === 'success' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' :
+                          restoreStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
+                          'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'}
+                      `}
+                    >
+                      {restoreStatus === 'loading' ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                          Restaurando...
+                        </>
+                      ) : restoreStatus === 'success' ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Backup Restaurado!
+                        </>
+                      ) : (
+                        <>
+                          <FileUp className="w-4 h-4" />
+                          Recuperar Backup (Upload)
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-slate-500 italic">
+                  As opções de backup estão desabilitadas no modo convidado.
+                </p>
+              )}
+            </div>
+            
+            <AnimatePresence>
+              {backupStatus === 'success' && (
+                <motion.p 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-emerald-400 text-xs mt-3 font-medium"
+                >
+                  Backup gerado e baixado com sucesso!
+                </motion.p>
+              )}
+              {restoreStatus === 'success' && (
+                <motion.p 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-emerald-400 text-xs mt-3 font-medium"
+                >
+                  Os dados foram carregados no aplicativo. Clique em &quot;Salvar na Minha Conta&quot; acima para persistir na nuvem.
+                </motion.p>
+              )}
+              {restoreStatus === 'error' && (
+                <motion.p 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400 text-xs mt-3 font-medium"
+                >
+                  Erro ao ler o arquivo de backup. Verifique se o formato está correto.
+                </motion.p>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           <div className="mt-12 pt-6 border-t border-slate-800/50">

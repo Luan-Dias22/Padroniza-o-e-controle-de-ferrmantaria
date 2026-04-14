@@ -94,6 +94,33 @@ export default function App() {
     setStockEntries([]);
   };
 
+  const getBackupData = () => {
+    return {
+      tools,
+      standardLists,
+      employees,
+      departments,
+      assignments,
+      collectiveLines,
+      collectiveStations,
+      stockEntries,
+      timestamp: new Date().toISOString(),
+      version: '1.1'
+    };
+  };
+
+  const restoreFromBackup = (data: any) => {
+    if (data.tools) setTools(data.tools);
+    if (data.standardLists) setStandardLists(data.standardLists);
+    if (data.employees) setEmployees(data.employees);
+    if (data.departments) setDepartments(data.departments);
+    if (data.assignments) setAssignments(data.assignments);
+    if (data.collectiveLines) setCollectiveLines(data.collectiveLines || []);
+    if (data.collectiveStations) setCollectiveStations(data.collectiveStations || []);
+    if (data.stockEntries) setStockEntries(data.stockEntries || []);
+    return true;
+  };
+
   const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit));
 
   const handleLogin = async () => {
@@ -491,7 +518,8 @@ export default function App() {
               <Settings 
                 onSync={syncAllData} 
                 onSyncToGuest={() => syncAllData('guest')}
-                onRestoreTemplate={restoreTemplateAll} 
+                onGetBackup={getBackupData}
+                onRestoreBackup={restoreFromBackup}
                 isGuest={isGuest} 
               />
             )}

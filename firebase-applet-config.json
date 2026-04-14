@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0625682431",
-  "appId": "1:251363252248:web:1e48b869e2f4e4c27fcb6d",
-  "apiKey": "AIzaSyBg8tXzUdwnuX2WthY8xVtdRwZxlBepqaI",
-  "authDomain": "gen-lang-client-0625682431.firebaseapp.com",
+  "projectId": "padroniza-controle-ferramentas",
+  "appId": "1:247405871067:web:92e3728810ba56d74d31fe",
+  "apiKey": "AIzaSyDEdhoN8D5iY5h36ntZHeEp3J7EkQwfq3o",
+  "authDomain": "padroniza-controle-ferramentas.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-69c9ad42-b539-40dd-886b-74e20672e178",
-  "storageBucket": "gen-lang-client-0625682431.firebasestorage.app",
-  "messagingSenderId": "251363252248",
+  "storageBucket": "padroniza-controle-ferramentas.firebasestorage.app",
+  "messagingSenderId": "247405871067",
   "measurementId": ""
 }

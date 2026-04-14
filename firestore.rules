@@ -200,7 +200,14 @@ service cloud.firestore {
     // ===============================================================
     // Rules
     // ===============================================================
+    match /connection_tests/{testId} {
+      allow read, write: if true;
+    }
+
     match /users/{userId} {
+      allow read: if canRead(userId);
+      allow write: if canWrite(userId);
+
       match /tools/{toolId} {
         allow read: if canRead(userId);
         allow create: if canWrite(userId) && hasRequiredFields(['brand', 'name', 'category', 'description', 'uid']) && isValidTool(request.resource.data) && uidUnchanged(userId);
