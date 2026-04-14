@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList } from '@/lib/data';
+import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList, Employee } from '@/lib/data';
 import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers, History, BarChart3, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
