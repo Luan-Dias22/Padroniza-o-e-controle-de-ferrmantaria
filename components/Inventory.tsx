@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList, Employee } from '@/lib/data';
+import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList } from '@/lib/data';
 import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers, History, BarChart3, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
@@ -31,6 +31,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   const [isMultiSelectModalOpen, setIsMultiSelectModalOpen] = useState(false);
   const [tempSelectedToolIds, setTempSelectedToolIds] = useState<string[]>([]);
   const [multiSelectSearch, setMultiSelectSearch] = useState('');
+  const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([]);
+  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,6 +116,28 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       setStockEntries(stockEntries.filter(e => e.id !== entryToDelete));
       setEntryToDelete(null);
     }
+  };
+
+  const toggleEntrySelection = (entryId: string) => {
+    setSelectedEntryIds(prev => 
+      prev.includes(entryId) 
+        ? prev.filter(id => id !== entryId) 
+        : [...prev, entryId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedEntryIds.length === filteredEntries.length) {
+      setSelectedEntryIds([]);
+    } else {
+      setSelectedEntryIds(filteredEntries.map(e => e.id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setStockEntries(stockEntries.filter(e => !selectedEntryIds.includes(e.id)));
+    setSelectedEntryIds([]);
+    setIsBulkDeleteConfirmOpen(false);
   };
 
   const filteredEntries = stockEntries.filter(entry => {
@@ -447,6 +471,42 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-3"
                 >
+                  {/* Bulk Actions Bar */}
+                  {filteredEntries.length > 0 && !isGuest && (
+                    <div className="flex items-center justify-between mb-2 px-1">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={handleSelectAll}
+                          className="flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-indigo-400 transition-colors"
+                        >
+                          {selectedEntryIds.length === filteredEntries.length ? (
+                            <CheckSquare className="w-4 h-4 text-indigo-400" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                          {selectedEntryIds.length === filteredEntries.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
+                        </button>
+                        {selectedEntryIds.length > 0 && (
+                          <span className="text-xs text-slate-500">
+                            {selectedEntryIds.length} selecionado(s)
+                          </span>
+                        )}
+                      </div>
+                      
+                      {selectedEntryIds.length > 0 && (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          onClick={() => setIsBulkDeleteConfirmOpen(true)}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 rounded-lg text-xs font-bold transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Excluir Selecionados
+                        </motion.button>
+                      )}
+                    </div>
+                  )}
+
                   {filteredEntries.length === 0 ? (
                     <div className="text-center py-12">
                       <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
@@ -460,8 +520,25 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                       const isWithdrawal = entry.quantity < 0;
                       
                       return (
-                        <div key={entry.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
-                          <div className="flex items-center gap-4">
+                        <div 
+                          key={entry.id} 
+                          className={`bg-slate-800/50 border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors ${
+                            selectedEntryIds.includes(entry.id) ? 'border-indigo-500/50 ring-1 ring-indigo-500/20 bg-indigo-500/5' : 'border-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4 w-full sm:w-auto">
+                            {!isGuest && (
+                              <button 
+                                onClick={() => toggleEntrySelection(entry.id)}
+                                className="shrink-0 text-slate-500 hover:text-indigo-400 transition-colors"
+                              >
+                                {selectedEntryIds.includes(entry.id) ? (
+                                  <CheckSquare className="w-5 h-5 text-indigo-400" />
+                                ) : (
+                                  <Square className="w-5 h-5" />
+                                )}
+                              </button>
+                            )}
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shrink-0 ${
                               isWithdrawal 
                                 ? 'bg-amber-500/10 border-amber-500/20' 
@@ -657,6 +734,54 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)]"
                 >
                   Sim, Excluir
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <AnimatePresence>
+        {isBulkDeleteConfirmOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+              onClick={() => setIsBulkDeleteConfirmOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Excluir Múltiplos Registros</h3>
+                  <p className="text-slate-400 text-sm">
+                    Tem certeza que deseja remover os <span className="text-white font-bold">{selectedEntryIds.length}</span> registros selecionados? Esta ação não pode ser desfeita.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsBulkDeleteConfirmOpen(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                >
+                  Sim, Excluir Todos
                 </button>
               </div>
             </motion.div>
