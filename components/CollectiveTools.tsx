@@ -581,28 +581,28 @@ export default function CollectiveTools({
                           className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-950/50 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors group gap-4"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-200 break-words">{t.name}</p>
-                            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-1.5">{t.category}</p>
+                            <p className="font-bold text-slate-200 text-sm sm:text-base leading-tight line-clamp-2" title={t.name}>{t.name}</p>
+                            <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-1">{t.category}</p>
                           </div>
-                          <div className="flex items-center gap-4 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                          <div className="flex items-center gap-3 shrink-0 bg-slate-900/50 p-2 rounded-xl border border-slate-800/50">
                             <div className="flex flex-col items-center">
-                              <span className="text-[9px] font-mono font-bold text-blue-400 uppercase mb-1.5">Atual</span>
+                              <span className="text-[9px] font-mono font-bold text-blue-400 uppercase mb-1">Atual</span>
                               <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
-                                <span className="px-3 py-1.5 font-bold text-slate-200 min-w-[40px] text-center font-mono">{t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2 py-1 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
+                                <span className="px-2 py-1 font-bold text-slate-200 min-w-[32px] text-center font-mono text-xs">{t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2 py-1 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
                               </div>
                             </div>
-                            <span className="text-slate-700 font-light text-2xl mt-4">/</span>
+                            <span className="text-slate-700 font-light text-xl self-end mb-1">/</span>
                             <div className="flex flex-col items-center">
-                              <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase mb-1.5">Nec.</span>
+                              <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase mb-1">Nec.</span>
                               <div className="flex items-center bg-slate-950 border border-slate-700 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
-                                <span className="px-3 py-1.5 font-bold text-slate-200 min-w-[40px] text-center font-mono">{t.requiredQuantity ?? t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2.5 py-1.5 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2 py-1 hover:bg-slate-800 text-slate-400 border-r border-slate-700 transition-colors">-</button>
+                                <span className="px-2 py-1 font-bold text-slate-200 min-w-[32px] text-center font-mono text-xs">{t.requiredQuantity ?? t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2 py-1 hover:bg-slate-800 text-slate-400 border-l border-slate-700 transition-colors">+</button>
                               </div>
                             </div>
-                            <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2.5 ml-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors mt-4">
+                            <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-end mb-0.5">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -636,9 +636,9 @@ export default function CollectiveTools({
                           onClick={() => handleAddToolToStation(tool)}
                           className="w-full flex items-center justify-between p-3.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group"
                         >
-                          <div className="min-w-0 pr-3">
-                            <p className="text-sm font-medium text-slate-300 break-words group-hover:text-indigo-300 transition-colors">{tool.name}</p>
-                            <p className="text-[10px] font-mono text-slate-500 break-words mt-1 uppercase tracking-wider">{tool.brand}</p>
+                          <div className="min-w-0 pr-3 flex-1">
+                            <p className="text-sm font-medium text-slate-300 line-clamp-2 group-hover:text-indigo-300 transition-colors" title={tool.name}>{tool.name}</p>
+                            <p className="text-[10px] font-mono text-slate-500 mt-1 uppercase tracking-wider truncate">{tool.brand}</p>
                           </div>
                           <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
                             <Plus className="w-4 h-4 text-slate-400 group-hover:text-white" />
@@ -720,8 +720,10 @@ export default function CollectiveTools({
                           
                           return (
                             <tr key={idx} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
-                              <td className="p-4 font-medium text-slate-200">{t.name}</td>
-                              <td className="p-4 text-slate-400 text-xs font-mono uppercase tracking-wider">{t.category}</td>
+                              <td className="p-4 font-medium text-slate-200 max-w-[200px]">
+                                <div className="line-clamp-2" title={t.name}>{t.name}</div>
+                              </td>
+                              <td className="p-4 text-slate-400 text-xs font-mono uppercase tracking-wider truncate max-w-[120px]">{t.category}</td>
                               <td className="p-4 text-center">
                                 <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-lg text-sm font-mono border ${currentQty < requiredQty ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
                                   {currentQty}
