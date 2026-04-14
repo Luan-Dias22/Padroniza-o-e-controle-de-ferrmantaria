@@ -476,6 +476,8 @@ export default function App() {
                 standardLists={standardLists}
                 assignments={assignments}
                 setAssignments={setAssignments}
+                stockEntries={stockEntries}
+                setStockEntries={setStockEntries}
                 isGuest={isGuest}
               />
             )}
@@ -510,6 +512,7 @@ export default function App() {
                 collectiveStations={collectiveStations}
                 stockEntries={stockEntries}
                 standardLists={standardLists}
+                employees={employees}
                 setStockEntries={setStockEntries}
                 isGuest={isGuest}
               />

@@ -72,6 +72,7 @@ service cloud.firestore {
     //   - uid: string (required, immutable)
     //   - type: string (required)
     //   - station: string (optional)
+    //   - employeeId: string (optional)
     //
     // ===============================================================
 
@@ -187,14 +188,15 @@ service cloud.firestore {
     }
 
     function isValidStockEntry(data) {
-      return hasOnlyAllowedFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type'], ['id', 'station']) &&
+      return hasOnlyAllowedFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type'], ['id', 'station', 'employeeId']) &&
              data.toolId is string && data.toolId.size() > 0 && data.toolId.size() < 100 &&
              data.lineId is string && data.lineId.size() > 0 && data.lineId.size() < 100 &&
-             data.quantity is number && data.quantity > 0 &&
+             data.quantity is number && data.quantity != 0 &&
              data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
              data.type in ['individual', 'collective'] &&
-             (!('station' in data) || (data.station is string && data.station.size() < 100));
+             (!('station' in data) || (data.station is string && data.station.size() < 100)) &&
+             (!('employeeId' in data) || (data.employeeId is string && data.employeeId.size() < 100));
     }
 
     // ===============================================================

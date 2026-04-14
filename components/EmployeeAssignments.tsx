@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Employee, Assignment, Department, Tool, StandardToolList } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users } from 'lucide-react';
+import { Employee, Assignment, Department, Tool, StandardToolList, StockEntry } from '@/lib/data';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
@@ -10,11 +10,12 @@ import { getLogoBase64 } from '@/lib/pdfUtils';
 import { sortByName } from '@/lib/utils';
 
 export default function EmployeeAssignments({
-  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments, isGuest = false
+  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments, stockEntries, setStockEntries, isGuest = false
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], tools: Tool[], standardLists: StandardToolList[],
   assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
+  stockEntries: StockEntry[], setStockEntries: (s: StockEntry[]) => void,
   isGuest?: boolean
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
@@ -32,6 +33,7 @@ export default function EmployeeAssignments({
   const [assignmentEmployeeSearch, setAssignmentEmployeeSearch] = useState('');
   const [assignmentDepartmentFilter, setAssignmentDepartmentFilter] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
+  const [shouldDeductFromStock, setShouldDeductFromStock] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -82,18 +84,35 @@ export default function EmployeeAssignments({
     const emp = employees.find(e => e.id === selectedEmployeeId);
     if (!emp) return;
 
+    const newAssignmentId = editingAssignmentId || crypto.randomUUID();
+    const newAssignment: Assignment = {
+      id: newAssignmentId,
+      employeeId: selectedEmployeeId,
+      departmentId: emp.departmentId,
+      assignedTools: customTools,
+      dateAssigned: editingAssignmentId 
+        ? assignments.find(a => a.id === editingAssignmentId)?.dateAssigned || new Date().toISOString()
+        : new Date().toISOString()
+    };
+
+    // Deduct from stock if requested
+    if (shouldDeductFromStock && customTools.length > 0) {
+      const newStockEntries: StockEntry[] = customTools.map((tool, index) => ({
+        id: `se_withdraw_${new Date().getTime()}_${index}`,
+        toolId: tool.toolId,
+        lineId: emp.departmentId,
+        quantity: -tool.quantity,
+        date: new Date().toISOString(),
+        type: 'individual',
+        employeeId: selectedEmployeeId
+      }));
+      setStockEntries([...(stockEntries || []), ...newStockEntries]);
+    }
+
     if (editingAssignmentId) {
-      setAssignments(assignments.map(a => a.id === editingAssignmentId ? {
-        ...a, employeeId: selectedEmployeeId, departmentId: emp.departmentId, assignedTools: customTools
-      } : a));
+      setAssignments(assignments.map(a => a.id === editingAssignmentId ? newAssignment : a));
     } else {
-      setAssignments([...assignments, {
-        id: crypto.randomUUID(),
-        employeeId: selectedEmployeeId,
-        departmentId: emp.departmentId,
-        assignedTools: customTools,
-        dateAssigned: new Date().toISOString()
-      }]);
+      setAssignments([...assignments, newAssignment]);
     }
     
     setIsAssigning(false);
@@ -106,6 +125,7 @@ export default function EmployeeAssignments({
     setAssignmentFilter('all');
     setAssignmentEmployeeSearch('');
     setAssignmentDepartmentFilter('');
+    setShouldDeductFromStock(false);
   };
 
   const getMissingTools = (assignment: Assignment) => {
@@ -593,20 +613,43 @@ export default function EmployeeAssignments({
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3 border-t border-slate-800 pt-5">
-              <button 
-                onClick={() => setIsAssigning(false)}
-                className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleSaveAssignment}
-                disabled={!selectedEmployeeId}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
-              >
-                Salvar Atribuição
-              </button>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800 pt-5">
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div 
+                    className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                      shouldDeductFromStock 
+                        ? 'bg-amber-500 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' 
+                        : 'border-slate-700 bg-slate-950 group-hover:border-slate-600'
+                    }`}
+                    onClick={() => setShouldDeductFromStock(!shouldDeductFromStock)}
+                  >
+                    {shouldDeductFromStock && <Check className="w-3.5 h-3.5 text-white" />}
+                  </div>
+                  <span className="text-sm text-slate-300 group-hover:text-slate-200 transition-colors select-none">
+                    Retirar ferramentas do estoque ao salvar
+                  </span>
+                </label>
+              </div>
+              
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button 
+                  onClick={() => {
+                    setIsAssigning(false);
+                    setShouldDeductFromStock(false);
+                  }}
+                  className="flex-1 sm:flex-none px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveAssignment}
+                  disabled={!selectedEmployeeId}
+                  className="flex-1 sm:flex-none px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
+                >
+                  Salvar Atribuição
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

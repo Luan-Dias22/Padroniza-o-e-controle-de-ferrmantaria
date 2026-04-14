@@ -24,6 +24,7 @@ export type StockEntry = {
   date: string;
   type?: 'individual' | 'collective';
   station?: string;
+  employeeId?: string;
 };
 
 export const mockTools: Tool[] = [

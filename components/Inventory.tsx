@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList } from '@/lib/data';
-import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers } from 'lucide-react';
+import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers, History, BarChart3, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
 
@@ -11,11 +11,13 @@ interface InventoryProps {
   collectiveStations: CollectiveStation[];
   stockEntries: StockEntry[];
   standardLists: StandardToolList[];
+  employees: Employee[];
   setStockEntries: (entries: StockEntry[]) => void;
   isGuest?: boolean;
 }
 
-export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, setStockEntries, isGuest = false }: InventoryProps) {
+export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, employees, setStockEntries, isGuest = false }: InventoryProps) {
+  const [activeInventoryTab, setActiveInventoryTab] = useState<'history' | 'balance' | 'pending'>('history');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedToolId, setSelectedToolId] = useState('');
   const [selectedLineId, setSelectedLineId] = useState('');
@@ -139,6 +141,41 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const selectedTool = tools.find(t => t.id === selectedToolId);
   const selectedLineName = allLines.find(l => l.id === selectedLineId)?.name || '';
+  
+  // Calculate Stock Balance
+  const stockBalance = stockEntries.reduce((acc, entry) => {
+    const key = `${entry.toolId}_${entry.lineId}_${entry.station || 'no-station'}`;
+    if (!acc[key]) {
+      acc[key] = {
+        toolId: entry.toolId,
+        lineId: entry.lineId,
+        station: entry.station,
+        quantity: 0,
+        type: entry.type
+      };
+    }
+    acc[key].quantity += entry.quantity;
+    return acc;
+  }, {} as Record<string, { toolId: string, lineId: string, station?: string, quantity: number, type?: string }>);
+
+  const balanceList = Object.values(stockBalance).filter(item => {
+    const tool = tools.find(t => t.id === item.toolId);
+    const line = allLines.find(l => l.id === item.lineId);
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      tool?.name.toLowerCase().includes(searchLower) ||
+      tool?.brand.toLowerCase().includes(searchLower) ||
+      line?.name.toLowerCase().includes(searchLower)
+    );
+  }).sort((a, b) => {
+    const toolA = tools.find(t => t.id === a.toolId)?.name || '';
+    const toolB = tools.find(t => t.id === b.toolId)?.name || '';
+    return sortByName(toolA, toolB);
+  });
+
+  const pendingDelivery = balanceList.filter(item => item.type === 'individual' && item.quantity > 0);
+
   const availableStations = collectiveStations
     .filter(s => s.line === selectedLineName)
     .sort((a, b) => {
@@ -157,7 +194,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
         <h1 className="text-2xl font-bold text-white tracking-tight">Estoque</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Form */}
         {!isGuest && (
           <motion.div 
@@ -341,81 +378,240 @@ export default function Inventory({ tools, departments, collectiveLines, collect
           </motion.div>
         )}
 
-        {/* List */}
+        {/* List and Tabs */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-2 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden flex flex-col h-[600px]"
+          className="lg:col-span-3 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden flex flex-col h-[700px]"
         >
-          <div className="p-5 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/80">
-            <h2 className="text-lg font-semibold text-white">Histórico de Entradas</h2>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar entradas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all text-sm"
-              />
+          <div className="p-5 border-b border-slate-800 bg-slate-900/80">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+              <h2 className="text-lg font-semibold text-white">Gestão de Estoque</h2>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar no estoque..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 p-1 bg-slate-950/50 rounded-xl border border-slate-800 w-fit">
+              <button
+                onClick={() => setActiveInventoryTab('history')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeInventoryTab === 'history'
+                    ? 'bg-indigo-500 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <History className="w-4 h-4" />
+                Histórico
+              </button>
+              <button
+                onClick={() => setActiveInventoryTab('balance')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeInventoryTab === 'balance'
+                    ? 'bg-indigo-500 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                Saldo Geral
+              </button>
+              <button
+                onClick={() => setActiveInventoryTab('pending')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeInventoryTab === 'pending'
+                    ? 'bg-indigo-500 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                Aguardando Entrega
+              </button>
             </div>
           </div>
 
           <div className="flex-1 overflow-auto p-5">
-            <div className="space-y-3">
-              {filteredEntries.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400">Nenhuma entrada de estoque encontrada.</p>
-                </div>
-              ) : (
-                filteredEntries.map(entry => {
-                  const tool = tools.find(t => t.id === entry.toolId);
-                  const line = allLines.find(l => l.id === entry.lineId);
-                  
-                  return (
-                    <div key={entry.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20 shrink-0">
-                          <Package className="w-5 h-5 text-indigo-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
-                          <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
-                            <span className="bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">{tool?.brand || '-'}</span>
-                            <span className={`px-2 py-0.5 rounded-md border ${entry.type === 'collective' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
-                              {entry.type === 'collective' ? 'Coletiva' : 'Individual'}
-                            </span>
-                            <span>Destino: <span className="text-indigo-300">{line?.name || 'Desconhecido'}</span></span>
-                            {entry.station && (
-                              <span>Posto: <span className="text-indigo-300">{entry.station}</span></span>
+            <AnimatePresence mode="wait">
+              {activeInventoryTab === 'history' && (
+                <motion.div
+                  key="history"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-3"
+                >
+                  {filteredEntries.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <p className="text-slate-400">Nenhuma movimentação encontrada.</p>
+                    </div>
+                  ) : (
+                    filteredEntries.map(entry => {
+                      const tool = tools.find(t => t.id === entry.toolId);
+                      const line = allLines.find(l => l.id === entry.lineId);
+                      const employee = entry.employeeId ? employees.find(e => e.id === entry.employeeId) : null;
+                      const isWithdrawal = entry.quantity < 0;
+                      
+                      return (
+                        <div key={entry.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shrink-0 ${
+                              isWithdrawal 
+                                ? 'bg-amber-500/10 border-amber-500/20' 
+                                : 'bg-indigo-500/10 border-indigo-500/20'
+                            }`}>
+                              <Package className={`w-5 h-5 ${isWithdrawal ? 'text-amber-400' : 'text-indigo-400'}`} />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 mt-1">
+                                <span className="bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">{tool?.brand || '-'}</span>
+                                <span className={`px-2 py-0.5 rounded-md border ${entry.type === 'collective' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                                  {entry.type === 'collective' ? 'Coletiva' : 'Individual'}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-md border ${isWithdrawal ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'}`}>
+                                  {isWithdrawal ? 'Saída' : 'Entrada'}
+                                </span>
+                                <span>Destino: <span className="text-indigo-300">{line?.name || 'Desconhecido'}</span></span>
+                                {entry.station && (
+                                  <span>Posto: <span className="text-indigo-300">{entry.station}</span></span>
+                                )}
+                                {employee && (
+                                  <span className="flex items-center gap-1">
+                                    Colaborador: <span className="text-amber-300 font-medium">{employee.name}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="text-right">
+                              <div className={`text-2xl font-bold ${isWithdrawal ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                {isWithdrawal ? entry.quantity : `+${entry.quantity}`}
+                              </div>
+                              <div className="text-xs text-slate-500">{new Date(entry.date).toLocaleDateString('pt-BR')}</div>
+                            </div>
+                            {!isGuest && (
+                              <button
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
+                                title="Remover Registro"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             )}
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-emerald-400">+{entry.quantity}</div>
-                          <div className="text-xs text-slate-500">{new Date(entry.date).toLocaleDateString('pt-BR')}</div>
-                        </div>
-                        {!isGuest && (
-                          <button
-                            onClick={() => handleDeleteEntry(entry.id)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
-                            title="Remover Entrada"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="hidden sm:inline">Excluir</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
+                      );
+                    })
+                  )}
+                </motion.div>
               )}
-            </div>
+
+              {activeInventoryTab === 'balance' && (
+                <motion.div
+                  key="balance"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-3"
+                >
+                  {balanceList.length === 0 ? (
+                    <div className="text-center py-12">
+                      <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <p className="text-slate-400">Nenhum saldo encontrado.</p>
+                    </div>
+                  ) : (
+                    balanceList.map((item, idx) => {
+                      const tool = tools.find(t => t.id === item.toolId);
+                      const line = allLines.find(l => l.id === item.lineId);
+                      
+                      return (
+                        <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20 shrink-0">
+                              <Package className="w-5 h-5 text-indigo-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 mt-1">
+                                <span className="bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">{tool?.brand || '-'}</span>
+                                <span className={`px-2 py-0.5 rounded-md border ${item.type === 'collective' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                                  {item.type === 'collective' ? 'Coletiva' : 'Individual'}
+                                </span>
+                                <span>Local: <span className="text-indigo-300">{line?.name || 'Desconhecido'}</span></span>
+                                {item.station && item.station !== 'no-station' && (
+                                  <span>Posto: <span className="text-indigo-300">{item.station}</span></span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className={`text-2xl font-bold ${item.quantity > 0 ? 'text-emerald-400' : item.quantity < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                              {item.quantity}
+                            </div>
+                            <div className="text-xs text-slate-500">Saldo Atual</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </motion.div>
+              )}
+
+              {activeInventoryTab === 'pending' && (
+                <motion.div
+                  key="pending"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="space-y-3"
+                >
+                  {pendingDelivery.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                      <p className="text-slate-400">Nenhuma ferramenta aguardando entrega.</p>
+                    </div>
+                  ) : (
+                    pendingDelivery.map((item, idx) => {
+                      const tool = tools.find(t => t.id === item.toolId);
+                      const line = allLines.find(l => l.id === item.lineId);
+                      
+                      return (
+                        <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 shrink-0">
+                              <Clock className="w-5 h-5 text-amber-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 mt-1">
+                                <span className="bg-slate-900 px-2 py-0.5 rounded-md border border-slate-700">{tool?.brand || '-'}</span>
+                                <span>Destinado a: <span className="text-indigo-300">{line?.name || 'Desconhecido'}</span></span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-amber-400">{item.quantity}</div>
+                            <div className="text-xs text-slate-500">Disponível para Entrega</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
