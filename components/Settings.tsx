@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap, Bug } from 'lucide-react';
+import { Settings as SettingsIcon, Upload, Image as ImageIcon, Trash2, CloudUpload, CheckCircle2, AlertCircle, Zap, Bug, Users } from 'lucide-react';
 import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import firebaseConfig from '@/firebase-applet-config.json';
 
-export default function Settings({ onSync, onRestoreTemplate, isGuest = false }: { 
+export default function Settings({ onSync, onSyncToGuest, onRestoreTemplate, isGuest = false }: { 
   onSync?: () => Promise<boolean>,
+  onSyncToGuest?: () => Promise<boolean>,
   onRestoreTemplate?: () => void,
   isGuest?: boolean
 }) {
@@ -19,6 +20,7 @@ export default function Settings({ onSync, onRestoreTemplate, isGuest = false }:
   });
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [guestSyncStatus, setGuestSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   const handleSync = async () => {
     if (!onSync) return;
@@ -28,6 +30,17 @@ export default function Settings({ onSync, onRestoreTemplate, isGuest = false }:
     
     if (success) {
       setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
+
+  const handleSyncToGuest = async () => {
+    if (!onSyncToGuest) return;
+    setGuestSyncStatus('loading');
+    const success = await onSyncToGuest();
+    setGuestSyncStatus(success ? 'success' : 'error');
+    
+    if (success) {
+      setTimeout(() => setGuestSyncStatus('idle'), 3000);
     }
   };
 
@@ -146,62 +159,124 @@ export default function Settings({ onSync, onRestoreTemplate, isGuest = false }:
               Sincronização de Dados
             </h2>
             <p className="text-slate-400 text-sm mb-6">
-              Se você estiver vendo dados no aplicativo que ainda não aparecem no seu banco de dados na nuvem, use este botão para forçar uma sincronização manual.
+              Gerencie como seus dados são salvos na nuvem e o que os convidados podem ver.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              {!isGuest ? (
-                <button
-                  onClick={handleSync}
-                  disabled={syncStatus === 'loading'}
-                  className={`
-                    flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all shadow-lg w-full sm:w-auto justify-center
-                    ${syncStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
-                      syncStatus === 'success' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' :
-                      syncStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
-                      'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
-                  `}
-                >
-                  {syncStatus === 'loading' ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                      Sincronizando...
-                    </>
-                  ) : syncStatus === 'success' ? (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      Dados Salvos na Nuvem!
-                    </>
-                  ) : syncStatus === 'error' ? (
-                    <>
-                      <AlertCircle className="w-5 h-5" />
-                      Erro ao Sincronizar
-                    </>
+            <div className="space-y-6">
+              <div>
+                <p className="text-slate-300 text-sm font-medium mb-3">Sua Conta Particular</p>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {!isGuest ? (
+                    <button
+                      onClick={handleSync}
+                      disabled={syncStatus === 'loading'}
+                      className={`
+                        flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all shadow-lg w-full sm:w-auto justify-center
+                        ${syncStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
+                          syncStatus === 'success' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' :
+                          syncStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
+                          'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
+                      `}
+                    >
+                      {syncStatus === 'loading' ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                          Sincronizando...
+                        </>
+                      ) : syncStatus === 'success' ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5" />
+                          Dados Salvos!
+                        </>
+                      ) : syncStatus === 'error' ? (
+                        <>
+                          <AlertCircle className="w-5 h-5" />
+                          Erro ao Sincronizar
+                        </>
+                      ) : (
+                        <>
+                          <CloudUpload className="w-5 h-5" />
+                          Salvar na Minha Conta
+                        </>
+                      )}
+                    </button>
                   ) : (
-                    <>
-                      <CloudUpload className="w-5 h-5" />
-                      Sincronizar Dados Atuais com a Nuvem
-                    </>
+                    <p className="text-sm text-slate-500 italic">
+                      A sincronização está desabilitada no modo convidado.
+                    </p>
                   )}
-                </button>
-              ) : (
-                <p className="text-sm text-slate-500 italic">
-                  A sincronização está desabilitada no modo convidado.
-                </p>
+                  
+                  <AnimatePresence>
+                    {syncStatus === 'success' && (
+                      <motion.p 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-emerald-400 text-xs font-medium"
+                      >
+                        Dados gravados com sucesso na sua conta particular.
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {!isGuest && (
+                <div className="pt-6 border-t border-slate-700/30">
+                  <p className="text-slate-300 text-sm font-medium mb-1 text-cyan-400">Acesso para Convidados</p>
+                  <p className="text-slate-500 text-xs mb-4">
+                    Use este botão para tornar seus dados atuais visíveis para qualquer pessoa que entrar como &quot;Convidado&quot;.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <button
+                      onClick={handleSyncToGuest}
+                      disabled={guestSyncStatus === 'loading'}
+                      className={`
+                        flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all shadow-lg w-full sm:w-auto justify-center
+                        ${guestSyncStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
+                          guestSyncStatus === 'success' ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/30' :
+                          guestSyncStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
+                          'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'}
+                      `}
+                    >
+                      {guestSyncStatus === 'loading' ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                          Publicando...
+                        </>
+                      ) : guestSyncStatus === 'success' ? (
+                        <>
+                          <CheckCircle2 className="w-5 h-5" />
+                          Publicado para Convidados!
+                        </>
+                      ) : guestSyncStatus === 'error' ? (
+                        <>
+                          <AlertCircle className="w-5 h-5" />
+                          Erro ao Publicar
+                        </>
+                      ) : (
+                        <>
+                          <Users className="w-5 h-5" />
+                          Publicar para Visualização de Convidados
+                        </>
+                      )}
+                    </button>
+                    
+                    <AnimatePresence>
+                      {guestSyncStatus === 'success' && (
+                        <motion.p 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="text-cyan-400 text-xs font-medium"
+                        >
+                          Agora os convidados verão estes dados ao acessar o sistema.
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
               )}
-              
-              <AnimatePresence>
-                {syncStatus === 'success' && (
-                  <motion.p 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="text-emerald-400 text-xs font-medium"
-                  >
-                    Todos os dados foram gravados com sucesso na sua conta luansold@gmail.com.
-                  </motion.p>
-                )}
-              </AnimatePresence>
             </div>
           </motion.div>
 

@@ -54,27 +54,18 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
-export function useFirestore<T extends { id: string }>(collectionName: string, initialValue: T[]) {
+export function useFirestore<T extends { id: string }>(collectionName: string, initialValue: T[], userId: string | null) {
   const [data, setData] = useState<T[]>(initialValue);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [hasMerged, setHasMerged] = useState(false);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUserId(user ? user.uid : null);
-      if (!user) {
-        setData(initialValue);
-        setIsInitialized(true);
-        setHasMerged(false);
-      }
-    });
-    return () => unsubscribeAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setData(initialValue);
+      setIsInitialized(true);
+      setHasMerged(false);
+      return;
+    }
 
     const path = `users/${userId}/${collectionName}`;
     const colRef = collection(db, path);
@@ -87,25 +78,17 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       });
 
       // Logic to prevent losing data on first login:
-      // If cloud is empty AND it's the first time we check (hasMerged is false)
       if (items.length === 0 && !hasMerged) {
-        // If our current state is also empty, try to at least show the template data
         if (data.length === 0 && initialValue.length > 0) {
           setData(initialValue);
         }
-        // Otherwise, we keep the current 'data' (which is the mock data) 
-        // so the user can see it and click "Sync" to save it to their account.
       } else {
-        // If there is data in the cloud, or we've already merged once, 
-        // we follow the cloud's state (which is the source of truth).
         setData(items);
       }
       
       setIsInitialized(true);
       setHasMerged(true);
     }, (error) => {
-      // Don't throw on transient errors like 'CANCELLED' or 'unavailable'
-      // as the SDK will handle retries automatically.
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (errorMessage.includes('CANCELLED') || errorMessage.includes('unavailable')) {
         console.warn(`Firestore transient error (${collectionName}):`, errorMessage);
@@ -129,32 +112,23 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
 
     try {
       const path = `users/${userId}/${collectionName}`;
-      
-      // We need to figure out what changed.
-      // For simplicity in this generic hook, we'll sync the whole array.
       const colRef = collection(db, path);
       
-      // Get current docs to find what to delete
       const snapshot = await getDocs(colRef);
       const currentIds = new Set(snapshot.docs.map(d => d.id));
       const newIds = new Set(newValue.map(item => item.id));
 
-      // Delete removed items
       for (const id of currentIds) {
         if (!newIds.has(id)) {
           await deleteDoc(doc(db, path, id));
         }
       }
 
-      // Add/Update items
       for (const item of newValue) {
         const docRef = doc(db, path, item.id);
-        // Add uid for security rules
         const dataToSave = { ...item, uid: userId };
-        // Remove id from the document body since it's the document key
         delete (dataToSave as any).id;
 
-        // Strip undefined values to prevent Firestore errors
         Object.keys(dataToSave).forEach(key => {
           if ((dataToSave as any)[key] === undefined) {
             delete (dataToSave as any)[key];
@@ -168,9 +142,31 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
     }
   };
 
-  const syncToFirestore = async () => {
-    if (!userId) return;
-    await setValue([...data]);
+  const syncToFirestore = async (targetUserId?: string) => {
+    const effectiveUserId = targetUserId || userId;
+    if (!effectiveUserId) return;
+    
+    // If we are syncing to a different user (e.g. guest), we need to use a different path
+    if (targetUserId && targetUserId !== userId) {
+      try {
+        const path = `users/${targetUserId}/${collectionName}`;
+        for (const item of data) {
+          const docRef = doc(db, path, item.id);
+          const dataToSave = { ...item, uid: targetUserId };
+          delete (dataToSave as any).id;
+          Object.keys(dataToSave).forEach(key => {
+            if ((dataToSave as any)[key] === undefined) {
+              delete (dataToSave as any)[key];
+            }
+          });
+          await setDoc(docRef, dataToSave);
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.WRITE, `users/${targetUserId}/${collectionName}`);
+      }
+    } else {
+      await setValue([...data]);
+    }
   };
 
   return [data, setValue, isInitialized, syncToFirestore] as const;

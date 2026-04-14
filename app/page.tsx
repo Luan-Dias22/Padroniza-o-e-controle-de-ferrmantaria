@@ -55,26 +55,26 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const [tools, setTools, toolsInit, syncTools] = useFirestore<Tool>('tools', mockTools);
-  const [standardLists, setStandardLists, listsInit, syncLists] = useFirestore<StandardToolList>('standardToolLists', mockStandardLists);
-  const [employees, setEmployees, empInit, syncEmployees] = useFirestore<Employee>('employees', mockEmployees);
-  const [departments, setDepartments, deptInit, syncDepts] = useFirestore<Department>('departments', mockDepartments);
-  const [assignments, setAssignments, assignInit, syncAssignments] = useFirestore<Assignment>('assignments', mockAssignments);
-  const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', []);
-  const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', []);
-  const [stockEntries, setStockEntries, stockInit, syncStock] = useFirestore<StockEntry>('stockEntries', []);
+  const [tools, setTools, toolsInit, syncTools] = useFirestore<Tool>('tools', mockTools, user?.uid || (isGuest ? 'guest' : null));
+  const [standardLists, setStandardLists, listsInit, syncLists] = useFirestore<StandardToolList>('standardToolLists', mockStandardLists, user?.uid || (isGuest ? 'guest' : null));
+  const [employees, setEmployees, empInit, syncEmployees] = useFirestore<Employee>('employees', mockEmployees, user?.uid || (isGuest ? 'guest' : null));
+  const [departments, setDepartments, deptInit, syncDepts] = useFirestore<Department>('departments', mockDepartments, user?.uid || (isGuest ? 'guest' : null));
+  const [assignments, setAssignments, assignInit, syncAssignments] = useFirestore<Assignment>('assignments', mockAssignments, user?.uid || (isGuest ? 'guest' : null));
+  const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', [], user?.uid || (isGuest ? 'guest' : null));
+  const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', [], user?.uid || (isGuest ? 'guest' : null));
+  const [stockEntries, setStockEntries, stockInit, syncStock] = useFirestore<StockEntry>('stockEntries', [], user?.uid || (isGuest ? 'guest' : null));
 
-  const syncAllData = async () => {
+  const syncAllData = async (targetUserId?: string) => {
     try {
       await Promise.all([
-        syncTools(),
-        syncLists(),
-        syncEmployees(),
-        syncDepts(),
-        syncAssignments(),
-        syncLines(),
-        syncStations(),
-        syncStock()
+        syncTools(targetUserId),
+        syncLists(targetUserId),
+        syncEmployees(targetUserId),
+        syncDepts(targetUserId),
+        syncAssignments(targetUserId),
+        syncLines(targetUserId),
+        syncStations(targetUserId),
+        syncStock(targetUserId)
       ]);
       return true;
     } catch (error) {
@@ -488,7 +488,12 @@ export default function App() {
               />
             )}
             {activeTab === 'settings' && (
-              <Settings onSync={syncAllData} onRestoreTemplate={restoreTemplateAll} isGuest={isGuest} />
+              <Settings 
+                onSync={syncAllData} 
+                onSyncToGuest={() => syncAllData('guest')}
+                onRestoreTemplate={restoreTemplateAll} 
+                isGuest={isGuest} 
+              />
             )}
             {activeTab === 'budgets' && (
               <Budgets 

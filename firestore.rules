@@ -82,20 +82,38 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.email == "luansold@gmail.com" && request.auth.token.email_verified == true);
+    }
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isDocOwner() {
-      return isAuthenticated() && (!('uid' in resource.data) || request.auth.uid == resource.data.uid);
+    function canRead(userId) {
+      return isOwner(userId) || userId == 'guest';
     }
 
-    function uidUnchanged() {
-      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    function canWrite(userId) {
+      return isOwner(userId) || (userId == 'guest' && isAdmin());
     }
 
-    function uidNotModified() {
-      return !('uid' in request.resource.data) || (!('uid' in resource.data) ? request.resource.data.uid == request.auth.uid : request.resource.data.uid == resource.data.uid);
+    function isDocOwner(userId) {
+      return isOwner(userId) || (userId == 'guest' && isAdmin());
+    }
+
+    function uidUnchanged(userId) {
+      return !('uid' in request.resource.data) || 
+             request.resource.data.uid == request.auth.uid ||
+             (userId == 'guest' && request.resource.data.uid == 'guest');
+    }
+
+    function uidNotModified(userId) {
+      return !('uid' in request.resource.data) || 
+             (!('uid' in resource.data) ? 
+               (request.resource.data.uid == request.auth.uid || (userId == 'guest' && request.resource.data.uid == 'guest')) : 
+               request.resource.data.uid == resource.data.uid);
     }
 
     function hasRequiredFields(fields) {
@@ -163,7 +181,7 @@ service cloud.firestore {
     function isValidCollectiveStation(data) {
       return hasOnlyAllowedFields(['name', 'line', 'tools', 'uid'], ['id']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.line is string && data.line.size() > 0 && data.line.size() < 100 &&
+             data.line is string && data.line.size() > 0 && data.line is string && data.line.size() < 100 &&
              data.tools is list && data.tools.size() <= 200 &&
              data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
     }
@@ -184,59 +202,59 @@ service cloud.firestore {
     // ===============================================================
     match /users/{userId} {
       match /tools/{toolId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['brand', 'name', 'category', 'description', 'uid']) && isValidTool(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidTool(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['brand', 'name', 'category', 'description', 'uid']) && isValidTool(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidTool(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /standardToolLists/{listId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['name', 'tools', 'uid']) && isValidStandardToolList(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidStandardToolList(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['name', 'tools', 'uid']) && isValidStandardToolList(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidStandardToolList(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /departments/{deptId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['name', 'uid']) && isValidDepartment(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidDepartment(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['name', 'uid']) && isValidDepartment(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidDepartment(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /employees/{empId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['employeeId', 'name', 'departmentId', 'uid']) && isValidEmployee(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidEmployee(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['employeeId', 'name', 'departmentId', 'uid']) && isValidEmployee(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidEmployee(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /assignments/{assignmentId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid']) && isValidAssignment(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidAssignment(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid']) && isValidAssignment(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidAssignment(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /collectiveLines/{lineId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['name', 'uid']) && isValidCollectiveLine(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveLine(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['name', 'uid']) && isValidCollectiveLine(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCollectiveLine(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /collectiveStations/{stationId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['name', 'line', 'tools', 'uid']) && isValidCollectiveStation(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidCollectiveStation(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['name', 'line', 'tools', 'uid']) && isValidCollectiveStation(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCollectiveStation(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
       match /stockEntries/{entryId} {
-        allow read: if isOwner(userId);
-        allow create: if isOwner(userId) && hasRequiredFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type']) && isValidStockEntry(request.resource.data) && uidUnchanged();
-        allow update: if isOwner(userId) && isDocOwner() && isValidStockEntry(request.resource.data) && uidNotModified();
-        allow delete: if isOwner(userId) && isDocOwner();
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type']) && isValidStockEntry(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidStockEntry(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
       }
     }
   }
