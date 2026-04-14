@@ -5,9 +5,10 @@ import { getLogoBase64, setLogoBase64 } from '@/lib/pdfUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import firebaseConfig from '@/firebase-applet-config.json';
 
-export default function Settings({ onSync, onRestoreTemplate }: { 
+export default function Settings({ onSync, onRestoreTemplate, isGuest = false }: { 
   onSync?: () => Promise<boolean>,
-  onRestoreTemplate?: () => void 
+  onRestoreTemplate?: () => void,
+  isGuest?: boolean
 }) {
   const [showDebug, setShowDebug] = useState(false);
   const [logo, setLogo] = useState<string | null>(() => {
@@ -109,19 +110,27 @@ export default function Settings({ onSync, onRestoreTemplate }: {
               </div>
 
               <div className="flex-1">
-                <label className="flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl cursor-pointer transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]">
-                  <Upload className="w-5 h-5" />
-                  <span>Escolher Imagem</span>
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg, image/svg+xml"
-                    className="hidden"
-                    onChange={handleLogoUpload}
-                  />
-                </label>
-                <p className="text-xs text-slate-500 mt-3 text-center sm:text-left">
-                  Formatos suportados: PNG, JPG, SVG. Tamanho máximo recomendado: 2MB.
-                </p>
+                {!isGuest ? (
+                  <>
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-xl cursor-pointer transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+                      <Upload className="w-5 h-5" />
+                      <span>Escolher Imagem</span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/svg+xml"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                    </label>
+                    <p className="text-xs text-slate-500 mt-3 text-center sm:text-left">
+                      Formatos suportados: PNG, JPG, SVG. Tamanho máximo recomendado: 2MB.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-500 italic">
+                    A alteração da logo está desabilitada no modo convidado.
+                  </p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -141,39 +150,45 @@ export default function Settings({ onSync, onRestoreTemplate }: {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <button
-                onClick={handleSync}
-                disabled={syncStatus === 'loading'}
-                className={`
-                  flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all shadow-lg w-full sm:w-auto justify-center
-                  ${syncStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
-                    syncStatus === 'success' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' :
-                    syncStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
-                    'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
-                `}
-              >
-                {syncStatus === 'loading' ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                    Sincronizando...
-                  </>
-                ) : syncStatus === 'success' ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    Dados Salvos na Nuvem!
-                  </>
-                ) : syncStatus === 'error' ? (
-                  <>
-                    <AlertCircle className="w-5 h-5" />
-                    Erro ao Sincronizar
-                  </>
-                ) : (
-                  <>
-                    <CloudUpload className="w-5 h-5" />
-                    Sincronizar Dados Atuais com a Nuvem
-                  </>
-                )}
-              </button>
+              {!isGuest ? (
+                <button
+                  onClick={handleSync}
+                  disabled={syncStatus === 'loading'}
+                  className={`
+                    flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all shadow-lg w-full sm:w-auto justify-center
+                    ${syncStatus === 'loading' ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 
+                      syncStatus === 'success' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30' :
+                      syncStatus === 'error' ? 'bg-red-600/20 text-red-400 border border-red-500/30' :
+                      'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
+                  `}
+                >
+                  {syncStatus === 'loading' ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                      Sincronizando...
+                    </>
+                  ) : syncStatus === 'success' ? (
+                    <>
+                      <CheckCircle2 className="w-5 h-5" />
+                      Dados Salvos na Nuvem!
+                    </>
+                  ) : syncStatus === 'error' ? (
+                    <>
+                      <AlertCircle className="w-5 h-5" />
+                      Erro ao Sincronizar
+                    </>
+                  ) : (
+                    <>
+                      <CloudUpload className="w-5 h-5" />
+                      Sincronizar Dados Atuais com a Nuvem
+                    </>
+                  )}
+                </button>
+              ) : (
+                <p className="text-sm text-slate-500 italic">
+                  A sincronização está desabilitada no modo convidado.
+                </p>
+              )}
               
               <AnimatePresence>
                 {syncStatus === 'success' && (
@@ -204,13 +219,19 @@ export default function Settings({ onSync, onRestoreTemplate }: {
               Se o seu aplicativo estiver totalmente vazio após o login, use este botão para recarregar os dados de exemplo (template). Depois de carregar, não esqueça de clicar em &quot;Sincronizar&quot; acima para salvá-los na sua conta.
             </p>
 
-            <button
-              onClick={onRestoreTemplate}
-              className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-all text-sm font-medium"
-            >
-              <Zap className="w-4 h-4" />
-              Restaurar Dados do Template (Exemplo)
-            </button>
+            {!isGuest ? (
+              <button
+                onClick={onRestoreTemplate}
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition-all text-sm font-medium"
+              >
+                <Zap className="w-4 h-4" />
+                Restaurar Dados do Template (Exemplo)
+              </button>
+            ) : (
+              <p className="text-sm text-slate-500 italic">
+                A restauração de template está desabilitada no modo convidado.
+              </p>
+            )}
           </motion.div>
 
           <div className="mt-12 pt-6 border-t border-slate-800/50">

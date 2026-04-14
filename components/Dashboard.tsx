@@ -4,10 +4,12 @@ import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChe
 import { motion } from 'motion/react';
 
 export default function Dashboard({ 
-  tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate, isDarkMode, toggleDarkMode 
+  tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate, isDarkMode, toggleDarkMode,
+  isGuest = false
 }: { 
   tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], onNavigate: (tab: string) => void,
-  isDarkMode: boolean, toggleDarkMode: () => void
+  isDarkMode: boolean, toggleDarkMode: () => void,
+  isGuest?: boolean
 }) {
   // Helper to check for missing tools
   const getMissingToolsCount = (assignment: Assignment) => {
@@ -91,12 +93,14 @@ export default function Dashboard({
           <p className="text-slate-400 mt-1 font-mono text-sm">SISTEMA // STATUS: ONLINE</p>
         </div>
         <div className="flex gap-3">
-          <button 
-            onClick={() => onNavigate('assignments')}
-            className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/30 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)]"
-          >
-            <Plus className="w-4 h-4" /> Nova Atribuição
-          </button>
+          {!isGuest && (
+            <button 
+              onClick={() => onNavigate('assignments')}
+              className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/30 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)]"
+            >
+              <Plus className="w-4 h-4" /> Nova Atribuição
+            </button>
+          )}
         </div>
       </div>
       

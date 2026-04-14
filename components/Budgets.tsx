@@ -18,6 +18,7 @@ interface BudgetsProps {
   standardLists: StandardToolList[];
   collectiveLines: CollectiveLine[];
   stockEntries?: StockEntry[];
+  isGuest?: boolean;
 }
 
 const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
@@ -166,7 +167,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
         'Fine Comb'
       ];
 
-      const getLineCosts = (itemName: string) => {
+      const getLineCosts = (itemName: string): { required: number; missing: number } => {
         const matches = budgetArray.filter((l: any) => {
           const n = l.name.toLowerCase();
           if (itemName === 'Bancada Principal Existente') {
@@ -189,8 +190,8 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
           }
           return false;
         });
-        const req = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
-        const miss = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
+        const req = matches.reduce((acc: number, l: any) => acc + l.requiredCost, 0);
+        const miss = matches.reduce((acc: number, l: any) => acc + l.missingCost, 0);
         return { required: req, missing: miss };
       };
 
@@ -322,7 +323,7 @@ const handleExportExcel = (budgetData: any) => {
         'Fine Comb'
       ];
 
-      const getLineCosts = (itemName: string) => {
+      const getLineCosts = (itemName: string): { required: number; missing: number } => {
         const matches = budgetArray.filter((l: any) => {
           const n = l.name.toLowerCase();
           if (itemName === 'Bancada Principal Existente') {
@@ -345,8 +346,8 @@ const handleExportExcel = (budgetData: any) => {
           }
           return false;
         });
-        const req = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
-        const miss = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
+        const req = matches.reduce((acc: number, l: any) => acc + l.requiredCost, 0);
+        const miss = matches.reduce((acc: number, l: any) => acc + l.missingCost, 0);
         return { required: req, missing: miss };
       };
 
@@ -450,7 +451,7 @@ const handleExportExcel = (budgetData: any) => {
 };
 
 export default function Budgets({ 
-  tools, setTools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries 
+  tools, setTools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries, isGuest = false 
 }: BudgetsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPrices, setEditingPrices] = useState<Record<string, string>>({});
@@ -696,13 +697,15 @@ export default function Budgets({
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
               />
             </div>
-            <button
-              onClick={handleSavePrices}
-              className="flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto justify-center"
-            >
-              <Save className="w-4 h-4" />
-              Salvar Preços
-            </button>
+            {!isGuest && (
+              <button
+                onClick={handleSavePrices}
+                className="flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-400 px-5 py-2.5 rounded-xl transition-all shadow-sm w-full sm:w-auto justify-center"
+              >
+                <Save className="w-4 h-4" />
+                Salvar Preços
+              </button>
+            )}
           </div>
         </div>
 
@@ -739,9 +742,10 @@ export default function Budgets({
                         type="number"
                         min="0"
                         step="0.01"
+                        disabled={isGuest}
                         value={editingPrices[tool.id] ?? ''}
                         onChange={(e) => handlePriceChange(tool.id, e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-mono"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-700 bg-slate-950/50 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                         placeholder="0.00"
                       />
                     </div>
@@ -863,8 +867,8 @@ export default function Budgets({
                             }
                             return false;
                           });
-                          const reqCost = matches.reduce((acc, l: any) => acc + l.requiredCost, 0);
-                          const missCost = matches.reduce((acc, l: any) => acc + l.missingCost, 0);
+                          const reqCost = matches.reduce((acc: number, l: any) => acc + l.requiredCost, 0);
+                          const missCost = matches.reduce((acc: number, l: any) => acc + l.missingCost, 0);
                           return (
                             <tr key={item}>
                               <td className="p-2 text-slate-400">Linha 1 {item}</td>
@@ -909,7 +913,7 @@ export default function Budgets({
                                 }
                                 return false;
                               });
-                              return acc + matches.reduce((sum, l: any) => sum + l.requiredCost, 0);
+                              return acc + matches.reduce((sum: number, l: any) => sum + l.requiredCost, 0);
                             }, 0))}
                           </th>
                           <th className="p-2 text-right text-red-400 font-mono">
@@ -944,7 +948,7 @@ export default function Budgets({
                                 }
                                 return false;
                               });
-                              return acc + matches.reduce((sum, l: any) => sum + l.missingCost, 0);
+                              return acc + matches.reduce((sum: number, l: any) => sum + l.missingCost, 0);
                             }, 0))}
                           </th>
                         </tr>

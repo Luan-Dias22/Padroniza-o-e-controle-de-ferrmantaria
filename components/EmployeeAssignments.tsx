@@ -10,11 +10,12 @@ import { getLogoBase64 } from '@/lib/pdfUtils';
 import { sortByName } from '@/lib/utils';
 
 export default function EmployeeAssignments({
-  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments
+  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments, isGuest = false
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], tools: Tool[], standardLists: StandardToolList[],
-  assignments: Assignment[], setAssignments: (a: Assignment[]) => void
+  assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
+  isGuest?: boolean
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
@@ -411,7 +412,7 @@ export default function EmployeeAssignments({
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Atribuições de Funcionários</h1>
         </div>
-        {!isAssigning && (
+        {!isAssigning && !isGuest && (
           <button 
             onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setEmployeeSortByMatricula(false); setCustomTools([]); }}
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-500 hover:to-indigo-500 flex items-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
@@ -732,12 +733,16 @@ export default function EmployeeAssignments({
                           <button onClick={() => exportToPDF(assignment)} className="p-2 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors" title="Exportar PDF">
                             <Download className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Editar">
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Excluir">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {!isGuest && (
+                            <>
+                              <button onClick={() => handleEditAssignment(assignment)} className="p-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors" title="Editar">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteAssignment(assignment.id)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="Excluir">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </td>
                       </motion.tr>
                     );

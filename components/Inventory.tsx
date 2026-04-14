@@ -12,9 +12,10 @@ interface InventoryProps {
   stockEntries: StockEntry[];
   standardLists: StandardToolList[];
   setStockEntries: (entries: StockEntry[]) => void;
+  isGuest?: boolean;
 }
 
-export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, setStockEntries }: InventoryProps) {
+export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, setStockEntries, isGuest = false }: InventoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedToolId, setSelectedToolId] = useState('');
   const [selectedLineId, setSelectedLineId] = useState('');
@@ -158,185 +159,187 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="lg:col-span-1 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-6 h-fit"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
-              <PackagePlus className="w-4 h-4 text-indigo-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-white">Nova Entrada</h2>
-          </div>
-
-          <form onSubmit={handleAddStock} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-2">Tipo de Estoque</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStockType('individual');
-                    // Check if current selected line is still valid for individual
-                    const isStillAvailable = allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId)).some(l => l.id === selectedLineId);
-                    if (!isStillAvailable) {
-                      setSelectedLineId('');
-                      setSelectedStation('');
-                    }
-                  }}
-                  className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
-                    stockType === 'individual'
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
-                      : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:bg-slate-900'
-                  }`}
-                >
-                  <User className="w-4 h-4" />
-                  <span className="text-sm font-medium">Individual</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStockType('collective');
-                    // Check if current selected line is still valid for collective
-                    const isStillAvailable = allLines.filter(line => collectiveStations.some(s => s.line === line.name)).some(l => l.id === selectedLineId);
-                    if (!isStillAvailable) {
-                      setSelectedLineId('');
-                      setSelectedStation('');
-                    }
-                  }}
-                  className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
-                    stockType === 'collective'
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
-                      : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:bg-slate-900'
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="text-sm font-medium">Coletiva</span>
-                </button>
+        {!isGuest && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-1 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-6 h-fit"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <PackagePlus className="w-4 h-4 text-indigo-400" />
               </div>
+              <h2 className="text-lg font-semibold text-white">Nova Entrada</h2>
             </div>
 
-            <div className="relative" ref={dropdownRef}>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-slate-400">Ferramenta</label>
-                <button
-                  type="button"
-                  onClick={() => setIsMultiSelectModalOpen(true)}
-                  className="text-xs font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
-                >
-                  <Layers className="w-3 h-3" />
-                  Seleção Múltipla
-                </button>
-              </div>
-              <div 
-                className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all flex items-center justify-between cursor-pointer"
-                onClick={() => setIsToolDropdownOpen(!isToolDropdownOpen)}
-              >
-                <span className={selectedTool ? "text-slate-200" : "text-slate-500"}>
-                  {selectedTool ? `${selectedTool.name} (${selectedTool.brand})` : 'Selecione uma ferramenta...'}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isToolDropdownOpen ? 'rotate-180' : ''}`} />
+            <form onSubmit={handleAddStock} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">Tipo de Estoque</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockType('individual');
+                      // Check if current selected line is still valid for individual
+                      const isStillAvailable = allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId)).some(l => l.id === selectedLineId);
+                      if (!isStillAvailable) {
+                        setSelectedLineId('');
+                        setSelectedStation('');
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                      stockType === 'individual'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:bg-slate-900'
+                    }`}
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="text-sm font-medium">Individual</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockType('collective');
+                      // Check if current selected line is still valid for collective
+                      const isStillAvailable = allLines.filter(line => collectiveStations.some(s => s.line === line.name)).some(l => l.id === selectedLineId);
+                      if (!isStillAvailable) {
+                        setSelectedLineId('');
+                        setSelectedStation('');
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
+                      stockType === 'collective'
+                        ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:bg-slate-900'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm font-medium">Coletiva</span>
+                  </button>
+                </div>
               </div>
 
-              {isToolDropdownOpen && (
-                <div className="absolute z-50 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
-                  <div className="p-2 border-b border-slate-800">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="Buscar ferramenta..."
-                        value={toolSearchQuery}
-                        onChange={(e) => setToolSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-950 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 border border-slate-800"
-                        onClick={(e) => e.stopPropagation()}
-                      />
+              <div className="relative" ref={dropdownRef}>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-slate-400">Ferramenta</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsMultiSelectModalOpen(true)}
+                    className="text-xs font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                  >
+                    <Layers className="w-3 h-3" />
+                    Seleção Múltipla
+                  </button>
+                </div>
+                <div 
+                  className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all flex items-center justify-between cursor-pointer"
+                  onClick={() => setIsToolDropdownOpen(!isToolDropdownOpen)}
+                >
+                  <span className={selectedTool ? "text-slate-200" : "text-slate-500"}>
+                    {selectedTool ? `${selectedTool.name} (${selectedTool.brand})` : 'Selecione uma ferramenta...'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isToolDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+
+                {isToolDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+                    <div className="p-2 border-b border-slate-800">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="text"
+                          placeholder="Buscar ferramenta..."
+                          value={toolSearchQuery}
+                          onChange={(e) => setToolSearchQuery(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 bg-slate-950 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 border border-slate-800"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                      {filteredTools.length === 0 ? (
+                        <div className="p-3 text-sm text-slate-500 text-center">Nenhuma ferramenta encontrada.</div>
+                      ) : (
+                        filteredTools.map(t => (
+                          <div
+                            key={t.id}
+                            className={`p-3 text-sm cursor-pointer hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors ${selectedToolId === t.id ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-300'}`}
+                            onClick={() => {
+                              setSelectedToolId(t.id);
+                              setIsToolDropdownOpen(false);
+                              setToolSearchQuery('');
+                            }}
+                          >
+                            <div className="font-medium">{t.name}</div>
+                            <div className="text-xs text-slate-500">{t.brand}</div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                    {filteredTools.length === 0 ? (
-                      <div className="p-3 text-sm text-slate-500 text-center">Nenhuma ferramenta encontrada.</div>
-                    ) : (
-                      filteredTools.map(t => (
-                        <div
-                          key={t.id}
-                          className={`p-3 text-sm cursor-pointer hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors ${selectedToolId === t.id ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-300'}`}
-                          onClick={() => {
-                            setSelectedToolId(t.id);
-                            setIsToolDropdownOpen(false);
-                            setToolSearchQuery('');
-                          }}
-                        >
-                          <div className="font-medium">{t.name}</div>
-                          <div className="text-xs text-slate-500">{t.brand}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Linha / Departamento Destino</label>
-              <select
-                required
-                value={selectedLineId}
-                onChange={(e) => {
-                  setSelectedLineId(e.target.value);
-                  setSelectedStation('');
-                }}
-                className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
-              >
-                <option value="">Selecione o destino...</option>
-                {filteredLines.map(l => (
-                  <option key={l.id} value={l.id}>{l.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {stockType === 'collective' && selectedLineId && availableStations.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-              >
-                <label className="block text-sm font-medium text-slate-400 mb-1">Posto de Montagem (Opcional)</label>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Linha / Departamento Destino</label>
                 <select
-                  value={selectedStation}
-                  onChange={(e) => setSelectedStation(e.target.value)}
+                  required
+                  value={selectedLineId}
+                  onChange={(e) => {
+                    setSelectedLineId(e.target.value);
+                    setSelectedStation('');
+                  }}
                   className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                 >
-                  <option value="">Geral (Para toda a linha)</option>
-                  {availableStations.map(s => (
-                    <option key={s.id} value={s.name}>{s.name}</option>
+                  <option value="">Selecione o destino...</option>
+                  {filteredLines.map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
                   ))}
                 </select>
-              </motion.div>
-            )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Quantidade</label>
-              <input
-                type="number"
-                required
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
-                placeholder="Ex: 10"
-              />
-            </div>
+              {stockType === 'collective' && selectedLineId && availableStations.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                >
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Posto de Montagem (Opcional)</label>
+                  <select
+                    value={selectedStation}
+                    onChange={(e) => setSelectedStation(e.target.value)}
+                    className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                  >
+                    <option value="">Geral (Para toda a linha)</option>
+                    {availableStations.map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </motion.div>
+              )}
 
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2.5 rounded-xl hover:from-indigo-500 hover:to-violet-500 transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] font-medium mt-2"
-            >
-              <Plus className="w-4 h-4" />
-              Adicionar ao Estoque
-            </button>
-          </form>
-        </motion.div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Quantidade</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="w-full p-2.5 bg-slate-950/50 border border-slate-800 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="Ex: 10"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2.5 rounded-xl hover:from-indigo-500 hover:to-violet-500 transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] font-medium mt-2"
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar ao Estoque
+              </button>
+            </form>
+          </motion.div>
+        )}
 
         {/* List */}
         <motion.div 
@@ -397,14 +400,16 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                           <div className="text-2xl font-bold text-emerald-400">+{entry.quantity}</div>
                           <div className="text-xs text-slate-500">{new Date(entry.date).toLocaleDateString('pt-BR')}</div>
                         </div>
-                        <button
-                          onClick={() => handleDeleteEntry(entry.id)}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
-                          title="Remover Entrada"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="hidden sm:inline">Excluir</span>
-                        </button>
+                        {!isGuest && (
+                          <button
+                            onClick={() => handleDeleteEntry(entry.id)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
+                            title="Remover Entrada"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">Excluir</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

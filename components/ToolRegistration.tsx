@@ -7,11 +7,13 @@ import ConfirmModal from './ConfirmModal';
 export default function ToolRegistration({ 
   tools, setTools,
   standardLists, setStandardLists,
-  assignments, setAssignments
+  assignments, setAssignments,
+  isGuest = false
 }: { 
   tools: Tool[], setTools: (tools: Tool[]) => void,
   standardLists: StandardToolList[], setStandardLists: (lists: StandardToolList[]) => void,
-  assignments: Assignment[], setAssignments: (assignments: Assignment[]) => void
+  assignments: Assignment[], setAssignments: (assignments: Assignment[]) => void,
+  isGuest?: boolean
 }) {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [formData, setFormData] = useState({ brand: '', name: '', category: 'ferramenta manual', description: '' });
@@ -115,81 +117,83 @@ export default function ToolRegistration({
         <h1 className="text-2xl font-bold text-white tracking-tight">Registro de Ferramentas</h1>
       </div>
 
-      <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/50 to-blue-500/50" />
-        <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-          {isEditing ? <Edit2 className="w-4 h-4 text-cyan-400" /> : <Plus className="w-4 h-4 text-cyan-400" />}
-          {isEditing ? 'Editar Ferramenta' : 'Adicionar Nova Ferramenta'}
-        </h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Marca da Ferramenta *</label>
-            <input 
-              type="text" 
-              value={formData.brand} 
-              onChange={e => setFormData({...formData, brand: e.target.value})}
-              className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-              placeholder="ex: Bosch, Makita"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Nome *</label>
-            <input 
-              type="text" 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-              placeholder="ex: Furadeira Elétrica"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Categoria</label>
-            <select 
-              value={formData.category} 
-              onChange={e => setFormData({...formData, category: e.target.value})}
-              className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
-            >
-              <option value="ferramenta manual">Ferramenta Manual</option>
-              <option value="ferramenta elétrica">Ferramenta Elétrica</option>
-              <option value="ferramenta pneumática">Ferramenta Pneumática</option>
-              <option value="medição">Medição</option>
-              <option value="segurança">Segurança</option>
-              <option value="outro">Outro</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Descrição</label>
-            <input 
-              type="text" 
-              value={formData.description} 
-              onChange={e => setFormData({...formData, description: e.target.value})}
-              className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
-              placeholder="Descrição opcional"
-            />
-          </div>
-          
-          {error && <div className="md:col-span-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>}
-          
-          <div className="md:col-span-2 flex justify-end gap-3 mt-4">
-            {isEditing && (
-              <button 
-                type="button" 
-                onClick={() => { setIsEditing(null); setFormData({ brand: '', name: '', category: 'ferramenta manual', description: '' }); setError(''); }}
-                className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
+      {!isGuest && (
+        <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/50 to-blue-500/50" />
+          <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            {isEditing ? <Edit2 className="w-4 h-4 text-cyan-400" /> : <Plus className="w-4 h-4 text-cyan-400" />}
+            {isEditing ? 'Editar Ferramenta' : 'Adicionar Nova Ferramenta'}
+          </h2>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Marca da Ferramenta *</label>
+              <input 
+                type="text" 
+                value={formData.brand} 
+                onChange={e => setFormData({...formData, brand: e.target.value})}
+                className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                placeholder="ex: Bosch, Makita"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Nome *</label>
+              <input 
+                type="text" 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                placeholder="ex: Furadeira Elétrica"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Categoria</label>
+              <select 
+                value={formData.category} 
+                onChange={e => setFormData({...formData, category: e.target.value})}
+                className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all appearance-none"
               >
-                Cancelar
+                <option value="ferramenta manual">Ferramenta Manual</option>
+                <option value="ferramenta elétrica">Ferramenta Elétrica</option>
+                <option value="ferramenta pneumática">Ferramenta Pneumática</option>
+                <option value="medição">Medição</option>
+                <option value="segurança">Segurança</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-wider">Descrição</label>
+              <input 
+                type="text" 
+                value={formData.description} 
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                className="w-full p-3 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                placeholder="Descrição opcional"
+              />
+            </div>
+            
+            {error && <div className="md:col-span-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 p-3 rounded-lg">{error}</div>}
+            
+            <div className="md:col-span-2 flex justify-end gap-3 mt-4">
+              {isEditing && (
+                <button 
+                  type="button" 
+                  onClick={() => { setIsEditing(null); setFormData({ brand: '', name: '', category: 'ferramenta manual', description: '' }); setError(''); }}
+                  className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button 
+                type="submit" 
+                className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-500 hover:to-blue-500 flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
+              >
+                {isEditing ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {isEditing ? 'Atualizar Ferramenta' : 'Adicionar Ferramenta'}
               </button>
-            )}
-            <button 
-              type="submit" 
-              className="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-500 hover:to-blue-500 flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
-            >
-              {isEditing ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {isEditing ? 'Atualizar Ferramenta' : 'Adicionar Ferramenta'}
-            </button>
-          </div>
-        </form>
-      </motion.div>
+            </div>
+          </form>
+        </motion.div>
+      )}
 
       <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
         <div className="p-5 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/80">
@@ -237,12 +241,16 @@ export default function ToolRegistration({
                     </td>
                     <td className="p-4 text-slate-400 truncate max-w-xs">{tool.description || '-'}</td>
                     <td className="p-4 flex justify-end gap-2">
-                      <button onClick={() => handleEdit(tool)} className="p-2 text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => handleDelete(tool.id)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!isGuest && (
+                        <>
+                          <button onClick={() => handleEdit(tool)} className="p-2 text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDelete(tool.id)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </motion.tr>
                 ))

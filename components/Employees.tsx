@@ -9,12 +9,14 @@ export default function Employees({
   employees, setEmployees,
   departments, setDepartments,
   assignments, setAssignments,
-  tools, standardLists
+  tools, standardLists,
+  isGuest = false
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], setDepartments: (d: Department[]) => void,
   assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
-  tools: Tool[], standardLists: StandardToolList[]
+  tools: Tool[], standardLists: StandardToolList[],
+  isGuest?: boolean
 }) {
   const [newEmpName, setNewEmpName] = useState('');
   const [newEmpId, setNewEmpId] = useState('');
@@ -181,20 +183,22 @@ export default function Employees({
             <Building2 className="w-5 h-5 text-emerald-400" />
             <h2 className="text-lg font-semibold text-white">Departamentos</h2>
           </div>
-          <div className="p-4 border-b border-slate-800 bg-slate-950/30">
-            <form onSubmit={handleAddDepartment} className="flex gap-2">
-              <input 
-                type="text" 
-                value={newDeptName} 
-                onChange={e => setNewDeptName(e.target.value)}
-                placeholder="Novo departamento..."
-                className="flex-1 p-2.5 bg-slate-950/50 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
-              />
-              <button type="submit" className="p-2.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 hover:border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-                <Plus className="w-5 h-5" />
-              </button>
-            </form>
-          </div>
+          {!isGuest && (
+            <div className="p-4 border-b border-slate-800 bg-slate-950/30">
+              <form onSubmit={handleAddDepartment} className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={newDeptName} 
+                  onChange={e => setNewDeptName(e.target.value)}
+                  placeholder="Novo departamento..."
+                  className="flex-1 p-2.5 bg-slate-950/50 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                />
+                <button type="submit" className="p-2.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 hover:border-emerald-400 transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                  <Plus className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
             {sortedDepartments.length === 0 ? (
               <p className="text-center text-slate-500 p-4 text-sm font-mono">Nenhum departamento criado.</p>
@@ -246,17 +250,21 @@ export default function Employees({
                         <div className="flex items-center justify-between w-full">
                           <span className="font-medium text-sm text-slate-200">{dept.name}</span>
                           <div className="flex gap-1">
-                            <button onClick={() => { 
-                              setEditingDeptId(dept.id); 
-                              setEditDeptName(dept.name); 
-                              setEditDeptNewcomers(dept.expectedNewcomers || 0);
-                              setEditDeptRequiredHeadcount(dept.requiredHeadcount || 0);
-                            }} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleDeleteDepartment(dept.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {!isGuest && (
+                              <>
+                                <button onClick={() => { 
+                                  setEditingDeptId(dept.id); 
+                                  setEditDeptName(dept.name); 
+                                  setEditDeptNewcomers(dept.expectedNewcomers || 0);
+                                  setEditDeptRequiredHeadcount(dept.requiredHeadcount || 0);
+                                }} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDeleteDepartment(dept.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                         {(dept.expectedNewcomers || 0) > 0 && (
@@ -307,49 +315,51 @@ export default function Employees({
               </button>
             </div>
           </div>
-          <div className="p-5 border-b border-slate-800 bg-slate-950/30">
-            <form onSubmit={handleSubmitEmployee} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <input 
-                type="text" 
-                value={newEmpId} 
-                onChange={e => setNewEmpId(e.target.value)}
-                placeholder="Matrícula (ex: EMP-103)"
-                className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
-              />
-              <input 
-                type="text" 
-                value={newEmpName} 
-                onChange={e => setNewEmpName(e.target.value)}
-                placeholder="Nome do colaborador"
-                className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all sm:col-span-2"
-              />
-              <select
-                value={newEmpDept}
-                onChange={e => setNewEmpDept(e.target.value)}
-                className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
-              >
-                <option value="">-- Departamento --</option>
-                {sortedDepartments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-              <div className="sm:col-span-4 flex justify-end gap-3 mt-2">
-                {editingEmpId && (
-                  <button 
-                    type="button" 
-                    onClick={cancelEditEmployee}
-                    className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
-                  >
-                    Cancelar
+          {!isGuest && (
+            <div className="p-5 border-b border-slate-800 bg-slate-950/30">
+              <form onSubmit={handleSubmitEmployee} className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <input 
+                  type="text" 
+                  value={newEmpId} 
+                  onChange={e => setNewEmpId(e.target.value)}
+                  placeholder="Matrícula (ex: EMP-103)"
+                  className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all"
+                />
+                <input 
+                  type="text" 
+                  value={newEmpName} 
+                  onChange={e => setNewEmpName(e.target.value)}
+                  placeholder="Nome do colaborador"
+                  className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all sm:col-span-2"
+                />
+                <select
+                  value={newEmpDept}
+                  onChange={e => setNewEmpDept(e.target.value)}
+                  className="p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-slate-300 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
+                >
+                  <option value="">-- Departamento --</option>
+                  {sortedDepartments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+                <div className="sm:col-span-4 flex justify-end gap-3 mt-2">
+                  {editingEmpId && (
+                    <button 
+                      type="button" 
+                      onClick={cancelEditEmployee}
+                      className="px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                  <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-500 hover:to-teal-500 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all">
+                    {editingEmpId ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    {editingEmpId ? 'Atualizar Colaborador' : 'Adicionar Colaborador'}
                   </button>
-                )}
-                <button type="submit" className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-500 hover:to-teal-500 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all">
-                  {editingEmpId ? <Edit2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                  {editingEmpId ? 'Atualizar Colaborador' : 'Adicionar Colaborador'}
-                </button>
-              </div>
-            </form>
-          </div>
+                </div>
+              </form>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
             {employees.length === 0 ? (
               <div className="h-full flex items-center justify-center text-slate-500 font-mono text-sm">
@@ -389,12 +399,16 @@ export default function Employees({
                         </p>
                       </div>
                       <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEditEmployee(emp)} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDeleteEmployee(emp.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isGuest && (
+                          <>
+                            <button onClick={() => handleEditEmployee(emp)} className="p-1.5 text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDeleteEmployee(emp.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </motion.div>
                   );

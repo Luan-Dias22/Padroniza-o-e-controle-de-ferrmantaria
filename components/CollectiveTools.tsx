@@ -11,12 +11,14 @@ export default function CollectiveTools({
   lines, setLines,
   stations, setStations,
   tools,
-  stockEntries = []
+  stockEntries = [],
+  isGuest = false
 }: {
   lines: CollectiveLine[], setLines: (lines: CollectiveLine[]) => void,
   stations: CollectiveStation[], setStations: (stations: CollectiveStation[]) => void,
   tools: Tool[],
-  stockEntries?: StockEntry[]
+  stockEntries?: StockEntry[],
+  isGuest?: boolean
 }) {
   const [selectedLineId, setSelectedLineId] = useState<string>('all');
   const [isStationModalOpen, setIsStationModalOpen] = useState(false);
@@ -222,28 +224,30 @@ export default function CollectiveTools({
             <p className="text-slate-400 text-sm mt-0.5 font-mono">Gerencie conjuntos de ferramentas compartilhadas em postos de trabalho.</p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-            className="px-5 py-2.5 bg-slate-900/50 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 text-sm font-medium"
-          >
-            <Settings2 className="w-4 h-4" /> Gerenciar Linhas
-          </button>
-          <button 
-            onClick={() => { 
-              if (lines.length === 0) {
-                alert('Crie uma linha primeiro.');
-                return;
-              }
-              setEditingStation(null); 
-              setStationFormData({ name: '', lineId: selectedLineId === 'all' ? lines[0].id : selectedLineId }); 
-              setIsStationModalOpen(true); 
-            }}
-            className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all flex items-center gap-2 text-sm font-medium shadow-[0_0_15px_rgba(99,102,241,0.3)]"
-          >
-            <Plus className="w-4 h-4" /> Novo Posto
-          </button>
-        </div>
+        {!isGuest && (
+          <div className="flex gap-3">
+            <button 
+              onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
+              className="px-5 py-2.5 bg-slate-900/50 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <Settings2 className="w-4 h-4" /> Gerenciar Linhas
+            </button>
+            <button 
+              onClick={() => { 
+                if (lines.length === 0) {
+                  alert('Crie uma linha primeiro.');
+                  return;
+                }
+                setEditingStation(null); 
+                setStationFormData({ name: '', lineId: selectedLineId === 'all' ? lines[0].id : selectedLineId }); 
+                setIsStationModalOpen(true); 
+              }}
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all flex items-center gap-2 text-sm font-medium shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+            >
+              <Plus className="w-4 h-4" /> Novo Posto
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Line Selector & Summary */}
@@ -276,12 +280,14 @@ export default function CollectiveTools({
               {line.name}
             </button>
           ))}
-          <button 
-            onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-            className="px-4 py-2 border border-dashed border-slate-700 bg-slate-950/30 text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-3.5 h-3.5" /> Nova Linha
-          </button>
+          {!isGuest && (
+            <button 
+              onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
+              className="px-4 py-2 border border-dashed border-slate-700 bg-slate-950/30 text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-3.5 h-3.5" /> Nova Linha
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -364,29 +370,33 @@ export default function CollectiveTools({
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => { setManagingStation(station); setIsManageToolsModalOpen(true); }}
-                          className="px-4 py-2 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg hover:bg-indigo-600 hover:border-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-2"
-                        >
-                          <Wrench className="w-3.5 h-3.5" /> Gerenciar
-                        </button>
-                        <button 
-                          onClick={() => { 
-                            const line = lines.find(l => l.name === station.line);
-                            setEditingStation(station); 
-                            setStationFormData({ name: station.name, lineId: line?.id || '' }); 
-                            setIsStationModalOpen(true); 
-                          }}
-                          className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteStation(station)}
-                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isGuest && (
+                          <>
+                            <button 
+                              onClick={() => { setManagingStation(station); setIsManageToolsModalOpen(true); }}
+                              className="px-4 py-2 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg hover:bg-indigo-600 hover:border-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-2"
+                            >
+                              <Wrench className="w-3.5 h-3.5" /> Gerenciar
+                            </button>
+                            <button 
+                              onClick={() => { 
+                                const line = lines.find(l => l.name === station.line);
+                                setEditingStation(station); 
+                                setStationFormData({ name: station.name, lineId: line?.id || '' }); 
+                                setIsStationModalOpen(true); 
+                              }}
+                              className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteStation(station)}
+                              className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

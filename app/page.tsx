@@ -23,6 +23,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -98,6 +99,7 @@ export default function App() {
   const handleLogin = async () => {
     setLoginError(null);
     setIsLoggingIn(true);
+    setIsGuest(false);
     try {
       await signInWithGoogle();
     } catch (error: any) {
@@ -113,6 +115,25 @@ export default function App() {
       } else {
         setLoginError(`Erro: ${error.message || 'Erro ao conectar'}. Dica: Tente abrir o app em uma nova aba do navegador.`);
       }
+    }
+  };
+
+  const handleGuestLogin = () => {
+    setIsGuest(true);
+    setUser({
+      uid: 'guest',
+      displayName: 'Convidado',
+      email: 'convidado@sistema.com',
+      photoURL: null,
+    } as User);
+  };
+
+  const handleLogout = async () => {
+    if (isGuest) {
+      setIsGuest(false);
+      setUser(null);
+    } else {
+      await logOut();
     }
   };
 
@@ -194,7 +215,7 @@ export default function App() {
           <button
             onClick={handleLogin}
             disabled={isLoggingIn}
-            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)]"
+            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] mb-4"
           >
             {isLoggingIn ? (
               <>
@@ -207,6 +228,15 @@ export default function App() {
                 Acessar Sistema
               </>
             )}
+          </button>
+
+          <button
+            onClick={handleGuestLogin}
+            disabled={isLoggingIn}
+            className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 px-4 rounded-xl transition-all border border-slate-700"
+          >
+            <Users className="w-5 h-5" />
+            Entrar como Convidado
           </button>
         </motion.div>
       </div>
@@ -342,7 +372,7 @@ export default function App() {
             </div>
           </div>
           <button
-            onClick={logOut}
+            onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all text-sm font-medium"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
@@ -373,6 +403,7 @@ export default function App() {
                 onNavigate={setActiveTab} 
                 isDarkMode={true}
                 toggleDarkMode={() => {}}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'tools' && (
@@ -383,6 +414,7 @@ export default function App() {
                 setStandardLists={setStandardLists}
                 assignments={assignments}
                 setAssignments={setAssignments}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'standard' && (
@@ -392,6 +424,7 @@ export default function App() {
                 tools={tools}
                 standardLists={standardLists}
                 setStandardLists={setStandardLists}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'employees' && (
@@ -404,6 +437,7 @@ export default function App() {
                 setAssignments={setAssignments}
                 tools={tools}
                 standardLists={standardLists}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'assignments' && (
@@ -415,6 +449,7 @@ export default function App() {
                 standardLists={standardLists}
                 assignments={assignments}
                 setAssignments={setAssignments}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'reports' && (
@@ -437,6 +472,7 @@ export default function App() {
                 setStations={setCollectiveStations}
                 tools={tools}
                 stockEntries={stockEntries}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'inventory' && (
@@ -448,10 +484,11 @@ export default function App() {
                 stockEntries={stockEntries}
                 standardLists={standardLists}
                 setStockEntries={setStockEntries}
+                isGuest={isGuest}
               />
             )}
             {activeTab === 'settings' && (
-              <Settings onSync={syncAllData} onRestoreTemplate={restoreTemplateAll} />
+              <Settings onSync={syncAllData} onRestoreTemplate={restoreTemplateAll} isGuest={isGuest} />
             )}
             {activeTab === 'budgets' && (
               <Budgets 
@@ -464,6 +501,7 @@ export default function App() {
                 standardLists={standardLists}
                 collectiveLines={collectiveLines}
                 stockEntries={stockEntries}
+                isGuest={isGuest}
               />
             )}
           </motion.div>
