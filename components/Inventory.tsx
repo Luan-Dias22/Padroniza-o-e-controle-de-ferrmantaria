@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, Department, CollectiveLine, StockEntry, CollectiveStation, StandardToolList, Employee } from '@/lib/data';
-import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers, History, BarChart3, Clock } from 'lucide-react';
+import { PackagePlus, Search, Plus, Trash2, Package, ChevronDown, AlertTriangle, X, Users, User, CheckSquare, Square, Layers, History, BarChart3, Clock, FileDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface InventoryProps {
   tools: Tool[];
@@ -208,6 +210,56 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       if (numA !== numB) return numA - numB;
       return a.name.localeCompare(b.name);
     });
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const title = "Relatório de Saldo de Estoque e Investimento";
+    const date = new Date().toLocaleDateString('pt-BR');
+    
+    doc.setFontSize(18);
+    doc.text(title, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Data de geração: ${date}`, 14, 30);
+
+    const tableData = balanceList.map(item => {
+      const tool = tools.find(t => t.id === item.toolId);
+      const line = allLines.find(l => l.id === item.lineId);
+      const price = tool?.price || 0;
+      const totalValue = price * item.quantity;
+      
+      return [
+        tool?.name || 'Ferramenta Removida',
+        tool?.brand || '-',
+        line?.name || 'Desconhecido',
+        item.station && item.station !== 'no-station' ? item.station : '-',
+        item.quantity.toString(),
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price),
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)
+      ];
+    });
+
+    const totalInvested = balanceList.reduce((acc, item) => {
+      const tool = tools.find(t => t.id === item.toolId);
+      const price = tool?.price || 0;
+      return acc + (price * item.quantity);
+    }, 0);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Ferramenta', 'Marca', 'Local', 'Posto', 'Qtd', 'Vlr Unit.', 'Vlr Total']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [63, 81, 181] },
+      foot: [[
+        { content: 'Total Investido em Estoque:', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalInvested), styles: { fontStyle: 'bold' } }
+      ]],
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`relatorio_estoque_${new Date().getTime()}.pdf`);
+  };
 
   return (
     <div className="space-y-6">
@@ -424,40 +476,52 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               </div>
             </div>
 
-            <div className="flex items-center gap-1 p-1 bg-slate-950/50 rounded-xl border border-slate-800 w-fit">
-              <button
-                onClick={() => setActiveInventoryTab('history')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeInventoryTab === 'history'
-                    ? 'bg-indigo-500 text-white shadow-lg'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                <History className="w-4 h-4" />
-                Histórico
-              </button>
-              <button
-                onClick={() => setActiveInventoryTab('balance')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeInventoryTab === 'balance'
-                    ? 'bg-indigo-500 text-white shadow-lg'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4" />
-                Saldo Geral
-              </button>
-              <button
-                onClick={() => setActiveInventoryTab('pending')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeInventoryTab === 'pending'
-                    ? 'bg-indigo-500 text-white shadow-lg'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
-              >
-                <Clock className="w-4 h-4" />
-                Aguardando Entrega
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-1 p-1 bg-slate-950/50 rounded-xl border border-slate-800 w-fit">
+                <button
+                  onClick={() => setActiveInventoryTab('history')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeInventoryTab === 'history'
+                      ? 'bg-indigo-500 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  <History className="w-4 h-4" />
+                  Histórico
+                </button>
+                <button
+                  onClick={() => setActiveInventoryTab('balance')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeInventoryTab === 'balance'
+                      ? 'bg-indigo-500 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Saldo Geral
+                </button>
+                <button
+                  onClick={() => setActiveInventoryTab('pending')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeInventoryTab === 'pending'
+                      ? 'bg-indigo-500 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  Aguardando Entrega
+                </button>
+              </div>
+
+              {activeInventoryTab === 'balance' && (
+                <button
+                  onClick={generatePDF}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Gerar Relatório PDF
+                </button>
+              )}
             </div>
           </div>
 
