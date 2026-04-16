@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import { CollectiveStation, CollectiveLine, Tool, StockEntry } from '@/lib/data';
-import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, LayoutGrid, Wrench, Settings2, ChevronRight, Building2, AlertCircle, X, Eye, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
 import { sortByName } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function CollectiveTools({
   lines, setLines,
@@ -181,6 +183,92 @@ export default function CollectiveTools({
     setManagingStation(updatedStation);
   };
 
+  const generateResponsibilityTerm = () => {
+    if (selectedLineId === 'all') {
+      alert('Por favor, selecione uma linha específica para gerar o termo de responsabilidade.');
+      return;
+    }
+
+    const line = lines.find(l => l.id === selectedLineId);
+    if (!line) return;
+
+    const lineStations = stations.filter(s => s.line === line.name);
+    const hasTools = lineStations.some(s => s.tools.length > 0);
+
+    if (!hasTools) {
+      alert('Esta linha não possui ferramentas registradas nos postos.');
+      return;
+    }
+    
+    const doc = new jsPDF();
+    const date = new Date().toLocaleDateString('pt-BR');
+
+    // Title
+    doc.setFontSize(14);
+    doc.text('TERMO DE RESPONSABILIDADE - FERRAMENTAS COLETIVAS', 105, 15, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text(`Linha: ${line.name}`, 14, 25);
+    doc.text(`Data de Emissão: ${date}`, 14, 30);
+
+    doc.setFontSize(9);
+    const text = 'Pelo presente termo, a linha e seus respectivos responsáveis declaram estar cientes da guarda e conservação das ferramentas abaixo relacionadas, destinadas ao uso coletivo nos postos de trabalho desta linha. O extravio ou dano por mau uso poderá ser passível de medidas administrativas.';
+    doc.text(text, 14, 38, { maxWidth: 180 });
+
+    let currentY = 50;
+
+    lineStations.sort((a, b) => a.name.localeCompare(b.name)).forEach(station => {
+      if (station.tools.length === 0) return;
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [
+          [{ content: `Posto: ${station.name}`, colSpan: 4, styles: { fillColor: [51, 65, 85], halign: 'left', fontStyle: 'bold', fontSize: 9 } }],
+          ['Ferramenta', 'Categoria', 'Nec.', 'Atu.']
+        ],
+        body: station.tools.map(t => [
+          t.name,
+          t.category,
+          t.requiredQuantity ?? '-',
+          t.quantity
+        ]),
+        theme: 'striped',
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        headStyles: { fillColor: [71, 85, 105], fontSize: 7.5 },
+        columnStyles: {
+          2: { halign: 'center', cellWidth: 15 },
+          3: { halign: 'center', cellWidth: 15 }
+        },
+        margin: { left: 14, right: 14 }
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 6;
+      
+      // Check if we need room for signature on same page
+      if (currentY > 260) {
+        doc.addPage();
+        currentY = 15;
+      }
+    });
+
+    // Signature Area
+    if (currentY > 250) {
+      doc.addPage();
+      currentY = 30;
+    } else {
+      currentY += 15;
+    }
+
+    doc.setFontSize(9);
+    doc.line(14, currentY, 90, currentY);
+    doc.text('Responsável pela Linha (Assinatura)', 14, currentY + 4);
+
+    doc.line(120, currentY, 196, currentY);
+    doc.text('Gerência / Supervisão (Assinatura)', 120, currentY + 4);
+
+    doc.save(`termo_responsabilidade_${line.name.replace(/\s+/g, '_')}.pdf`);
+  };
+
   const availableTools = tools.filter(t => 
     t.name.toLowerCase().includes(toolSearch.toLowerCase()) || 
     t.brand.toLowerCase().includes(toolSearch.toLowerCase())
@@ -256,37 +344,51 @@ export default function CollectiveTools({
           <LayoutGrid className="w-5 h-5 text-indigo-400" />
           <span className="font-mono text-sm uppercase tracking-wider">Linha de Montagem:</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button 
-            onClick={() => setSelectedLineId('all')}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              selectedLineId === 'all' 
-                ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
-                : 'bg-slate-950/50 border border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-            }`}
-          >
-            Todas as Linhas
-          </button>
-          {[...lines].sort((a, b) => sortByName(a.name, b.name)).map(line => (
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          <div className="flex flex-wrap gap-2 flex-1">
             <button 
-              key={line.id}
-              onClick={() => setSelectedLineId(line.id)}
+              onClick={() => setSelectedLineId('all')}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                selectedLineId === line.id 
+                selectedLineId === 'all' 
                   ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
                   : 'bg-slate-950/50 border border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
               }`}
             >
-              {line.name}
+              Todas as Linhas
             </button>
-          ))}
-          {!isGuest && (
-            <button 
-              onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-              className="px-4 py-2 border border-dashed border-slate-700 bg-slate-950/30 text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
+            {[...lines].sort((a, b) => sortByName(a.name, b.name)).map(line => (
+              <button 
+                key={line.id}
+                onClick={() => setSelectedLineId(line.id)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  selectedLineId === line.id 
+                    ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
+                    : 'bg-slate-950/50 border border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                }`}
+              >
+                {line.name}
+              </button>
+            ))}
+            {!isGuest && (
+              <button 
+                onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
+                className="px-4 py-2 border border-dashed border-slate-700 bg-slate-950/30 text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
+              >
+                <Plus className="w-3.5 h-3.5" /> Nova Linha
+              </button>
+            )}
+          </div>
+          
+          {selectedLineId !== 'all' && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={generateResponsibilityTerm}
+              className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(99,102,241,0.1)]"
             >
-              <Plus className="w-3.5 h-3.5" /> Nova Linha
-            </button>
+              <FileText className="w-4 h-4" />
+              Imprimir Termo de Responsabilidade
+            </motion.button>
           )}
         </div>
       </motion.div>
