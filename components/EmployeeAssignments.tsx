@@ -108,7 +108,7 @@ export default function EmployeeAssignments({
         type: 'individual',
         employeeId: selectedEmployeeId
       }));
-      setStockEntries(prev => [...(prev || []), ...newStockEntries]);
+      setStockEntries((prev: StockEntry[]) => [...(prev || []), ...newStockEntries]);
     }
 
     if (editingAssignmentId) {
@@ -155,7 +155,7 @@ export default function EmployeeAssignments({
       employeeId: selectedEmployeeId
     };
     
-    setStockEntries(prev => [...(prev || []), newStockEntry]);
+    setStockEntries((prev: StockEntry[]) => [...(prev || []), newStockEntry]);
     setWithdrawnToolIds([...withdrawnToolIds, toolId]);
   };
 

@@ -72,7 +72,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
     };
 
-    setStockEntries(prev => [...prev, newEntry]);
+    setStockEntries((prev: StockEntry[]) => [...prev, newEntry]);
     setSelectedToolId('');
     setToolSearchQuery('');
     setSelectedLineId('');
@@ -93,7 +93,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
     }));
 
-    setStockEntries(prev => [...prev, ...newEntries]);
+    setStockEntries((prev: StockEntry[]) => [...prev, ...newEntries]);
     setTempSelectedToolIds([]);
     setSelectedLineId('');
     setQuantity('');
@@ -115,13 +115,13 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const confirmDelete = () => {
     if (entryToDelete) {
-      setStockEntries(prev => prev.filter(e => e.id !== entryToDelete));
+      setStockEntries((prev: StockEntry[]) => prev.filter(e => e.id !== entryToDelete));
       setEntryToDelete(null);
     }
   };
 
   const toggleEntrySelection = (entryId: string) => {
-    setSelectedEntryIds(prev => 
+    setSelectedEntryIds((prev: string[]) => 
       prev.includes(entryId) 
         ? prev.filter(id => id !== entryId) 
         : [...prev, entryId]
@@ -137,7 +137,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   };
 
   const handleBulkDelete = () => {
-    setStockEntries(prev => prev.filter(e => !selectedEntryIds.includes(e.id)));
+    setStockEntries((prev: StockEntry[]) => prev.filter(e => !selectedEntryIds.includes(e.id)));
     setSelectedEntryIds([]);
     setIsBulkDeleteConfirmOpen(false);
   };
