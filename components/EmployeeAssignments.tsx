@@ -378,10 +378,17 @@ export default function EmployeeAssignments({
     }
     
     if (assignmentEmployeeSearch) {
-      const emp = employees.find(e => e.id === a.employeeId);
-      if (!emp) return false;
       const searchLower = assignmentEmployeeSearch.toLowerCase();
-      return emp.name.toLowerCase().includes(searchLower) || emp.employeeId.toLowerCase().includes(searchLower);
+      
+      const emp = employees.find(e => e.id === a.employeeId);
+      const empMatches = emp && (emp.name.toLowerCase().includes(searchLower) || emp.employeeId.toLowerCase().includes(searchLower));
+      
+      const missingTools = getMissingTools(a);
+      const missingToolMatches = missingTools.some(mt => mt.toolName.toLowerCase().includes(searchLower));
+
+      if (!empMatches && !missingToolMatches) {
+        return false;
+      }
     }
     
     return true;
@@ -662,10 +669,10 @@ export default function EmployeeAssignments({
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <input
                 type="text"
-                placeholder="Buscar por nome ou matrícula..."
+                placeholder="Buscar (colaborador, matrícula, ou fer. pendente)..."
                 value={assignmentEmployeeSearch}
                 onChange={e => setAssignmentEmployeeSearch(e.target.value)}
-                className="text-sm p-2 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-full sm:w-48"
+                className="text-sm p-2 bg-slate-950/50 border border-slate-700 rounded-xl text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-full sm:w-64"
               />
               <select
                 value={assignmentDepartmentFilter}
