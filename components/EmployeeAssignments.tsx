@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Employee, Assignment, Department, Tool, StandardToolList, StockEntry } from '@/lib/data';
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users, Package } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users, Package, PackageMinus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
@@ -34,6 +34,7 @@ export default function EmployeeAssignments({
   const [assignmentDepartmentFilter, setAssignmentDepartmentFilter] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
   const [shouldDeductFromStock, setShouldDeductFromStock] = useState(false);
+  const [withdrawnToolIds, setWithdrawnToolIds] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -97,7 +98,8 @@ export default function EmployeeAssignments({
 
     // Deduct from stock if requested
     if (shouldDeductFromStock && customTools.length > 0) {
-      const newStockEntries: StockEntry[] = customTools.map((tool, index) => ({
+      const toolsToDeduct = customTools.filter(t => !withdrawnToolIds.includes(t.toolId));
+      const newStockEntries: StockEntry[] = toolsToDeduct.map((tool, index) => ({
         id: `se_withdraw_${new Date().getTime()}_${index}`,
         toolId: tool.toolId,
         lineId: emp.departmentId,
@@ -126,6 +128,35 @@ export default function EmployeeAssignments({
     setAssignmentEmployeeSearch('');
     setAssignmentDepartmentFilter('');
     setShouldDeductFromStock(false);
+    setWithdrawnToolIds([]);
+  };
+
+  const handleSingleWithdrawal = (e: React.MouseEvent, toolId: string) => {
+    e.stopPropagation();
+    if (!selectedEmployeeId) {
+      alert("Por favor, selecione um funcionário primeiro.");
+      return;
+    }
+    const emp = employees.find(e => e.id === selectedEmployeeId);
+    if (!emp) return;
+
+    if (withdrawnToolIds.includes(toolId)) return; // Already withdrawn in this session
+
+    const assignedTool = customTools.find(t => t.toolId === toolId);
+    const quantity = assignedTool ? assignedTool.quantity : 1;
+
+    const newStockEntry: StockEntry = {
+      id: `se_single_withdraw_${new Date().getTime()}_${toolId}`,
+      toolId: toolId,
+      lineId: emp.departmentId,
+      quantity: -quantity,
+      date: new Date().toISOString(),
+      type: 'individual',
+      employeeId: selectedEmployeeId
+    };
+    
+    setStockEntries([...(stockEntries || []), newStockEntry]);
+    setWithdrawnToolIds([...withdrawnToolIds, toolId]);
   };
 
   const getMissingTools = (assignment: Assignment) => {
@@ -162,6 +193,7 @@ export default function EmployeeAssignments({
     setAssignmentFilter('all');
     setAssignmentEmployeeSearch('');
     setAssignmentDepartmentFilter('');
+    setWithdrawnToolIds([]);
   };
 
   const handleViewAssignment = (assignment: Assignment) => {
@@ -441,7 +473,7 @@ export default function EmployeeAssignments({
         </div>
         {!isAssigning && !isGuest && (
           <button 
-            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setEmployeeSortByMatricula(false); setCustomTools([]); }}
+            onClick={() => { setIsAssigning(true); setEditingAssignmentId(null); setSelectedEmployeeId(''); setEmployeeSearch(''); setEmployeeSortByMatricula(false); setCustomTools([]); setWithdrawnToolIds([]); }}
             className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-500 hover:to-indigo-500 flex items-center gap-2 shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all"
           >
             <Plus className="w-4 h-4" /> Nova Atribuição
@@ -608,6 +640,15 @@ export default function EmployeeAssignments({
                                   onChange={(e) => updateCustomToolQuantity(tool.id, parseInt(e.target.value) || 1)}
                                   className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
                                 />
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleSingleWithdrawal(e, tool.id)}
+                                  disabled={withdrawnToolIds.includes(tool.id) || isGuest}
+                                  className={`p-1.5 rounded-lg border transition-colors ${withdrawnToolIds.includes(tool.id) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                  title={withdrawnToolIds.includes(tool.id) ? 'Já retirado do estoque' : 'Fazer retirada única deste item do estoque agora'}
+                                >
+                                  {withdrawnToolIds.includes(tool.id) ? <Check className="w-4 h-4" /> : <PackageMinus className="w-4 h-4" />}
+                                </button>
                               </div>
                             )}
                             {isStandard && <span className="text-[9px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest">Padrão</span>}
@@ -644,6 +685,7 @@ export default function EmployeeAssignments({
                   onClick={() => {
                     setIsAssigning(false);
                     setShouldDeductFromStock(false);
+                    setWithdrawnToolIds([]);
                   }}
                   className="flex-1 sm:flex-none px-5 py-2.5 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 transition-colors"
                 >
