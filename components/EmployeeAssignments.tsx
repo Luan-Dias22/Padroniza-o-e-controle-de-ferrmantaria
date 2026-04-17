@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Employee, Assignment, Department, Tool, StandardToolList, StockEntry } from '@/lib/data';
 import { Plus, Trash2, Edit2, Check, X, AlertTriangle, Eye, FileText, Download, Filter, Users, Package, PackageMinus } from 'lucide-react';
@@ -14,8 +14,8 @@ export default function EmployeeAssignments({
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], tools: Tool[], standardLists: StandardToolList[],
-  assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
-  stockEntries: StockEntry[], setStockEntries: (s: StockEntry[]) => void,
+  assignments: Assignment[], setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>,
+  stockEntries: StockEntry[], setStockEntries: React.Dispatch<React.SetStateAction<StockEntry[]>>,
   isGuest?: boolean
 }) {
   const [isAssigning, setIsAssigning] = useState(false);

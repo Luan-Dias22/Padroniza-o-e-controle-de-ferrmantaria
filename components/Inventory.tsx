@@ -14,7 +14,7 @@ interface InventoryProps {
   stockEntries: StockEntry[];
   standardLists: StandardToolList[];
   employees: Employee[];
-  setStockEntries: (entries: StockEntry[]) => void;
+  setStockEntries: React.Dispatch<React.SetStateAction<StockEntry[]>>;
   isGuest?: boolean;
 }
 
@@ -121,7 +121,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   };
 
   const toggleEntrySelection = (entryId: string) => {
-    setSelectedEntryIds((prev: string[]) => 
+    setSelectedEntryIds(prev => 
       prev.includes(entryId) 
         ? prev.filter(id => id !== entryId) 
         : [...prev, entryId]
