@@ -72,7 +72,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
     };
 
-    setStockEntries([...stockEntries, newEntry]);
+    setStockEntries(prev => [...prev, newEntry]);
     setSelectedToolId('');
     setToolSearchQuery('');
     setSelectedLineId('');
@@ -93,7 +93,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
     }));
 
-    setStockEntries([...stockEntries, ...newEntries]);
+    setStockEntries(prev => [...prev, ...newEntries]);
     setTempSelectedToolIds([]);
     setSelectedLineId('');
     setQuantity('');
@@ -115,7 +115,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const confirmDelete = () => {
     if (entryToDelete) {
-      setStockEntries(stockEntries.filter(e => e.id !== entryToDelete));
+      setStockEntries(prev => prev.filter(e => e.id !== entryToDelete));
       setEntryToDelete(null);
     }
   };
@@ -137,7 +137,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   };
 
   const handleBulkDelete = () => {
-    setStockEntries(stockEntries.filter(e => !selectedEntryIds.includes(e.id)));
+    setStockEntries(prev => prev.filter(e => !selectedEntryIds.includes(e.id)));
     setSelectedEntryIds([]);
     setIsBulkDeleteConfirmOpen(false);
   };
@@ -145,13 +145,16 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   const filteredEntries = stockEntries.filter(entry => {
     const tool = tools.find(t => t.id === entry.toolId);
     const line = allLines.find(l => l.id === entry.lineId);
+    const employee = entry.employeeId ? employees.find(e => e.id === entry.employeeId) : null;
+    
     if (!searchQuery) return true;
     
     const searchLower = searchQuery.toLowerCase();
     return (
       tool?.name.toLowerCase().includes(searchLower) ||
       tool?.brand.toLowerCase().includes(searchLower) ||
-      line?.name.toLowerCase().includes(searchLower)
+      line?.name.toLowerCase().includes(searchLower) ||
+      employee?.name.toLowerCase().includes(searchLower)
     );
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

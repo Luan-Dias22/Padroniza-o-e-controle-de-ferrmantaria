@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db, auth } from './firebase';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -56,8 +56,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 export function useFirestore<T extends { id: string }>(collectionName: string, initialValue: T[], userId: string | null) {
   const [data, setData] = useState<T[]>(initialValue);
+  const dataRef = useRef(data);
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasMerged, setHasMerged] = useState(false);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     if (!userId) {
@@ -79,10 +84,12 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
 
       // Logic to prevent losing data on first login:
       if (items.length === 0 && !hasMerged) {
-        if (data.length === 0 && initialValue.length > 0) {
+        if (dataRef.current.length === 0 && initialValue.length > 0) {
+          dataRef.current = initialValue;
           setData(initialValue);
         }
       } else {
+        dataRef.current = items;
         setData(items);
       }
       
@@ -107,7 +114,8 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       return;
     }
 
-    const newValue = value instanceof Function ? value(data) : value;
+    const newValue = value instanceof Function ? value(dataRef.current) : value;
+    dataRef.current = newValue;
     setData(newValue); // Optimistic update
 
     try {
