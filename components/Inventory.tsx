@@ -54,9 +54,17 @@ export default function Inventory({ tools, departments, collectiveLines, collect
     index === self.findIndex((t) => t.name === line.name)
   ).sort((a, b) => sortByName(a.name, b.name));
 
+  const getLine = (lineId: string) => {
+    if (lineId === 'general') return { id: 'general', name: 'Estoque Geral' };
+    return allLines.find(l => l.id === lineId);
+  };
+
   const filteredLines = stockType === 'collective' 
     ? allLines.filter(line => collectiveStations.some(s => s.line === line.name))
-    : allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId));
+    : [
+        { id: 'general', name: 'Estoque Geral' },
+        ...allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId))
+      ];
 
   const handleAddStock = (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +152,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const filteredEntries = stockEntries.filter(entry => {
     const tool = tools.find(t => t.id === entry.toolId);
-    const line = allLines.find(l => l.id === entry.lineId);
+    const line = getLine(entry.lineId);
     const employee = entry.employeeId ? employees.find(e => e.id === entry.employeeId) : null;
     
     if (!searchQuery) return true;
@@ -169,7 +177,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   );
 
   const selectedTool = tools.find(t => t.id === selectedToolId);
-  const selectedLineName = allLines.find(l => l.id === selectedLineId)?.name || '';
+  const selectedLineName = getLine(selectedLineId)?.name || '';
   
   // Calculate Stock Balance
   const stockBalance = stockEntries.reduce((acc, entry) => {
@@ -189,7 +197,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
   const balanceList = Object.values(stockBalance).filter(item => {
     const tool = tools.find(t => t.id === item.toolId);
-    const line = allLines.find(l => l.id === item.lineId);
+    const line = getLine(item.lineId);
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -227,7 +235,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
     const tableData = balanceList.map(item => {
       const tool = tools.find(t => t.id === item.toolId);
-      const line = allLines.find(l => l.id === item.lineId);
+      const line = getLine(item.lineId);
       const price = tool?.price || 0;
       const totalValue = price * item.quantity;
       
@@ -297,7 +305,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                     onClick={() => {
                       setStockType('individual');
                       // Check if current selected line is still valid for individual
-                      const isStillAvailable = allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId)).some(l => l.id === selectedLineId);
+                      const isStillAvailable = selectedLineId === 'general' || allLines.filter(line => departments.some(dept => dept.name === line.name && dept.standardListId)).some(l => l.id === selectedLineId);
                       if (!isStillAvailable) {
                         setSelectedLineId('');
                         setSelectedStation('');
@@ -582,7 +590,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   ) : (
                     filteredEntries.map(entry => {
                       const tool = tools.find(t => t.id === entry.toolId);
-                      const line = allLines.find(l => l.id === entry.lineId);
+                      const line = getLine(entry.lineId);
                       const employee = entry.employeeId ? employees.find(e => e.id === entry.employeeId) : null;
                       const isWithdrawal = entry.quantity < 0;
                       
@@ -676,7 +684,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   ) : (
                     balanceList.map((item, idx) => {
                       const tool = tools.find(t => t.id === item.toolId);
-                      const line = allLines.find(l => l.id === item.lineId);
+                      const line = getLine(item.lineId);
                       
                       return (
                         <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">
@@ -728,7 +736,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   ) : (
                     pendingDelivery.map((item, idx) => {
                       const tool = tools.find(t => t.id === item.toolId);
-                      const line = allLines.find(l => l.id === item.lineId);
+                      const line = getLine(item.lineId);
                       
                       return (
                         <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-800 transition-colors">

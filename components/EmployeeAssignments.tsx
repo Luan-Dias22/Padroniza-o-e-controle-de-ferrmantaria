@@ -99,15 +99,62 @@ export default function EmployeeAssignments({
     // Deduct from stock if requested
     if (shouldDeductFromStock && customTools.length > 0) {
       const toolsToDeduct = customTools.filter(t => !withdrawnToolIds.includes(t.toolId));
-      const newStockEntries: StockEntry[] = toolsToDeduct.map((tool, index) => ({
-        id: `se_withdraw_${new Date().getTime()}_${index}`,
-        toolId: tool.toolId,
-        lineId: emp.departmentId,
-        quantity: -tool.quantity,
-        date: new Date().toISOString(),
-        type: 'individual',
-        employeeId: selectedEmployeeId
-      }));
+      const newStockEntries: StockEntry[] = [];
+      const insufficientTools: string[] = [];
+
+      toolsToDeduct.forEach((tool, index) => {
+        const toolInfo = tools.find(t => t.id === tool.toolId);
+        const lineBalance = stockEntries
+          .filter(e => e.toolId === tool.toolId && e.lineId === emp.departmentId)
+          .reduce((sum, e) => sum + e.quantity, 0);
+        
+        const generalBalance = stockEntries
+          .filter(e => e.toolId === tool.toolId && e.lineId === 'general')
+          .reduce((sum, e) => sum + e.quantity, 0);
+
+        const totalAvailable = lineBalance + generalBalance;
+
+        if (totalAvailable < tool.quantity) {
+          insufficientTools.push(toolInfo?.name || 'Ferramenta desconhecida');
+          return;
+        }
+
+        let remainingToDeduct = tool.quantity;
+
+        // Prioritize line stock
+        if (lineBalance > 0) {
+          const fromLine = Math.min(lineBalance, remainingToDeduct);
+          newStockEntries.push({
+            id: `se_withdraw_line_${new Date().getTime()}_${index}`,
+            toolId: tool.toolId,
+            lineId: emp.departmentId,
+            quantity: -fromLine,
+            date: new Date().toISOString(),
+            type: 'individual',
+            employeeId: selectedEmployeeId
+          });
+          remainingToDeduct -= fromLine;
+        }
+
+        // Use general stock for the rest
+        if (remainingToDeduct > 0) {
+          newStockEntries.push({
+            id: `se_withdraw_gen_${new Date().getTime()}_${index}`,
+            toolId: tool.toolId,
+            lineId: 'general',
+            quantity: -remainingToDeduct,
+            date: new Date().toISOString(),
+            type: 'individual',
+            employeeId: selectedEmployeeId
+          });
+        }
+      });
+
+      if (insufficientTools.length > 0) {
+        alert(`Estoque insuficiente para as seguintes ferramentas:\n${insufficientTools.join(', ')}\n\nOperação cancelada.`);
+        return;
+      }
+
       setStockEntries((prev: StockEntry[]) => [...(prev || []), ...newStockEntries]);
     }
 
@@ -145,17 +192,54 @@ export default function EmployeeAssignments({
     const assignedTool = customTools.find(t => t.toolId === toolId);
     const quantity = assignedTool ? assignedTool.quantity : 1;
 
-    const newStockEntry: StockEntry = {
-      id: `se_single_withdraw_${new Date().getTime()}_${toolId}`,
-      toolId: toolId,
-      lineId: emp.departmentId,
-      quantity: -quantity,
-      date: new Date().toISOString(),
-      type: 'individual',
-      employeeId: selectedEmployeeId
-    };
+    const lineBalance = stockEntries
+      .filter(e => e.toolId === toolId && e.lineId === emp.departmentId)
+      .reduce((sum, e) => sum + e.quantity, 0);
     
-    setStockEntries((prev: StockEntry[]) => [...(prev || []), newStockEntry]);
+    const generalBalance = stockEntries
+      .filter(e => e.toolId === toolId && e.lineId === 'general')
+      .reduce((sum, e) => sum + e.quantity, 0);
+
+    const totalAvailable = lineBalance + generalBalance;
+
+    if (totalAvailable < quantity) {
+      const toolInfo = tools.find(t => t.id === toolId);
+      alert(`Estoque insuficiente para a ferramenta: ${toolInfo?.name || 'Ferramenta'}\nSaldo total disponível: ${totalAvailable}\n\nOperação cancelada.`);
+      return;
+    }
+
+    const newStockEntries: StockEntry[] = [];
+    let remainingToDeduct = quantity;
+
+    // Prioritize line stock
+    if (lineBalance > 0) {
+      const fromLine = Math.min(lineBalance, remainingToDeduct);
+      newStockEntries.push({
+        id: `se_single_withdraw_line_${new Date().getTime()}_${toolId}`,
+        toolId: toolId,
+        lineId: emp.departmentId,
+        quantity: -fromLine,
+        date: new Date().toISOString(),
+        type: 'individual',
+        employeeId: selectedEmployeeId
+      });
+      remainingToDeduct -= fromLine;
+    }
+
+    // Use general stock for the rest
+    if (remainingToDeduct > 0) {
+      newStockEntries.push({
+        id: `se_single_withdraw_gen_${new Date().getTime()}_${toolId}`,
+        toolId: toolId,
+        lineId: 'general',
+        quantity: -remainingToDeduct,
+        date: new Date().toISOString(),
+        type: 'individual',
+        employeeId: selectedEmployeeId
+      });
+    }
+    
+    setStockEntries((prev: StockEntry[]) => [...(prev || []), ...newStockEntries]);
     setWithdrawnToolIds([...withdrawnToolIds, toolId]);
   };
 
@@ -637,24 +721,58 @@ export default function EmployeeAssignments({
                               <p className="text-[10px] font-mono text-slate-500 break-words uppercase tracking-wider">{tool.brand}</p>
                             </div>
                             {isSelected && (
-                              <div className="flex items-center gap-2">
-                                <label className="text-[10px] font-mono text-slate-400 uppercase">Qtd:</label>
-                                <input 
-                                  type="number" 
-                                  min="1"
-                                  value={customTools.find(t => t.toolId === tool.id)?.quantity || 1}
-                                  onChange={(e) => updateCustomToolQuantity(tool.id, parseInt(e.target.value) || 1)}
-                                  className="w-16 p-1.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleSingleWithdrawal(e, tool.id)}
-                                  disabled={withdrawnToolIds.includes(tool.id) || isGuest}
-                                  className={`p-1.5 rounded-lg border transition-colors ${withdrawnToolIds.includes(tool.id) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10'} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                  title={withdrawnToolIds.includes(tool.id) ? 'Já retirado do estoque' : 'Fazer retirada única deste item do estoque agora'}
-                                >
-                                  {withdrawnToolIds.includes(tool.id) ? <Check className="w-4 h-4" /> : <PackageMinus className="w-4 h-4" />}
-                                </button>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    const qty = customTools.find(t => t.toolId === tool.id)?.quantity || 1;
+                                    const lineStock = stockEntries
+                                      .filter(e => e.toolId === tool.id && e.lineId === dept?.id)
+                                      .reduce((sum, e) => sum + e.quantity, 0);
+                                    const generalStock = stockEntries
+                                      .filter(e => e.toolId === tool.id && e.lineId === 'general')
+                                      .reduce((sum, e) => sum + e.quantity, 0);
+                                    const totalStock = lineStock + generalStock;
+                                    const isInsufficient = shouldDeductFromStock && qty > totalStock;
+
+                                    return (
+                                      <>
+                                        <div className="flex flex-col items-end mr-1">
+                                          <span className={`text-[9px] font-mono uppercase tracking-widest ${isInsufficient ? 'text-red-400' : 'text-slate-500'}`}>
+                                            Estoque: {totalStock}
+                                          </span>
+                                          {isInsufficient && (
+                                            <span className="text-[8px] text-red-500 font-bold uppercase flex items-center gap-0.5 animate-pulse">
+                                              <AlertTriangle className="w-2 h-2" /> Insuficiente
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <label className={`text-[10px] font-mono uppercase ${isInsufficient ? 'text-red-400' : 'text-slate-400'}`}>Qtd:</label>
+                                          <input 
+                                            type="number" 
+                                            min="1"
+                                            value={qty}
+                                            onChange={(e) => updateCustomToolQuantity(tool.id, parseInt(e.target.value) || 1)}
+                                            className={`w-16 p-1.5 bg-slate-950 border rounded-lg text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                                              isInsufficient 
+                                                ? 'border-red-500 text-red-200 bg-red-500/5 ring-1 ring-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]' 
+                                                : 'border-slate-700 text-slate-200 focus:border-blue-500'
+                                            }`}
+                                          />
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleSingleWithdrawal(e, tool.id)}
+                                    disabled={withdrawnToolIds.includes(tool.id) || isGuest}
+                                    className={`p-1.5 rounded-lg border transition-colors ${withdrawnToolIds.includes(tool.id) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    title={withdrawnToolIds.includes(tool.id) ? 'Já retirado do estoque' : 'Fazer retirada única deste item do estoque agora'}
+                                  >
+                                    {withdrawnToolIds.includes(tool.id) ? <Check className="w-4 h-4" /> : <PackageMinus className="w-4 h-4" />}
+                                  </button>
+                                </div>
                               </div>
                             )}
                             {isStandard && <span className="text-[9px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest">Padrão</span>}
@@ -686,7 +804,27 @@ export default function EmployeeAssignments({
                 </label>
               </div>
               
-              <div className="flex gap-3 w-full sm:w-auto">
+              <div className="flex gap-3 w-full sm:w-auto items-center">
+                {shouldDeductFromStock && (() => {
+                  const hasInsufficient = customTools.some(tool => {
+                    if (withdrawnToolIds.includes(tool.toolId)) return false;
+                    const emp = employees.find(e => e.id === selectedEmployeeId);
+                    const lineStock = stockEntries
+                      .filter(e => e.toolId === tool.toolId && e.lineId === emp?.departmentId)
+                      .reduce((sum, e) => sum + e.quantity, 0);
+                    const generalStock = stockEntries
+                      .filter(e => e.toolId === tool.toolId && e.lineId === 'general')
+                      .reduce((sum, e) => sum + e.quantity, 0);
+                    return tool.quantity > (lineStock + generalStock);
+                  });
+                  
+                  return hasInsufficient ? (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-bold animate-pulse">
+                      <AlertTriangle className="w-4 h-4" />
+                      Estoque Insuficiente
+                    </div>
+                  ) : null;
+                })()}
                 <button 
                   onClick={() => {
                     setIsAssigning(false);
