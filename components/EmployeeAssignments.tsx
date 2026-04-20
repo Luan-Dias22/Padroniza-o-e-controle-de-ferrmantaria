@@ -257,13 +257,19 @@ export default function EmployeeAssignments({
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105); // slate-600
+    
     doc.text(`NOME: ${emp?.name.toUpperCase() || 'DESCONHECIDO'}`, 14, infoY + 8);
-    doc.text(`MATRÍCULA: ${emp?.employeeId || 'N/A'}`, 14, infoY + 14);
-    doc.text(`DEPARTAMENTO: ${dept?.name.toUpperCase() || 'DESCONHECIDO'}`, 105, infoY + 8);
-    doc.text(`DATA DE ENTREGA: ${date}`, 105, infoY + 14);
+    
+    const deptText = doc.splitTextToSize(`DEPARTAMENTO: ${dept?.name.toUpperCase() || 'DESCONHECIDO'}`, 91);
+    doc.text(deptText, 105, infoY + 8);
+    
+    const nextLineY = infoY + 8 + (deptText.length * 5);
+    
+    doc.text(`MATRÍCULA: ${emp?.employeeId || 'N/A'}`, 14, nextLineY);
+    doc.text(`DATA DE ENTREGA: ${date}`, 105, nextLineY);
     
     // Agreement Text
-    const textY = infoY + 25;
+    const textY = nextLineY + 10;
     const agreementText = `Eu, ${emp?.name || '____________________'}, colaborador da empresa, declaro ter recebido as ferramentas individuais abaixo relacionadas. A contar desta data, assumo a responsabilidade pela guarda e conservação das mesmas, comprometendo-me a devolvê-las em perfeito estado de funcionamento.\n\nEm caso de extravio ou danos por mau uso que acarretem a perda total ou parcial do bem, autorizo o desconto em folha de pagamento do valor correspondente ao prejuízo causado, fixado de acordo com o estado em que a ferramenta se encontrava no ato da entrega.`;
     
     doc.setFontSize(10);
