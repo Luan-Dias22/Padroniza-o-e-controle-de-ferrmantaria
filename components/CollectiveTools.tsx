@@ -340,10 +340,6 @@ export default function CollectiveTools({
 
       {/* Line Selector & Summary */}
       <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-800 p-5 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-slate-400 font-medium mr-2">
-          <LayoutGrid className="w-5 h-5 text-indigo-400" />
-          <span className="font-mono text-sm uppercase tracking-wider">Linha de Montagem:</span>
-        </div>
         <div className="flex flex-wrap items-center gap-2 flex-1">
           <div className="flex flex-wrap gap-2 flex-1">
             <button 
