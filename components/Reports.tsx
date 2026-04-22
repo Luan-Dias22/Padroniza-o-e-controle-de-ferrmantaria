@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine, StockEntry } from '@/lib/data';
-import { FileText, Search, Download, Filter, Users, Building2, Package, X, AlertTriangle } from 'lucide-react';
+import { FileText, Search, Download, Filter, Users, Building2, Package, X } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx-js-style';
@@ -318,14 +318,24 @@ export default function Reports({ tools, departments, assignments, employees, co
       const deptData = reportData[dept.id];
       if (!deptData) return;
 
-      const toolIds = Object.keys(deptData.total || {}).filter(toolId => {
-        const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
-        const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
+      let toolIds = Object.keys(deptData.total || {}).filter(toolId => {
+        // If specific tool is selected, we only care about that tool in the summary
+        if (specificToolId && toolId !== specificToolId) return false;
+
+        const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] !== undefined);
+        const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] !== undefined) || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
         
         if (selectedToolType === 'individual') return hasIndividual;
         if (selectedToolType === 'collective') return hasCollective;
         return hasIndividual || hasCollective;
       });
+
+      // If specific tool is selected but not in total, check if it's required (edge case)
+      if (specificToolId && !toolIds.includes(specificToolId)) {
+        const isRequired = (deptData.requiredIndividual && deptData.requiredIndividual[specificToolId] !== undefined) ||
+                           (deptData.requiredCollective && deptData.requiredCollective[specificToolId] !== undefined);
+        if (isRequired) toolIds = [specificToolId];
+      }
 
       toolIds.forEach(toolId => {
         const currentInd = deptData.individual[toolId] || 0;
@@ -353,7 +363,7 @@ export default function Reports({ tools, departments, assignments, employees, co
       collective: { current: colCurrent, missing: colMissing },
       total: { current: indCurrent + colCurrent, missing: indMissing + colMissing }
     };
-  }, [filteredDepartments, reportData, selectedToolType]);
+  }, [filteredDepartments, reportData, selectedToolType, specificToolId]);
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -1067,18 +1077,22 @@ export default function Reports({ tools, departments, assignments, employees, co
           {filteredDepartments.map(dept => {
             const deptData = reportData[dept.id];
             let toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
-              const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
-              const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
+              // If specific tool is selected, prioritize it
+              if (specificToolId && toolId === specificToolId) return true;
+
+              const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] !== undefined);
+              const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] !== undefined) || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
               
               if (selectedToolType === 'individual') return hasIndividual;
               if (selectedToolType === 'collective') return hasCollective;
               return hasIndividual || hasCollective;
             });
 
-            // If specific tool is selected, only show that tool in the department table
+            // If specific tool is selected, filter only that one
             if (specificToolId) {
               toolIds = toolIds.filter(id => id === specificToolId);
-              // If none of the main tool fields matched but it's required (e.g. standard list but no stock/assignment yet)
+              
+              // Fallback: if tool is required but wasn't in total or was filtered out
               if (toolIds.length === 0) {
                 const isRequired = (deptData.requiredIndividual && deptData.requiredIndividual[specificToolId] !== undefined) ||
                                    (deptData.requiredCollective && deptData.requiredCollective[specificToolId] !== undefined);
