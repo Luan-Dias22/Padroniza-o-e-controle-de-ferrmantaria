@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, CollectiveLine, StockEntry } from '@/lib/data';
-import { FileText, Search, Download, Filter, Users, Building2 } from 'lucide-react';
+import { FileText, Search, Download, Filter, Users, Building2, Package, X, AlertTriangle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx-js-style';
 import { getLogoBase64 } from '@/lib/pdfUtils';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { sortByName } from '@/lib/utils';
 
 interface ReportsProps {
@@ -23,6 +23,20 @@ export default function Reports({ tools, departments, assignments, employees, co
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedToolType, setSelectedToolType] = useState<'all' | 'individual' | 'collective'>('all');
+  const [specificToolId, setSpecificToolId] = useState<string>('');
+  const [isToolSearchOpen, setIsToolSearchOpen] = useState(false);
+  const [toolSearchValue, setToolSearchValue] = useState('');
+  const toolListRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (toolListRef.current && !toolListRef.current.contains(event.target as Node)) {
+        setIsToolSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Calculate tool quantities per department
   const reportData = useMemo(() => {
@@ -211,6 +225,38 @@ export default function Reports({ tools, departments, assignments, employees, co
     return data;
   }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines, stockEntries]);
 
+  // Aggregate global tool stats
+  const globalToolStats = useMemo(() => {
+    const stats: Record<string, { required: number, current: number, missing: number }> = {};
+    
+    Object.keys(reportData).forEach(deptId => {
+      const deptData = reportData[deptId];
+      const toolIds = Object.keys(deptData.total || {});
+      
+      toolIds.forEach(toolId => {
+        if (!stats[toolId]) stats[toolId] = { required: 0, current: 0, missing: 0 };
+        
+        const individualQty = deptData.individual[toolId] || 0;
+        const collectiveQty = deptData.collective[toolId] || 0;
+        const stockIndQty = deptData.stockIndividual[toolId] || 0;
+        const stockColQty = deptData.stockCollective[toolId] || 0;
+        const stockStationTotal = Object.values(deptData.stockStation[toolId] || {}).reduce((a, b) => a + b, 0);
+        
+        const reqInd = deptData.requiredIndividual[toolId] || 0;
+        const reqCol = deptData.requiredCollective[toolId] || 0;
+
+        stats[toolId].required += (reqInd + reqCol);
+        stats[toolId].current += (individualQty + stockIndQty + collectiveQty + stockColQty + stockStationTotal);
+      });
+    });
+
+    Object.keys(stats).forEach(toolId => {
+      stats[toolId].missing = Math.max(0, stats[toolId].required - stats[toolId].current);
+    });
+
+    return stats;
+  }, [reportData]);
+
   // Combine departments and collective lines for filtering and display
   const allReportEntities = useMemo(() => {
     const entities: { id: string, name: string, isLineOnly?: boolean }[] = [...departments];
@@ -226,6 +272,19 @@ export default function Reports({ tools, departments, assignments, employees, co
 
   const filteredDepartments = allReportEntities.filter(dept => {
     if (selectedDepartment !== 'all' && dept.id !== selectedDepartment) return false;
+    
+    // Filter by specific tool if selected
+    if (specificToolId) {
+      const deptData = reportData[dept.id];
+      if (!deptData) return false;
+      
+      const hasSpecificTool = (deptData.total && deptData.total[specificToolId] !== undefined) || 
+                              (deptData.requiredIndividual && deptData.requiredIndividual[specificToolId] !== undefined) ||
+                              (deptData.requiredCollective && deptData.requiredCollective[specificToolId] !== undefined);
+      
+      if (!hasSpecificTool) return false;
+    }
+
     if (searchQuery) {
       return dept.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
@@ -851,6 +910,65 @@ export default function Reports({ tools, departments, assignments, employees, co
             className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
           />
         </div>
+
+        <div className="relative flex-1 group" ref={toolListRef}>
+          <Package className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+          <input
+            type="text"
+            placeholder="Filtrar por ferramenta específica..."
+            value={toolSearchValue}
+            autoComplete="off"
+            onFocus={() => setIsToolSearchOpen(true)}
+            onChange={(e) => {
+              setToolSearchValue(e.target.value);
+              setIsToolSearchOpen(true);
+              if (specificToolId) setSpecificToolId('');
+            }}
+            className="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
+          />
+          {toolSearchValue && (
+            <button 
+              onClick={() => { setToolSearchValue(''); setSpecificToolId(''); setIsToolSearchOpen(false); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          <AnimatePresence>
+            {isToolSearchOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar"
+              >
+                {tools
+                  .filter(t => t.name.toLowerCase().includes(toolSearchValue.toLowerCase()) || t.brand.toLowerCase().includes(toolSearchValue.toLowerCase()))
+                  .sort((a,b) => a.name.localeCompare(b.name))
+                  .map(tool => (
+                    <button
+                      key={tool.id}
+                      onClick={() => {
+                        setSpecificToolId(tool.id);
+                        setToolSearchValue(tool.name);
+                        setIsToolSearchOpen(false);
+                      }}
+                      className="w-full text-left p-3 hover:bg-slate-800 border-b border-slate-800 last:border-0 flex flex-col"
+                    >
+                      <span className="text-sm font-medium text-slate-200">{tool.name}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-mono">{tool.brand}</span>
+                    </button>
+                  ))
+                }
+                {tools.filter(t => t.name.toLowerCase().includes(toolSearchValue.toLowerCase()) || t.brand.toLowerCase().includes(toolSearchValue.toLowerCase())).length === 0 && (
+                  <div className="p-4 text-center text-slate-500 text-sm italic">Nenhuma ferramenta encontrada</div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-slate-500" />
           <select
@@ -904,9 +1022,51 @@ export default function Reports({ tools, departments, assignments, employees, co
           animate="visible"
           className="space-y-8 max-w-6xl mx-auto"
         >
+          {specificToolId && globalToolStats[specificToolId] && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Package className="w-24 h-24 text-amber-500" />
+              </div>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
+                <div>
+                  <h3 className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">Resumo Global da Ferramenta</h3>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">
+                    {tools.find(t => t.id === specificToolId)?.name}
+                  </h2>
+                  <p className="text-slate-400 text-sm font-mono mt-1 uppercase">
+                    {tools.find(t => t.id === specificToolId)?.brand} | {tools.find(t => t.id === specificToolId)?.category}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-8 md:gap-12 w-full md:w-auto">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Necessário</span>
+                    <span className="text-2xl font-black text-white">{globalToolStats[specificToolId].required}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Em Estoque</span>
+                    <span className={`text-2xl font-black ${globalToolStats[specificToolId].current < globalToolStats[specificToolId].required ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {globalToolStats[specificToolId].current}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Faltante</span>
+                    <span className={`text-2xl font-black ${globalToolStats[specificToolId].missing > 0 ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-cyan-400'}`}>
+                      {globalToolStats[specificToolId].missing}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {filteredDepartments.map(dept => {
             const deptData = reportData[dept.id];
-            const toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
+            let toolIds = Object.keys(deptData?.total || {}).filter(toolId => {
               const hasIndividual = (deptData.individual[toolId] || 0) > 0 || (deptData.requiredIndividual[toolId] || 0) > 0;
               const hasCollective = (deptData.collective[toolId] || 0) > 0 || (deptData.requiredCollective[toolId] || 0) > 0 || (deptData.stations[toolId] && deptData.stations[toolId].length > 0);
               
@@ -914,6 +1074,17 @@ export default function Reports({ tools, departments, assignments, employees, co
               if (selectedToolType === 'collective') return hasCollective;
               return hasIndividual || hasCollective;
             });
+
+            // If specific tool is selected, only show that tool in the department table
+            if (specificToolId) {
+              toolIds = toolIds.filter(id => id === specificToolId);
+              // If none of the main tool fields matched but it's required (e.g. standard list but no stock/assignment yet)
+              if (toolIds.length === 0) {
+                const isRequired = (deptData.requiredIndividual && deptData.requiredIndividual[specificToolId] !== undefined) ||
+                                   (deptData.requiredCollective && deptData.requiredCollective[specificToolId] !== undefined);
+                if (isRequired) toolIds = [specificToolId];
+              }
+            }
             
             if (toolIds.length === 0) return null;
 
