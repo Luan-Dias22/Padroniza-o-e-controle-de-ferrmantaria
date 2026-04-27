@@ -1,10 +1,15 @@
 import type {Metadata} from 'next';
-import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
-import './globals.css'; // Global styles
+import { Space_Grotesk, JetBrains_Mono, Inter } from 'next/font/google';
+import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-sans', // we'll use this for headings
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body', // use Inter for general body text
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -22,8 +27,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="pt-BR" className={`dark ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="font-sans bg-slate-950 text-slate-50 antialiased selection:bg-cyan-500/30" suppressHydrationWarning>{children}</body>
+    <html lang="pt-BR" className={`dark ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="font-body bg-[#050505] text-zinc-300 antialiased selection:bg-indigo-500/30" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

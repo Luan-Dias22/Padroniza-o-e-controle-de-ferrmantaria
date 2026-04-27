@@ -86,17 +86,17 @@ export default function Dashboard({
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-3xl font-bold font-sans tracking-tight text-white flex items-center gap-3">
             <Activity className="w-8 h-8 text-cyan-400" />
             Painel de Controle
           </h1>
-          <p className="text-slate-400 mt-1 font-mono text-sm">SISTEMA // STATUS: ONLINE</p>
+          <p className="text-zinc-400 mt-1 font-mono text-sm">SISTEMA // STATUS: ONLINE</p>
         </div>
         <div className="flex gap-3">
           {!isGuest && (
             <button 
               onClick={() => onNavigate('assignments')}
-              className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/30 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.4)]"
+              className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-xl hover:bg-cyan-500/30 hover:border-cyan-400 transition-all shadow-sm hover:shadow-md"
             >
               <Plus className="w-4 h-4" /> Nova Atribuição
             </button>
@@ -113,9 +113,9 @@ export default function Dashboard({
               key={i} 
               variants={itemVariants}
               onClick={() => onNavigate(stat.tab)}
-              className={`bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border ${stat.borderColor} cursor-pointer hover:bg-slate-800/80 transition-all group relative overflow-hidden`}
+              className={`bg-[#0a0a0a] rounded-xl p-6 border ${stat.borderColor} cursor-pointer hover:bg-zinc-900/80 transition-all group relative overflow-hidden`}
             >
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-transparent to-white opacity-5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:opacity-10 transition-opacity`} />
+              
               <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className={`${stat.bgColor} ${stat.color} p-3 rounded-xl border ${stat.borderColor} group-hover:scale-110 transition-transform shadow-lg`}>
                   <Icon className="w-6 h-6" />
@@ -123,7 +123,7 @@ export default function Dashboard({
                 <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-cyan-400 transition-colors" />
               </div>
               <div className="relative z-10">
-                <p className="text-sm text-slate-400 font-medium">{stat.label}</p>
+                <p className="text-sm text-zinc-400 font-medium">{stat.label}</p>
                 <p className={`text-4xl font-bold ${stat.color} mt-1 font-mono tracking-tight`}>{stat.value}</p>
               </div>
             </motion.div>
@@ -134,7 +134,7 @@ export default function Dashboard({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Section */}
         <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border border-slate-800 relative overflow-hidden">
+          <div className="bg-[#0a0a0a] rounded-xl p-6 border border-white/105 relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -180,8 +180,8 @@ export default function Dashboard({
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
-                  <div className="w-16 h-16 rounded-full border border-slate-700 flex items-center justify-center bg-slate-800/50">
+                <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-3">
+                  <div className="w-16 h-16 rounded-full border border-white/105 flex items-center justify-center bg-zinc-900/50">
                     <ClipboardCheck className="w-8 h-8 opacity-50" />
                   </div>
                   <p className="font-mono text-sm">Aguardando dados...</p>
@@ -194,47 +194,47 @@ export default function Dashboard({
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <button 
               onClick={() => onNavigate('tools')}
-              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all flex flex-col items-center text-center gap-3 group"
+              className="p-4 bg-[#0a0a0a] border border-white/105 rounded-xl hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
                 <Wrench className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-cyan-400 transition-colors uppercase tracking-wider">Registrar Ferramenta</span>
+              <span className="text-xs font-semibold text-zinc-300 group-hover:text-cyan-400 transition-colors uppercase tracking-wider">Registrar Ferramenta</span>
             </button>
             <button 
               onClick={() => onNavigate('standard')}
-              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/10 transition-all flex flex-col items-center text-center gap-3 group"
+              className="p-4 bg-[#0a0a0a] border border-white/105 rounded-xl hover:border-purple-500/50 hover:bg-purple-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
                 <ListChecks className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-purple-400 transition-colors uppercase tracking-wider">Gerenciar Listas</span>
+              <span className="text-xs font-semibold text-zinc-300 group-hover:text-purple-400 transition-colors uppercase tracking-wider">Gerenciar Listas</span>
             </button>
             <button 
               onClick={() => onNavigate('collective')}
-              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all flex flex-col items-center text-center gap-3 group"
+              className="p-4 bg-[#0a0a0a] border border-white/105 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
                 <Package className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-indigo-400 transition-colors uppercase tracking-wider">Uso Coletivo</span>
+              <span className="text-xs font-semibold text-zinc-300 group-hover:text-indigo-400 transition-colors uppercase tracking-wider">Uso Coletivo</span>
             </button>
             <button 
               onClick={() => onNavigate('employees')}
-              className="p-4 bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all flex flex-col items-center text-center gap-3 group"
+              className="p-4 bg-[#0a0a0a] border border-white/105 rounded-xl hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                 <Building2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-300 group-hover:text-emerald-400 transition-colors uppercase tracking-wider">Departamentos</span>
+              <span className="text-xs font-semibold text-zinc-300 group-hover:text-emerald-400 transition-colors uppercase tracking-wider">Departamentos</span>
             </button>
           </div>
         </motion.div>
 
         {/* Recent Activity Section */}
-        <motion.div variants={itemVariants} className="bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-800 flex flex-col relative overflow-hidden">
+        <motion.div variants={itemVariants} className="bg-[#0a0a0a] rounded-xl border border-white/105 flex flex-col relative overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-1 bg-gradient-to-l from-transparent via-blue-500/50 to-transparent" />
-          <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
+          <div className="p-6 border-b border-white/5/50 flex items-center justify-between">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Activity className="w-5 h-5 text-blue-400" />
               Log de Atividades
@@ -262,17 +262,17 @@ export default function Dashboard({
                       transition={{ delay: idx * 0.1 }}
                       className="flex gap-4 items-start group relative"
                     >
-                      <div className="absolute left-5 top-10 bottom-[-24px] w-px bg-slate-800 group-last:hidden" />
+                      <div className="absolute left-5 top-10 bottom-[-24px] w-px bg-zinc-900 group-last:hidden" />
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 relative z-10 border ${
                         missingCount > 0 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
                       }`}>
                         {missingCount > 0 ? <AlertTriangle className="w-5 h-5" /> : <ClipboardCheck className="w-5 h-5" />}
                       </div>
                       <div className="flex-1 min-w-0 pt-1">
-                        <p className="text-sm font-bold text-slate-200 truncate group-hover:text-cyan-400 transition-colors">
+                        <p className="text-sm font-bold text-zinc-200 truncate group-hover:text-cyan-400 transition-colors">
                           {emp?.name || 'Desconhecido'}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1 font-mono">
+                        <p className="text-xs text-zinc-500 mt-1 font-mono">
                           {dept?.name} | {new Date(assignment.dateAssigned).toLocaleDateString()}
                         </p>
                         {missingCount > 0 && (
@@ -286,8 +286,8 @@ export default function Dashboard({
                 })}
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3 py-12">
-                <div className="w-16 h-16 rounded-full border border-slate-700 flex items-center justify-center bg-slate-800/50">
+              <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-3 py-12">
+                <div className="w-16 h-16 rounded-full border border-white/105 flex items-center justify-center bg-zinc-900/50">
                   <ClipboardCheck className="w-8 h-8 opacity-50" />
                 </div>
                 <p className="font-mono text-sm">Nenhum log registrado.</p>

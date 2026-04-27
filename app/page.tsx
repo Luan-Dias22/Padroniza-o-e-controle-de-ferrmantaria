@@ -179,7 +179,7 @@ export default function App() {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-cyan-400">
+      <div className="min-h-screen flex items-center justify-center bg-transparent text-cyan-400">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -192,7 +192,7 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-transparent p-4 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-[120px]" />
@@ -203,7 +203,7 @@ export default function App() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center relative z-10"
+          className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/5 p-8 rounded-3xl shadow-sm max-w-md w-full text-center relative z-10"
         >
           <motion.div 
             initial={{ scale: 0 }}
@@ -222,12 +222,12 @@ export default function App() {
                 target.nextSibling.style.display = 'flex';
               }}
             />
-            <div className="hidden w-full h-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-2xl items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+            <div className="hidden w-full h-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded-2xl items-center justify-center shadow-sm">
               <Wrench className="w-12 h-12" />
             </div>
           </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Tool Manager <span className="text-cyan-400">OS</span></h1>
-          <p className="text-slate-400 mb-8 text-sm">Sistema avançado de gestão e padronização de ferramentaria.</p>
+          <h1 className="text-3xl font-bold font-sans tracking-tight text-white mb-2 tracking-tight">Tool Manager <span className="text-cyan-400">OS</span></h1>
+          <p className="text-zinc-400 mb-8 text-sm">Sistema avançado de gestão e padronização de ferramentaria.</p>
           
           {loginError && (
             <motion.div 
@@ -242,7 +242,7 @@ export default function App() {
           <button
             onClick={handleLogin}
             disabled={isLoggingIn}
-            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] mb-4"
+            className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow-sm mb-4"
           >
             {isLoggingIn ? (
               <>
@@ -260,7 +260,7 @@ export default function App() {
           <button
             onClick={handleGuestLogin}
             disabled={isLoggingIn}
-            className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 px-4 rounded-xl transition-all border border-slate-700"
+            className="w-full flex items-center justify-center gap-3 bg-[#0a0a0a] hover:bg-slate-700 text-zinc-300 font-medium py-3 px-4 rounded-xl transition-all border border-white/5"
           >
             <Users className="w-5 h-5" />
             Entrar como Convidado
@@ -271,7 +271,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans text-slate-200 selection:bg-cyan-500/30 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent flex flex-col md:flex-row font-sans text-zinc-200 selection:bg-cyan-500/30 relative overflow-hidden">
       {/* Global Animated Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px]" />
@@ -280,7 +280,7 @@ export default function App() {
       </div>
 
       {/* Mobile Header */}
-      <div className="md:hidden bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 flex justify-between items-center sticky top-0 z-30">
+      <div className="md:hidden bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/5 p-4 flex justify-between items-center sticky top-0 z-30">
         <div className="font-bold text-lg flex items-center gap-3 text-white">
           <div className="w-8 h-8 relative">
             <Image 
@@ -298,7 +298,7 @@ export default function App() {
           </div>
           Tool Manager <span className="text-cyan-400 text-xs align-top">OS</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-300 hover:text-white">
+        <button onClick={() => setIsMobileMenuOpen(true)} className="text-zinc-300 hover:text-white">
           <Menu className="w-6 h-6" />
         </button>
       </div>
@@ -310,7 +310,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 bg-transparent/80 backdrop-blur-sm z-40 md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -319,14 +319,14 @@ export default function App() {
       {/* Sidebar */}
       <motion.div 
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 flex-shrink-0 flex flex-col h-screen
+          fixed inset-y-0 left-0 z-50 w-64 bg-[#0a0a0a]/50 backdrop-blur-xl border-r border-white/5 flex-shrink-0 flex flex-col h-screen
           md:relative md:translate-x-0 md:block
         `}
         initial={false}
         animate={{ x: isMobileMenuOpen ? 0 : (typeof window !== 'undefined' && window.innerWidth < 768 ? '-100%' : 0) }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="p-5 flex items-center justify-between border-b border-slate-800/50">
+        <div className="p-5 flex items-center justify-between border-b border-white/5/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 relative flex-shrink-0">
               <Image 
@@ -341,13 +341,13 @@ export default function App() {
                   target.nextSibling.style.display = 'flex';
                 }}
               />
-              <div className="hidden w-full h-full bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+              <div className="hidden w-full h-full bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl items-center justify-center shadow-sm">
                 <Wrench className="w-5 h-5 text-white" />
               </div>
             </div>
             <span className="font-bold text-lg tracking-tight text-white">Tool Manager</span>
           </div>
-          <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+          <button className="md:hidden text-zinc-400 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -366,7 +366,7 @@ export default function App() {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left relative group ${
                   isActive 
                     ? 'text-cyan-400 bg-cyan-500/10' 
-                    : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                    : 'text-zinc-400 hover:bg-[#0a0a0a]/50 hover:text-zinc-200'
                 }`}
               >
                 {isActive && (
@@ -384,23 +384,23 @@ export default function App() {
         </nav>
         
         {/* User Profile & Logout */}
-        <div className="p-4 border-t border-slate-800/50 bg-slate-900/30">
+        <div className="p-4 border-t border-white/5/50 bg-[#0a0a0a]/30">
           <div className="flex items-center gap-3 mb-3">
             {user.photoURL ? (
-              <Image src={user.photoURL} alt="Profile" width={36} height={36} className="rounded-full border border-slate-700" referrerPolicy="no-referrer" />
+              <Image src={user.photoURL} alt="Profile" width={36} height={36} className="rounded-full border border-white/5" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-9 h-9 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center">
-                <Users className="w-4 h-4 text-slate-400" />
+              <div className="w-9 h-9 bg-[#0a0a0a] border border-white/5 rounded-full flex items-center justify-center">
+                <Users className="w-4 h-4 text-zinc-400" />
               </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user.displayName || 'Operador'}</p>
-              <p className="text-xs text-slate-500 truncate">{user.email}</p>
+              <p className="text-xs text-zinc-500 truncate">{user.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-400 border border-transparent hover:border-red-500/20 transition-all text-sm font-medium"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             Desconectar

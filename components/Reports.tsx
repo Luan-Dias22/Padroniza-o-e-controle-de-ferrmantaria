@@ -835,24 +835,24 @@ export default function Reports({ tools, departments, assignments, employees, co
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-slate-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col h-[calc(100vh-2rem)]"
+      className="bg-zinc-900/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/105 overflow-hidden flex flex-col h-[calc(100vh-2rem)]"
     >
-      <div className="p-6 border-b border-slate-800/50 bg-slate-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="p-6 border-b border-white/5/50 bg-zinc-900/30 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+          <h1 className="text-2xl font-bold font-sans tracking-tight text-white flex items-center gap-2 tracking-tight">
             <FileText className="w-6 h-6 text-cyan-400" />
             Relatório por Linha
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-zinc-400 text-sm mt-1">
             Visão geral das quantidades de ferramentas atribuídas por departamento/linha.
           </p>
         </div>
         
         <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="flex items-center gap-6 bg-slate-800/50 px-5 py-2.5 rounded-xl border border-slate-700/50 shadow-inner flex-1 lg:flex-none justify-center">
+          <div className="flex items-center gap-6 bg-zinc-900/50 px-5 py-2.5 rounded-xl border border-white/105/50 shadow-inner flex-1 lg:flex-none justify-center">
             {(selectedToolType === 'all' || selectedToolType === 'individual') && (
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Individuais</span>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Individuais</span>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5" title="Atuais">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
@@ -870,7 +870,7 @@ export default function Reports({ tools, departments, assignments, employees, co
               <>
                 {selectedToolType === 'all' && <div className="w-px h-8 bg-slate-700/50"></div>}
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Coletivas</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Coletivas</span>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5" title="Atuais">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"></div>
@@ -887,7 +887,7 @@ export default function Reports({ tools, departments, assignments, employees, co
 
             <div className="w-px h-8 bg-slate-700/50"></div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Faltante</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Total Faltante</span>
               <span className="text-sm font-bold text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">{summaryData.total.missing}</span>
             </div>
           </div>
@@ -895,13 +895,13 @@ export default function Reports({ tools, departments, assignments, employees, co
           <div className="flex items-center gap-2 w-full lg:w-auto">
             <button
               onClick={handleExportExcel}
-              className="px-4 py-2.5 h-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] flex-1 lg:flex-none"
+              className="px-4 py-2.5 h-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-sm hover:shadow-md flex-1 lg:flex-none"
             >
               <Download className="w-4 h-4" /> Excel
             </button>
             <button
               onClick={handleExportPDF}
-              className="px-4 py-2.5 h-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] flex-1 lg:flex-none"
+              className="px-4 py-2.5 h-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-medium shadow-sm hover:shadow-md flex-1 lg:flex-none"
             >
               <Download className="w-4 h-4" /> PDF
             </button>
@@ -909,20 +909,20 @@ export default function Reports({ tools, departments, assignments, employees, co
         </div>
       </div>
 
-      <div className="p-4 border-b border-slate-800/50 bg-slate-900/30 flex flex-col sm:flex-row gap-4">
+      <div className="p-4 border-b border-white/5/50 bg-zinc-900/30 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
+          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-cyan-400 transition-colors" />
           <input
             type="text"
             placeholder="Buscar linha/departamento..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-white/105 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-zinc-200 placeholder-slate-600 transition-all"
           />
         </div>
 
         <div className="relative flex-1 group" ref={toolListRef}>
-          <Package className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-amber-400 transition-colors" />
+          <Package className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-400 transition-colors" />
           <input
             type="text"
             placeholder="Filtrar por ferramenta específica..."
@@ -934,12 +934,12 @@ export default function Reports({ tools, departments, assignments, employees, co
               setIsToolSearchOpen(true);
               if (specificToolId) setSpecificToolId('');
             }}
-            className="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none text-slate-200 placeholder-slate-600 transition-all"
+            className="w-full pl-10 pr-10 py-2.5 bg-transparent border border-white/105 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none text-zinc-200 placeholder-slate-600 transition-all"
           />
           {toolSearchValue && (
             <button 
               onClick={() => { setToolSearchValue(''); setSpecificToolId(''); setIsToolSearchOpen(false); }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -951,7 +951,7 @@ export default function Reports({ tools, departments, assignments, employees, co
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar"
+                className="absolute left-0 right-0 top-full mt-2 bg-zinc-900 border border-white/105 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar"
               >
                 {tools
                   .filter(t => t.name.toLowerCase().includes(toolSearchValue.toLowerCase()) || t.brand.toLowerCase().includes(toolSearchValue.toLowerCase()))
@@ -964,15 +964,15 @@ export default function Reports({ tools, departments, assignments, employees, co
                         setToolSearchValue(tool.name);
                         setIsToolSearchOpen(false);
                       }}
-                      className="w-full text-left p-3 hover:bg-slate-800 border-b border-slate-800 last:border-0 flex flex-col"
+                      className="w-full text-left p-3 hover:bg-zinc-900 border-b border-white/5 last:border-0 flex flex-col"
                     >
-                      <span className="text-sm font-medium text-slate-200">{tool.name}</span>
-                      <span className="text-[10px] text-slate-500 uppercase font-mono">{tool.brand}</span>
+                      <span className="text-sm font-medium text-zinc-200">{tool.name}</span>
+                      <span className="text-[10px] text-zinc-500 uppercase font-mono">{tool.brand}</span>
                     </button>
                   ))
                 }
                 {tools.filter(t => t.name.toLowerCase().includes(toolSearchValue.toLowerCase()) || t.brand.toLowerCase().includes(toolSearchValue.toLowerCase())).length === 0 && (
-                  <div className="p-4 text-center text-slate-500 text-sm italic">Nenhuma ferramenta encontrada</div>
+                  <div className="p-4 text-center text-zinc-500 text-sm italic">Nenhuma ferramenta encontrada</div>
                 )}
               </motion.div>
             )}
@@ -980,11 +980,11 @@ export default function Reports({ tools, departments, assignments, employees, co
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-slate-500" />
+          <Filter className="w-5 h-5 text-zinc-500" />
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
+            className="p-2.5 bg-transparent border border-white/105 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-zinc-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todas as Linhas</option>
             {dropdownEntities.map(dept => (
@@ -1016,7 +1016,7 @@ export default function Reports({ tools, departments, assignments, employees, co
                 }
               }
             }}
-            className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-slate-200 min-w-[150px] transition-all appearance-none"
+            className="p-2.5 bg-transparent border border-white/105 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none text-zinc-200 min-w-[150px] transition-all appearance-none"
           >
             <option value="all">Todos os Tipos</option>
             <option value="individual">Individuais</option>
@@ -1025,7 +1025,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 bg-slate-950/30 custom-scrollbar">
+      <div className="flex-1 overflow-auto p-6 bg-transparent/30 custom-scrollbar">
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -1036,7 +1036,7 @@ export default function Reports({ tools, departments, assignments, employees, co
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden group"
+              className="bg-zinc-900 border border-amber-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Package className="w-24 h-24 text-amber-500" />
@@ -1044,27 +1044,27 @@ export default function Reports({ tools, departments, assignments, employees, co
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
                 <div>
                   <h3 className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-1">Resumo Global da Ferramenta</h3>
-                  <h2 className="text-2xl font-bold text-white tracking-tight">
+                  <h2 className="text-2xl font-bold font-sans tracking-tight text-white tracking-tight">
                     {tools.find(t => t.id === specificToolId)?.name}
                   </h2>
-                  <p className="text-slate-400 text-sm font-mono mt-1 uppercase">
+                  <p className="text-zinc-400 text-sm font-mono mt-1 uppercase">
                     {tools.find(t => t.id === specificToolId)?.brand} | {tools.find(t => t.id === specificToolId)?.category}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-8 md:gap-12 w-full md:w-auto">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Necessário</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Necessário</span>
                     <span className="text-2xl font-black text-white">{globalToolStats[specificToolId].required}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Em Estoque</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Em Estoque</span>
                     <span className={`text-2xl font-black ${globalToolStats[specificToolId].current < globalToolStats[specificToolId].required ? 'text-amber-400' : 'text-emerald-400'}`}>
                       {globalToolStats[specificToolId].current}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Faltante</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Faltante</span>
                     <span className={`text-2xl font-black ${globalToolStats[specificToolId].missing > 0 ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'text-cyan-400'}`}>
                       {globalToolStats[specificToolId].missing}
                     </span>
@@ -1106,9 +1106,9 @@ export default function Reports({ tools, departments, assignments, employees, co
               <motion.div 
                 variants={itemVariants}
                 key={dept.id} 
-                className="bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden shadow-lg backdrop-blur-sm"
+                className="bg-zinc-900/50 border border-white/105 rounded-xl overflow-hidden shadow-lg backdrop-blur-sm"
               >
-                <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-700/50 flex justify-between items-center">
+                <div className="bg-zinc-900/50 px-6 py-4 border-b border-white/5/50 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <h2 className="text-lg font-bold text-white tracking-tight">{dept.name}</h2>
                     {(() => {
@@ -1130,18 +1130,18 @@ export default function Reports({ tools, departments, assignments, employees, co
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-950/50 border-b border-slate-800 text-slate-400 text-sm">
+                      <tr className="bg-zinc-900/30 border-b border-white/5 text-zinc-400 text-sm">
                         <th className="p-4 font-semibold">Ferramenta</th>
                         {selectedToolType === 'collective' && <th className="p-4 font-semibold">Posto</th>}
                         <th className="p-4 font-semibold">Marca</th>
                         <th className="p-4 font-semibold text-center">
                           <div className="flex flex-col items-center">
-                            <span className="text-slate-400">Nec.</span>
+                            <span className="text-zinc-400">Nec.</span>
                           </div>
                         </th>
                         <th className="p-4 font-semibold text-center">
                           <div className="flex flex-col items-center">
-                            <span className="text-slate-400">Atu.</span>
+                            <span className="text-zinc-400">Atu.</span>
                           </div>
                         </th>
                         <th className="p-4 font-semibold text-center bg-cyan-950/30">
@@ -1238,9 +1238,9 @@ export default function Reports({ tools, departments, assignments, employees, co
                             className="transition-colors"
                           >
                             <td className="p-4">
-                              <p className="text-slate-200 font-medium">{row.tool?.name || 'Ferramenta Desconhecida'}</p>
+                              <p className="text-zinc-200 font-medium">{row.tool?.name || 'Ferramenta Desconhecida'}</p>
                               <div className="flex flex-col gap-1 mt-1">
-                                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">{row.tool?.category}</p>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono">{row.tool?.category}</p>
                                 {!row.isExpanded && (selectedToolType === 'all' || selectedToolType === 'collective') && row.stationsList?.length > 0 && (
                                   <div className="flex flex-wrap gap-1.5 mt-2">
                                     {row.stationsList.map((detail: any, idx: number) => (
@@ -1254,19 +1254,19 @@ export default function Reports({ tools, departments, assignments, employees, co
                             </td>
                             {selectedToolType === 'collective' && (
                               <td className="p-4">
-                                <span className="px-2.5 py-1 bg-slate-800/50 border border-slate-700 text-slate-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
+                                <span className="px-2.5 py-1 bg-zinc-900/50 border border-white/105 text-zinc-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
                                   {row.station?.name || '-'}
                                 </span>
                               </td>
                             )}
-                            <td className="p-4 text-slate-400">{row.tool?.brand || '-'}</td>
+                            <td className="p-4 text-zinc-400">{row.tool?.brand || '-'}</td>
                             <td className="p-4 text-center">
-                              <span className="text-sm text-slate-300 font-medium">
+                              <span className="text-sm text-zinc-300 font-medium">
                                 {row.reqQty}
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={`text-sm font-medium ${row.curQty < row.reqQty ? 'text-amber-400' : 'text-slate-300'}`}>
+                              <span className={`text-sm font-medium ${row.curQty < row.reqQty ? 'text-amber-400' : 'text-zinc-300'}`}>
                                 {row.curQty}
                               </span>
                             </td>
@@ -1289,11 +1289,11 @@ export default function Reports({ tools, departments, assignments, employees, co
           {filteredDepartments.every(dept => Object.keys(reportData[dept.id]?.total || {}).length === 0) && (
             <motion.div 
               variants={itemVariants}
-              className="text-center py-16 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm"
+              className="text-center py-16 bg-zinc-900/50 rounded-2xl border border-white/105 backdrop-blur-sm"
             >
               <FileText className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-slate-300 mb-2">Nenhum dado encontrado</h3>
-              <p className="text-slate-500">Não há ferramentas atribuídas para as linhas selecionadas.</p>
+              <h3 className="text-xl font-medium text-zinc-300 mb-2">Nenhum dado encontrado</h3>
+              <p className="text-zinc-500">Não há ferramentas atribuídas para as linhas selecionadas.</p>
             </motion.div>
           )}
         </motion.div>
