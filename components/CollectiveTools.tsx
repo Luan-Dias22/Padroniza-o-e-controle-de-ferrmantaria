@@ -304,19 +304,19 @@ export default function CollectiveTools({
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
             <LayoutGrid className="w-5 h-5 text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-sans tracking-tight text-white tracking-tight">Ferramentas Coletivas</h1>
-            <p className="text-zinc-400 text-sm mt-0.5 font-mono">Gerencie conjuntos de ferramentas compartilhadas em postos de trabalho.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Ferramentas Coletivas</h1>
+            <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 text-sm mt-0.5 font-mono">Gerencie conjuntos de ferramentas compartilhadas em postos de trabalho.</p>
           </div>
         </div>
         {!isGuest && (
           <div className="flex gap-3">
             <button 
               onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-              className="px-5 py-2.5 bg-zinc-900/50 border border-white/105 text-zinc-300 rounded-xl hover:bg-zinc-900 transition-all flex items-center gap-2 text-sm font-medium"
+              className="px-5 py-2.5 bg-white/50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:bg-slate-800 transition-all flex items-center gap-2 text-sm font-medium"
             >
               <Settings2 className="w-4 h-4" /> Gerenciar Linhas
             </button>
@@ -330,7 +330,7 @@ export default function CollectiveTools({
                 setStationFormData({ name: '', lineId: selectedLineId === 'all' ? lines[0].id : selectedLineId }); 
                 setIsStationModalOpen(true); 
               }}
-              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all flex items-center gap-2 text-sm font-medium shadow-sm"
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-slate-900 dark:text-white rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all flex items-center gap-2 text-sm font-medium shadow-[0_0_15px_rgba(99,102,241,0.3)]"
             >
               <Plus className="w-4 h-4" /> Novo Posto
             </button>
@@ -339,15 +339,15 @@ export default function CollectiveTools({
       </div>
 
       {/* Line Selector & Summary */}
-      <motion.div variants={itemVariants} className="bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 p-5 flex flex-wrap items-center gap-4">
+      <motion.div variants={itemVariants} className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-5 flex flex-wrap items-center gap-4">
         <div className="flex flex-wrap items-center gap-2 flex-1">
           <div className="flex flex-wrap gap-2 flex-1">
             <button 
               onClick={() => setSelectedLineId('all')}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 selectedLineId === 'all' 
-                  ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
-                  : 'bg-zinc-900/30 border border-white/105 text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+                  ? 'bg-indigo-600 text-slate-900 dark:text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
+                  : 'bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:bg-slate-800/50 hover:text-slate-800 dark:text-slate-200'
               }`}
             >
               Todas as Linhas
@@ -358,8 +358,8 @@ export default function CollectiveTools({
                 onClick={() => setSelectedLineId(line.id)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   selectedLineId === line.id 
-                    ? 'bg-indigo-600 text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
-                    : 'bg-zinc-900/30 border border-white/105 text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+                    ? 'bg-indigo-600 text-slate-900 dark:text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]' 
+                    : 'bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:bg-slate-800/50 hover:text-slate-800 dark:text-slate-200'
                 }`}
               >
                 {line.name}
@@ -368,7 +368,7 @@ export default function CollectiveTools({
             {!isGuest && (
               <button 
                 onClick={() => { setEditingLine(null); setLineFormData({ name: '' }); setIsLineModalOpen(true); }}
-                className="px-4 py-2 border border-dashed border-white/5 bg-transparent/30 text-zinc-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
+                className="px-4 py-2 border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-950/30 text-slate-400 dark:text-slate-500 rounded-xl text-sm hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center gap-2"
               >
                 <Plus className="w-3.5 h-3.5" /> Nova Linha
               </button>
@@ -380,7 +380,7 @@ export default function CollectiveTools({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               onClick={generateResponsibilityTerm}
-              className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm"
+              className="px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-slate-900 dark:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(99,102,241,0.1)]"
             >
               <FileText className="w-4 h-4" />
               Imprimir Termo de Responsabilidade
@@ -390,11 +390,11 @@ export default function CollectiveTools({
       </motion.div>
 
       {/* Stations Grid/Table */}
-      <motion.div variants={itemVariants} className="bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 overflow-hidden">
+      <motion.div variants={itemVariants} className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-900/30 text-zinc-400 text-xs font-mono uppercase tracking-wider border-b border-white/5">
+              <tr className="bg-slate-50/50 dark:bg-slate-950/50 text-slate-400 dark:text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <th className="p-4 font-semibold">Posto de Trabalho</th>
                 <th className="p-4 font-semibold">Linha</th>
                 <th className="p-4 font-semibold">Ferramentas Coletivas</th>
@@ -405,8 +405,8 @@ export default function CollectiveTools({
               {filteredStations.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-12 text-center">
-                    <div className="flex flex-col items-center justify-center text-zinc-500 space-y-4">
-                      <div className="w-16 h-16 bg-zinc-900/50 rounded-2xl flex items-center justify-center border border-white/105">
+                    <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 space-y-4">
+                      <div className="w-16 h-16 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-300 dark:border-slate-700">
                         <Building2 className="w-8 h-8 text-slate-600" />
                       </div>
                       <p className="text-sm font-mono">Nenhum posto encontrado para esta seleção.</p>
@@ -426,28 +426,28 @@ export default function CollectiveTools({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                     key={station.id} 
-                    className="hover:bg-zinc-900/30 transition-colors group"
+                    className="hover:bg-slate-100/30 dark:bg-slate-800/30 transition-colors group"
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center shadow-inner">
                           <Settings2 className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-zinc-200">{station.name}</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{station.name}</span>
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className="px-3 py-1.5 bg-zinc-900/50 border border-white/105 text-zinc-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
+                      <span className="px-3 py-1.5 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider">
                         {station.line}
                       </span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-zinc-900/50 rounded-lg flex items-center justify-center border border-white/105">
-                          <Wrench className="w-4 h-4 text-zinc-400" />
+                        <div className="w-8 h-8 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg flex items-center justify-center border border-slate-300 dark:border-slate-700">
+                          <Wrench className="w-4 h-4 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-zinc-300">
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                             {station.tools.reduce((acc, t) => {
                               const stockQty = stockEntries
                                 .filter(se => se.type === 'collective' && se.station === station.name && se.toolId === t.toolId)
@@ -455,7 +455,7 @@ export default function CollectiveTools({
                               return acc + t.quantity + stockQty;
                             }, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
                           </span>
-                          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">{station.tools.length} tipos</span>
+                          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider">{station.tools.length} tipos</span>
                         </div>
                       </div>
                     </td>
@@ -463,7 +463,7 @@ export default function CollectiveTools({
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => setViewingStation(station)}
-                          className="p-2 text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
                           title="Visualizar Ferramentas"
                         >
                           <Eye className="w-4 h-4" />
@@ -472,7 +472,7 @@ export default function CollectiveTools({
                           <>
                             <button 
                               onClick={() => { setManagingStation(station); setIsManageToolsModalOpen(true); }}
-                              className="px-4 py-2 bg-zinc-900/50 border border-white/105 text-zinc-300 rounded-lg hover:bg-indigo-600 hover:border-indigo-500 hover:text-white transition-all text-xs font-bold flex items-center gap-2"
+                              className="px-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-indigo-600 hover:border-indigo-500 hover:text-slate-900 dark:text-white transition-all text-xs font-bold flex items-center gap-2"
                             >
                               <Wrench className="w-3.5 h-3.5" /> Gerenciar
                             </button>
@@ -483,13 +483,13 @@ export default function CollectiveTools({
                                 setStationFormData({ name: station.name, lineId: line?.id || '' }); 
                                 setIsStationModalOpen(true); 
                               }}
-                              className="p-2 text-zinc-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => handleDeleteStation(station)}
-                              className="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-2 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -518,12 +518,12 @@ export default function CollectiveTools({
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-zinc-900 border border-white/105 rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-blue-500" />
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/80">
-                <h2 className="text-xl font-bold font-sans tracking-tight text-white">Gerenciar Linhas</h2>
-                <button onClick={() => setIsLineModalOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900 p-1.5 rounded-lg transition-colors">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/80">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Gerenciar Linhas</h2>
+                <button onClick={() => setIsLineModalOpen(false)} className="text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -534,18 +534,18 @@ export default function CollectiveTools({
                     placeholder="Nome da nova linha..."
                     value={lineFormData.name}
                     onChange={e => setLineFormData({ name: e.target.value })}
-                    className="flex-1 p-3 bg-zinc-900/30 border border-white/105 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none text-sm text-zinc-200 transition-all"
+                    className="flex-1 p-3 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none text-sm text-slate-800 dark:text-slate-200 transition-all"
                     autoFocus
                   />
-                  <button type="submit" className="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all">
+                  <button type="submit" className="px-5 py-3 bg-indigo-600 text-slate-900 dark:text-white rounded-xl hover:bg-indigo-700 text-sm font-bold shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all">
                     {editingLine ? 'Salvar' : 'Adicionar'}
                   </button>
                 </form>
 
                 <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                   {lines.map(line => (
-                    <div key={line.id} className="flex items-center justify-between p-4 bg-transparent/30 rounded-xl border border-white/105 hover:border-white/5 transition-colors group">
-                      <span className="font-medium text-zinc-300">{line.name}</span>
+                    <div key={line.id} className="flex items-center justify-between p-4 bg-slate-50/30 dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:border-slate-700 transition-colors group">
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{line.name}</span>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => { setEditingLine(line); setLineFormData({ name: line.name }); }} className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                           <Edit2 className="w-4 h-4" />
@@ -556,7 +556,7 @@ export default function CollectiveTools({
                       </div>
                     </div>
                   ))}
-                  {lines.length === 0 && <p className="text-center text-zinc-500 text-sm font-mono py-6">Nenhuma linha cadastrada.</p>}
+                  {lines.length === 0 && <p className="text-center text-slate-400 dark:text-slate-500 text-sm font-mono py-6">Nenhuma linha cadastrada.</p>}
                 </div>
               </div>
             </motion.div>
@@ -577,33 +577,33 @@ export default function CollectiveTools({
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-zinc-900 border border-white/105 rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500" />
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/80">
-                <h2 className="text-xl font-bold font-sans tracking-tight text-white">{editingStation ? 'Editar Posto' : 'Novo Posto de Trabalho'}</h2>
-                <button onClick={() => setIsStationModalOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900 p-1.5 rounded-lg transition-colors">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/80">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingStation ? 'Editar Posto' : 'Novo Posto de Trabalho'}</h2>
+                <button onClick={() => setIsStationModalOpen(false)} className="text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <form onSubmit={handleSaveStation} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-mono text-zinc-400 uppercase tracking-wider mb-2">Nome do Posto *</label>
+                  <label className="block text-xs font-mono text-slate-400 dark:text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Nome do Posto *</label>
                   <input 
                     type="text" 
                     placeholder="ex: Posto 1 - Crimpagem"
                     value={stationFormData.name}
                     onChange={e => setStationFormData({ ...stationFormData, name: e.target.value })}
-                    className="w-full p-3 bg-zinc-900/30 border border-white/105 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-200 transition-all"
+                    className="w-full p-3 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-mono text-zinc-400 uppercase tracking-wider mb-2">Linha de Montagem *</label>
+                  <label className="block text-xs font-mono text-slate-400 dark:text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Linha de Montagem *</label>
                   <select 
                     value={stationFormData.lineId}
                     onChange={e => setStationFormData({ ...stationFormData, lineId: e.target.value })}
-                    className="w-full p-3 bg-zinc-900/30 border border-white/105 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-200 transition-all appearance-none"
+                    className="w-full p-3 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 transition-all appearance-none"
                     required
                   >
                     <option value="" disabled>Selecione uma linha</option>
@@ -612,17 +612,17 @@ export default function CollectiveTools({
                     ))}
                   </select>
                 </div>
-                <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-white/5">
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
                   <button 
                     type="button" 
                     onClick={() => setIsStationModalOpen(false)}
-                    className="px-5 py-2.5 text-zinc-300 font-medium border border-white/105 hover:bg-zinc-900 rounded-xl transition-colors"
+                    className="px-5 py-2.5 text-slate-700 dark:text-slate-300 font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:bg-slate-800 rounded-xl transition-colors"
                   >
                     Cancelar
                   </button>
                   <button 
                     type="submit" 
-                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all shadow-sm"
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-slate-900 dark:text-white font-bold rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                   >
                     {editingStation ? 'Salvar Alterações' : 'Criar Posto'}
                   </button>
@@ -646,28 +646,28 @@ export default function CollectiveTools({
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-zinc-900 border border-white/105 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/80">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/80">
                 <div>
-                  <h2 className="text-xl font-bold font-sans tracking-tight text-white">Gerenciar Ferramentas</h2>
-                  <p className="text-sm text-zinc-400 font-mono mt-1">{managingStation.name} • {managingStation.line}</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Gerenciar Ferramentas</h2>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 font-mono mt-1">{managingStation.name} • {managingStation.line}</p>
                 </div>
-                <button onClick={() => setIsManageToolsModalOpen(false)} className="text-zinc-400 hover:text-white hover:bg-zinc-900 p-1.5 rounded-lg transition-colors">
+                <button onClick={() => setIsManageToolsModalOpen(false)} className="text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
               
               <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
                 {/* Left Side: Current Tools */}
-                <div className="flex-1 p-6 overflow-y-auto border-r border-white/5 custom-scrollbar">
-                  <h3 className="text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest mb-5">Ferramentas no Posto</h3>
+                <div className="flex-1 p-6 overflow-y-auto border-r border-slate-200 dark:border-slate-800 custom-scrollbar">
+                  <h3 className="text-xs font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">Ferramentas no Posto</h3>
                   <div className="space-y-3">
                     {managingStation.tools.length === 0 ? (
-                      <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-2xl bg-transparent/30">
+                      <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50/30 dark:bg-slate-950/30">
                         <Wrench className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                        <p className="text-zinc-500 text-sm font-mono">Nenhuma ferramenta adicionada.</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-sm font-mono">Nenhuma ferramenta adicionada.</p>
                       </div>
                     ) : (
                       managingStation.tools.map((t, idx) => (
@@ -676,31 +676,31 @@ export default function CollectiveTools({
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           key={idx} 
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-zinc-900/30 rounded-2xl border border-white/105 hover:border-white/5 transition-colors group gap-4"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-950/50 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:border-slate-700 transition-colors group gap-4"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-zinc-200 text-sm sm:text-base leading-tight line-clamp-2" title={t.name}>{t.name}</p>
-                            <p className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest mt-1">{t.category}</p>
+                            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm sm:text-base leading-tight line-clamp-2" title={t.name}>{t.name}</p>
+                            <p className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{t.category}</p>
                           </div>
-                          <div className="flex items-center gap-3 shrink-0 bg-zinc-900/50 p-2 rounded-xl border border-white/105/50">
+                          <div className="flex items-center gap-3 shrink-0 bg-white/50 dark:bg-slate-900/50 p-2 rounded-xl border border-slate-200/50 dark:border-slate-800/50">
                             <div className="flex flex-col items-center">
                               <span className="text-[9px] font-mono font-bold text-blue-400 uppercase mb-1">Atual</span>
-                              <div className="flex items-center bg-transparent border border-white/105 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2 py-1 hover:bg-zinc-900 text-zinc-400 border-r border-white/5 transition-colors">-</button>
-                                <span className="px-2 py-1 font-bold text-zinc-200 min-w-[32px] text-center font-mono text-xs">{t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2 py-1 hover:bg-zinc-900 text-zinc-400 border-l border-white/5 transition-colors">+</button>
+                              <div className="flex items-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', -1)} className="px-2 py-1 hover:bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700 transition-colors">-</button>
+                                <span className="px-2 py-1 font-bold text-slate-800 dark:text-slate-200 min-w-[32px] text-center font-mono text-xs">{t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'quantity', 1)} className="px-2 py-1 hover:bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-700 transition-colors">+</button>
                               </div>
                             </div>
                             <span className="text-slate-700 font-light text-xl self-end mb-1">/</span>
                             <div className="flex flex-col items-center">
                               <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase mb-1">Nec.</span>
-                              <div className="flex items-center bg-transparent border border-white/105 rounded-lg overflow-hidden">
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2 py-1 hover:bg-zinc-900 text-zinc-400 border-r border-white/5 transition-colors">-</button>
-                                <span className="px-2 py-1 font-bold text-zinc-200 min-w-[32px] text-center font-mono text-xs">{t.requiredQuantity ?? t.quantity}</span>
-                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2 py-1 hover:bg-zinc-900 text-zinc-400 border-l border-white/5 transition-colors">+</button>
+                              <div className="flex items-center bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', -1)} className="px-2 py-1 hover:bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700 transition-colors">-</button>
+                                <span className="px-2 py-1 font-bold text-slate-800 dark:text-slate-200 min-w-[32px] text-center font-mono text-xs">{t.requiredQuantity ?? t.quantity}</span>
+                                <button onClick={() => handleUpdateToolQuantity(idx, 'requiredQuantity', 1)} className="px-2 py-1 hover:bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 border-l border-slate-300 dark:border-slate-700 transition-colors">+</button>
                               </div>
                             </div>
-                            <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-end mb-0.5">
+                            <button onClick={() => handleRemoveToolFromStation(idx)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors self-end mb-0.5">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -711,20 +711,20 @@ export default function CollectiveTools({
                 </div>
 
                 {/* Right Side: Add Tools */}
-                <div className="w-full md:w-96 bg-zinc-900/30 p-6 overflow-y-auto custom-scrollbar">
-                  <h3 className="text-xs font-mono font-bold text-zinc-500 uppercase tracking-widest mb-5">Adicionar Ferramenta</h3>
+                <div className="w-full md:w-96 bg-slate-50/50 dark:bg-slate-950/50 p-6 overflow-y-auto custom-scrollbar">
+                  <h3 className="text-xs font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-5">Adicionar Ferramenta</h3>
 
                   {/* Search from Catalog */}
                   <div className="space-y-4">
                     <p className="text-[10px] font-mono font-bold text-slate-600 uppercase tracking-wider">Do Catálogo</p>
                     <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-zinc-500" />
+                      <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-500" />
                       <input 
                         type="text" 
                         placeholder="Buscar no catálogo..."
                         value={toolSearch}
                         onChange={e => setToolSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-white/105 rounded-xl text-sm text-zinc-200 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
                       />
                     </div>
                     <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar pr-2">
@@ -732,14 +732,14 @@ export default function CollectiveTools({
                         <button 
                           key={tool.id}
                           onClick={() => handleAddToolToStation(tool)}
-                          className="w-full flex items-center justify-between p-3.5 bg-zinc-900 border border-white/105 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group"
+                          className="w-full flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-left group"
                         >
                           <div className="min-w-0 pr-3 flex-1">
-                            <p className="text-sm font-medium text-zinc-300 line-clamp-2 group-hover:text-indigo-300 transition-colors" title={tool.name}>{tool.name}</p>
-                            <p className="text-[10px] font-mono text-zinc-500 mt-1 uppercase tracking-wider truncate">{tool.brand}</p>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 group-hover:text-indigo-300 transition-colors" title={tool.name}>{tool.name}</p>
+                            <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wider truncate">{tool.brand}</p>
                           </div>
-                          <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                            <Plus className="w-4 h-4 text-zinc-400 group-hover:text-white" />
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-slate-900 dark:text-white transition-colors">
+                            <Plus className="w-4 h-4 text-slate-400 dark:text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:text-white" />
                           </div>
                         </button>
                       ))}
@@ -748,10 +748,10 @@ export default function CollectiveTools({
                 </div>
               </div>
 
-              <div className="p-5 border-t border-white/5 bg-zinc-900/80 flex justify-end">
+              <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 flex justify-end">
                 <button 
                   onClick={() => setIsManageToolsModalOpen(false)}
-                  className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-sm"
+                  className="px-8 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-slate-900 dark:text-white font-bold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]"
                 >
                   Concluir
                 </button>
@@ -774,34 +774,34 @@ export default function CollectiveTools({
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-zinc-900 border border-white/105 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
-              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/80">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/80">
                 <div>
-                  <h2 className="text-xl font-bold font-sans tracking-tight text-white">Detalhes do Posto</h2>
-                  <p className="text-sm text-zinc-400 font-mono mt-1">{viewingStation.name} • {viewingStation.line}</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Detalhes do Posto</h2>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 font-mono mt-1">{viewingStation.name} • {viewingStation.line}</p>
                 </div>
-                <button onClick={() => setViewingStation(null)} className="text-zinc-400 hover:text-white hover:bg-zinc-900 p-1.5 rounded-lg transition-colors">
+                <button onClick={() => setViewingStation(null)} className="text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg transition-colors">
                   <X className="w-6 h-6" />
                 </button>
               </div>
               <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                <h3 className="font-bold text-white mb-5 flex items-center gap-3">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/20">
                     <Wrench className="w-4 h-4 text-blue-400" />
                   </div>
                   Ferramentas no Posto
                 </h3>
                 {viewingStation.tools.length === 0 ? (
-                  <div className="text-center py-12 text-zinc-500 bg-zinc-900/30 rounded-2xl border border-white/105 font-mono text-sm">
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-950/50 rounded-2xl border border-slate-200 dark:border-slate-800 font-mono text-sm">
                     Nenhuma ferramenta atribuída a este posto.
                   </div>
                 ) : (
-                  <div className="border border-white/105 rounded-xl overflow-hidden bg-transparent/30">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-slate-50/30 dark:bg-slate-950/30">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-zinc-900/50 text-zinc-400 text-[10px] font-mono uppercase tracking-wider border-b border-white/5">
+                        <tr className="bg-white/50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 dark:text-slate-400 text-[10px] font-mono uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                           <th className="p-4 font-semibold">Ferramenta</th>
                           <th className="p-4 font-semibold">Categoria</th>
                           <th className="p-4 font-semibold text-center">Atual</th>
@@ -817,17 +817,17 @@ export default function CollectiveTools({
                           const requiredQty = t.requiredQuantity ?? t.quantity;
                           
                           return (
-                            <tr key={idx} className="border-b border-white/5/50 last:border-0 hover:bg-zinc-900/30 transition-colors">
-                              <td className="p-4 font-medium text-zinc-200 max-w-[200px]">
+                            <tr key={idx} className="border-b border-slate-200/50 dark:border-slate-800/50 last:border-0 hover:bg-slate-100/30 dark:bg-slate-800/30 transition-colors">
+                              <td className="p-4 font-medium text-slate-800 dark:text-slate-200 max-w-[200px]">
                                 <div className="line-clamp-2" title={t.name}>{t.name}</div>
                               </td>
-                              <td className="p-4 text-zinc-400 text-xs font-mono uppercase tracking-wider truncate max-w-[120px]">{t.category}</td>
+                              <td className="p-4 text-slate-400 dark:text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider truncate max-w-[120px]">{t.category}</td>
                               <td className="p-4 text-center">
                                 <span className={`inline-flex items-center justify-center font-bold px-3 py-1 rounded-lg text-sm font-mono border ${currentQty < requiredQty ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
                                   {currentQty}
                                 </span>
                               </td>
-                              <td className="p-4 text-center text-zinc-400 font-mono font-bold">
+                              <td className="p-4 text-center text-slate-400 dark:text-slate-500 dark:text-slate-400 font-mono font-bold">
                                 {requiredQty}
                               </td>
                             </tr>
@@ -838,10 +838,10 @@ export default function CollectiveTools({
                   </div>
                 )}
               </div>
-              <div className="p-5 border-t border-white/5 bg-zinc-900/80 flex justify-end">
+              <div className="p-5 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 flex justify-end">
                 <button
                   onClick={() => setViewingStation(null)}
-                  className="px-6 py-2.5 border border-white/105 text-zinc-300 font-medium rounded-xl hover:bg-zinc-900 transition-colors"
+                  className="px-6 py-2.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl hover:bg-slate-100 dark:bg-slate-800 transition-colors"
                 >
                   Fechar
                 </button>

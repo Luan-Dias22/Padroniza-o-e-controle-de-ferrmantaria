@@ -275,10 +275,10 @@ export default function Inventory({ tools, departments, collectiveLines, collect
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-sm">
+        <div className="w-10 h-10 bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.2)]">
           <Package className="w-5 h-5 text-indigo-400" />
         </div>
-        <h1 className="text-2xl font-bold font-sans tracking-tight text-white tracking-tight">Estoque</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Estoque</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -287,18 +287,18 @@ export default function Inventory({ tools, departments, collectiveLines, collect
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="lg:col-span-1 bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 p-6 h-fit"
+            className="lg:col-span-1 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-6 h-fit"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
                 <PackagePlus className="w-4 h-4 text-indigo-400" />
               </div>
-              <h2 className="text-lg font-semibold font-sans tracking-tight text-white">Nova Entrada</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Nova Entrada</h2>
             </div>
 
             <form onSubmit={handleAddStock} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Tipo de Estoque</label>
+                <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400 mb-2">Tipo de Estoque</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -314,7 +314,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                     className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
                       stockType === 'individual'
                         ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
-                        : 'bg-zinc-900/30 border-white/5 text-zinc-400 hover:bg-zinc-900'
+                        : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-white dark:bg-slate-900'
                     }`}
                   >
                     <User className="w-4 h-4" />
@@ -334,7 +334,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                     className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${
                       stockType === 'collective'
                         ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300'
-                        : 'bg-zinc-900/30 border-white/5 text-zinc-400 hover:bg-zinc-900'
+                        : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-white dark:bg-slate-900'
                     }`}
                   >
                     <Users className="w-4 h-4" />
@@ -345,7 +345,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
 
               <div className="relative" ref={dropdownRef}>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-zinc-400">Ferramenta</label>
+                  <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400">Ferramenta</label>
                   <button
                     type="button"
                     onClick={() => setIsMultiSelectModalOpen(true)}
@@ -356,38 +356,38 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   </button>
                 </div>
                 <div 
-                  className="w-full p-2.5 bg-zinc-900/30 border border-white/105 rounded-xl text-sm text-zinc-200 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all flex items-center justify-between cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all flex items-center justify-between cursor-pointer"
                   onClick={() => setIsToolDropdownOpen(!isToolDropdownOpen)}
                 >
-                  <span className={selectedTool ? "text-zinc-200" : "text-zinc-500"}>
+                  <span className={selectedTool ? "text-slate-800 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}>
                     {selectedTool ? `${selectedTool.name} (${selectedTool.brand})` : 'Selecione uma ferramenta...'}
                   </span>
-                  <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${isToolDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-slate-500 dark:text-slate-400 transition-transform ${isToolDropdownOpen ? 'rotate-180' : ''}`} />
                 </div>
 
                 {isToolDropdownOpen && (
-                  <div className="absolute z-50 w-full mt-2 bg-zinc-900 border border-white/105 rounded-xl shadow-2xl overflow-hidden">
-                    <div className="p-2 border-b border-white/5">
+                  <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+                    <div className="p-2 border-b border-slate-200 dark:border-slate-800">
                       <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                         <input
                           type="text"
                           placeholder="Buscar ferramenta..."
                           value={toolSearchQuery}
                           onChange={(e) => setToolSearchQuery(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 bg-transparent rounded-lg text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 border border-white/105"
+                          className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-950 rounded-lg text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 border border-slate-200 dark:border-slate-800"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
                     <div className="max-h-60 overflow-y-auto custom-scrollbar">
                       {filteredTools.length === 0 ? (
-                        <div className="p-3 text-sm text-zinc-500 text-center">Nenhuma ferramenta encontrada.</div>
+                        <div className="p-3 text-sm text-slate-400 dark:text-slate-500 text-center">Nenhuma ferramenta encontrada.</div>
                       ) : (
                         filteredTools.map(t => (
                           <div
                             key={t.id}
-                            className={`p-3 text-sm cursor-pointer hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors ${selectedToolId === t.id ? 'bg-indigo-500/20 text-indigo-300' : 'text-zinc-300'}`}
+                            className={`p-3 text-sm cursor-pointer hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors ${selectedToolId === t.id ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-700 dark:text-slate-300'}`}
                             onClick={() => {
                               setSelectedToolId(t.id);
                               setIsToolDropdownOpen(false);
@@ -395,7 +395,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                             }}
                           >
                             <div className="font-medium">{t.name}</div>
-                            <div className="text-xs text-zinc-500">{t.brand}</div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500">{t.brand}</div>
                           </div>
                         ))
                       )}
@@ -405,7 +405,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Linha / Departamento Destino</label>
+                <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400 mb-1">Linha / Departamento Destino</label>
                 <select
                   required
                   value={selectedLineId}
@@ -413,7 +413,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                     setSelectedLineId(e.target.value);
                     setSelectedStation('');
                   }}
-                  className="w-full p-2.5 bg-zinc-900/30 border border-white/105 rounded-xl text-sm text-zinc-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                 >
                   <option value="">Selecione o destino...</option>
                   {filteredLines.map(l => (
@@ -427,11 +427,11 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                 >
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Posto de Montagem (Opcional)</label>
+                  <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400 mb-1">Posto de Montagem (Opcional)</label>
                   <select
                     value={selectedStation}
                     onChange={(e) => setSelectedStation(e.target.value)}
-                    className="w-full p-2.5 bg-zinc-900/30 border border-white/105 rounded-xl text-sm text-zinc-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                    className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                   >
                     <option value="">Geral (Para toda a linha)</option>
                     {availableStations.map(s => (
@@ -442,21 +442,21 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               )}
 
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Quantidade</label>
+                <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400 mb-1">Quantidade</label>
                 <input
                   type="number"
                   required
                   min="1"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full p-2.5 bg-zinc-900/30 border border-white/105 rounded-xl text-sm text-zinc-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                   placeholder="Ex: 10"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-4 py-2.5 rounded-xl hover:from-indigo-500 hover:to-violet-500 transition-all shadow-sm font-medium mt-2"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-slate-900 dark:text-white px-4 py-2.5 rounded-xl hover:from-indigo-500 hover:to-violet-500 transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] font-medium mt-2"
               >
                 <Plus className="w-4 h-4" />
                 Adicionar ao Estoque
@@ -470,31 +470,31 @@ export default function Inventory({ tools, departments, collectiveLines, collect
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="lg:col-span-3 bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 overflow-hidden flex flex-col h-[700px]"
+          className="lg:col-span-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-[700px]"
         >
-          <div className="p-5 border-b border-white/5 bg-zinc-900/80">
+          <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
-              <h2 className="text-lg font-semibold font-sans tracking-tight text-white">Gestão de Estoque</h2>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Gestão de Estoque</h2>
               <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
                 <input
                   type="text"
                   placeholder="Buscar no estoque..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-white/105 bg-zinc-900/30 text-zinc-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all text-sm"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all text-sm"
                 />
               </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-1 p-1 bg-zinc-900/30 rounded-xl border border-white/105 w-fit">
+              <div className="flex items-center gap-1 p-1 bg-slate-50/50 dark:bg-slate-950/50 rounded-xl border border-slate-200 dark:border-slate-800 w-fit">
                 <button
                   onClick={() => setActiveInventoryTab('history')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     activeInventoryTab === 'history'
-                      ? 'bg-indigo-500 text-white shadow-lg'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                      ? 'bg-indigo-500 text-slate-900 dark:text-white shadow-lg'
+                      : 'text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:bg-slate-800'
                   }`}
                 >
                   <History className="w-4 h-4" />
@@ -504,8 +504,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   onClick={() => setActiveInventoryTab('balance')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     activeInventoryTab === 'balance'
-                      ? 'bg-indigo-500 text-white shadow-lg'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                      ? 'bg-indigo-500 text-slate-900 dark:text-white shadow-lg'
+                      : 'text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:bg-slate-800'
                   }`}
                 >
                   <BarChart3 className="w-4 h-4" />
@@ -515,8 +515,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   onClick={() => setActiveInventoryTab('pending')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     activeInventoryTab === 'pending'
-                      ? 'bg-indigo-500 text-white shadow-lg'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
+                      ? 'bg-indigo-500 text-slate-900 dark:text-white shadow-lg'
+                      : 'text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:bg-slate-800'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -527,7 +527,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               {activeInventoryTab === 'balance' && (
                 <button
                   onClick={generatePDF}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all"
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-slate-900 dark:text-white border border-indigo-500/20 rounded-xl text-sm font-bold transition-all"
                 >
                   <FileDown className="w-4 h-4" />
                   Gerar Relatório PDF
@@ -552,7 +552,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                       <div className="flex items-center gap-3">
                         <button
                           onClick={handleSelectAll}
-                          className="flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-indigo-400 transition-colors"
+                          className="flex items-center gap-2 text-xs font-medium text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-indigo-400 transition-colors"
                         >
                           {selectedEntryIds.length === filteredEntries.length ? (
                             <CheckSquare className="w-4 h-4 text-indigo-400" />
@@ -562,7 +562,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                           {selectedEntryIds.length === filteredEntries.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
                         </button>
                         {selectedEntryIds.length > 0 && (
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-slate-400 dark:text-slate-500">
                             {selectedEntryIds.length} selecionado(s)
                           </span>
                         )}
@@ -573,7 +573,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           onClick={() => setIsBulkDeleteConfirmOpen(true)}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 rounded-lg text-xs font-bold transition-all"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-slate-900 dark:text-white border border-red-500/20 rounded-lg text-xs font-bold transition-all"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Excluir Selecionados
@@ -585,7 +585,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   {filteredEntries.length === 0 ? (
                     <div className="text-center py-12">
                       <Package className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                      <p className="text-zinc-400">Nenhuma movimentação encontrada.</p>
+                      <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400">Nenhuma movimentação encontrada.</p>
                     </div>
                   ) : (
                     filteredEntries.map(entry => {
@@ -597,15 +597,15 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                       return (
                         <div 
                           key={entry.id} 
-                          className={`bg-zinc-900/50 border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-zinc-900 transition-colors ${
-                            selectedEntryIds.includes(entry.id) ? 'border-indigo-500/50 ring-1 ring-indigo-500/20 bg-indigo-500/5' : 'border-white/5/50'
+                          className={`bg-slate-100/50 dark:bg-slate-800/50 border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-100 dark:bg-slate-800 transition-colors ${
+                            selectedEntryIds.includes(entry.id) ? 'border-indigo-500/50 ring-1 ring-indigo-500/20 bg-indigo-500/5' : 'border-slate-300/50 dark:border-slate-700/50'
                           }`}
                         >
                           <div className="flex items-center gap-4 w-full sm:w-auto">
                             {!isGuest && (
                               <button 
                                 onClick={() => toggleEntrySelection(entry.id)}
-                                className="shrink-0 text-zinc-500 hover:text-indigo-400 transition-colors"
+                                className="shrink-0 text-slate-400 dark:text-slate-500 hover:text-indigo-400 transition-colors"
                               >
                                 {selectedEntryIds.includes(entry.id) ? (
                                   <CheckSquare className="w-5 h-5 text-indigo-400" />
@@ -622,9 +622,9 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                               <Package className={`w-5 h-5 ${isWithdrawal ? 'text-amber-400' : 'text-indigo-400'}`} />
                             </div>
                             <div>
-                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
-                              <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400 mt-1">
-                                <span className="bg-zinc-900 px-2 py-0.5 rounded-md border border-white/105">{tool?.brand || '-'}</span>
+                              <h3 className="text-slate-900 dark:text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-1">
+                                <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700">{tool?.brand || '-'}</span>
                                 <span className={`px-2 py-0.5 rounded-md border ${entry.type === 'collective' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
                                   {entry.type === 'collective' ? 'Coletiva' : 'Individual'}
                                 </span>
@@ -649,12 +649,12 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                               <div className={`text-2xl font-bold ${isWithdrawal ? 'text-amber-400' : 'text-emerald-400'}`}>
                                 {isWithdrawal ? entry.quantity : `+${entry.quantity}`}
                               </div>
-                              <div className="text-xs text-zinc-500">{new Date(entry.date).toLocaleDateString('pt-BR')}</div>
+                              <div className="text-xs text-slate-400 dark:text-slate-500">{new Date(entry.date).toLocaleDateString('pt-BR')}</div>
                             </div>
                             {!isGuest && (
                               <button
                                 onClick={() => handleDeleteEntry(entry.id)}
-                                className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-transparent hover:border-red-400/20"
                                 title="Remover Registro"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -679,7 +679,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   {balanceList.length === 0 ? (
                     <div className="text-center py-12">
                       <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                      <p className="text-zinc-400">Nenhum saldo encontrado.</p>
+                      <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400">Nenhum saldo encontrado.</p>
                     </div>
                   ) : (
                     balanceList.map((item, idx) => {
@@ -687,15 +687,15 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                       const line = getLine(item.lineId);
                       
                       return (
-                        <div key={idx} className="bg-zinc-900/50 border border-white/105/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-zinc-900 transition-colors">
+                        <div key={idx} className="bg-slate-100/50 dark:bg-slate-800/50 border border-slate-300/50 dark:border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-100 dark:bg-slate-800 transition-colors">
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center border border-indigo-500/20 shrink-0">
                               <Package className="w-5 h-5 text-indigo-400" />
                             </div>
                             <div>
-                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
-                              <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400 mt-1">
-                                <span className="bg-zinc-900 px-2 py-0.5 rounded-md border border-white/105">{tool?.brand || '-'}</span>
+                              <h3 className="text-slate-900 dark:text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-1">
+                                <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700">{tool?.brand || '-'}</span>
                                 <span className={`px-2 py-0.5 rounded-md border ${item.type === 'collective' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
                                   {item.type === 'collective' ? 'Coletiva' : 'Individual'}
                                 </span>
@@ -708,10 +708,10 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                           </div>
                           
                           <div className="text-right">
-                            <div className={`text-2xl font-bold ${item.quantity > 0 ? 'text-emerald-400' : item.quantity < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
+                            <div className={`text-2xl font-bold ${item.quantity > 0 ? 'text-emerald-400' : item.quantity < 0 ? 'text-red-400' : 'text-slate-400 dark:text-slate-500 dark:text-slate-400'}`}>
                               {item.quantity}
                             </div>
-                            <div className="text-xs text-zinc-500">Saldo Atual</div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500">Saldo Atual</div>
                           </div>
                         </div>
                       );
@@ -731,7 +731,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   {pendingDelivery.length === 0 ? (
                     <div className="text-center py-12">
                       <Clock className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                      <p className="text-zinc-400">Nenhuma ferramenta aguardando entrega.</p>
+                      <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400">Nenhuma ferramenta aguardando entrega.</p>
                     </div>
                   ) : (
                     pendingDelivery.map((item, idx) => {
@@ -739,23 +739,23 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                       const line = getLine(item.lineId);
                       
                       return (
-                        <div key={idx} className="bg-zinc-900/50 border border-white/105/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-zinc-900 transition-colors">
+                        <div key={idx} className="bg-slate-100/50 dark:bg-slate-800/50 border border-slate-300/50 dark:border-slate-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-100 dark:bg-slate-800 transition-colors">
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center border border-amber-500/20 shrink-0">
                               <Clock className="w-5 h-5 text-amber-400" />
                             </div>
                             <div>
-                              <h3 className="text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
-                              <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400 mt-1">
-                                <span className="bg-zinc-900 px-2 py-0.5 rounded-md border border-white/105">{tool?.brand || '-'}</span>
+                              <h3 className="text-slate-900 dark:text-white font-medium">{tool?.name || 'Ferramenta Removida'}</h3>
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-1">
+                                <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700">{tool?.brand || '-'}</span>
                                 <span>Destinado a: <span className="text-indigo-300">{line?.name || 'Desconhecido'}</span></span>
                               </div>
                             </div>
                           </div>
                           
                           <div className="text-right">
-                            <div className="text-2xl font-bold font-sans tracking-tight text-amber-400">{item.quantity}</div>
-                            <div className="text-xs text-zinc-500">Disponível para Entrega</div>
+                            <div className="text-2xl font-bold text-amber-400">{item.quantity}</div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500">Disponível para Entrega</div>
                           </div>
                         </div>
                       );
@@ -776,14 +776,14 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-transparent/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
               onClick={() => setEntryToDelete(null)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-zinc-900 border border-white/105 rounded-xl shadow-2xl p-6 w-full max-w-md overflow-hidden"
+              className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
               <div className="flex items-start gap-4 mb-6">
@@ -791,8 +791,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Excluir Entrada</h3>
-                  <p className="text-zinc-400 text-sm">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Excluir Entrada</h3>
+                  <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 text-sm">
                     Tem certeza que deseja remover esta entrada de estoque? Esta ação não pode ser desfeita.
                   </p>
                 </div>
@@ -800,13 +800,13 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setEntryToDelete(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-900 dark:text-white bg-red-500 hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)]"
                 >
                   Sim, Excluir
                 </button>
@@ -824,14 +824,14 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-transparent/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
               onClick={() => setIsBulkDeleteConfirmOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-zinc-900 border border-white/105 rounded-xl shadow-2xl p-6 w-full max-w-md overflow-hidden"
+              className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-red-500" />
               <div className="flex items-start gap-4 mb-6">
@@ -839,22 +839,22 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                   <AlertTriangle className="w-5 h-5 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Excluir Múltiplos Registros</h3>
-                  <p className="text-zinc-400 text-sm">
-                    Tem certeza que deseja remover os <span className="text-white font-bold">{selectedEntryIds.length}</span> registros selecionados? Esta ação não pode ser desfeita.
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Excluir Múltiplos Registros</h3>
+                  <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 text-sm">
+                    Tem certeza que deseja remover os <span className="text-slate-900 dark:text-white font-bold">{selectedEntryIds.length}</span> registros selecionados? Esta ação não pode ser desfeita.
                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setIsBulkDeleteConfirmOpen(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleBulkDelete}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-900 dark:text-white bg-red-500 hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)]"
                 >
                   Sim, Excluir Todos
                 </button>
@@ -872,54 +872,54 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-transparent/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
               onClick={() => setIsMultiSelectModalOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-zinc-900 border border-white/105 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]"
+              className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-zinc-900/80 backdrop-blur-md">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
                     <Layers className="w-5 h-5 text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white">Seleção Múltipla</h3>
-                    <p className="text-xs text-zinc-500">{tempSelectedToolIds.length} ferramentas selecionadas</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Seleção Múltipla</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{tempSelectedToolIds.length} ferramentas selecionadas</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsMultiSelectModalOpen(false)}
-                  className="p-2 hover:bg-zinc-900 rounded-lg text-zinc-400 transition-colors"
+                  className="p-2 hover:bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400 dark:text-slate-500 dark:text-slate-400 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="p-4 border-b border-white/5 bg-transparent/30 flex flex-col sm:flex-row gap-4">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/30 flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     placeholder="Buscar ferramentas por nome ou marca..."
                     value={multiSelectSearch}
                     onChange={(e) => setMultiSelectSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-white/105 rounded-xl text-sm text-zinc-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all"
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setTempSelectedToolIds(multiSelectFilteredTools.map(t => t.id))}
-                    className="px-3 py-2 bg-zinc-900 hover:bg-slate-700 text-zinc-300 rounded-lg text-xs font-medium transition-colors"
+                    className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors"
                   >
                     Selecionar Filtrados
                   </button>
                   <button
                     onClick={() => setTempSelectedToolIds([])}
-                    className="px-3 py-2 bg-zinc-900 hover:bg-slate-700 text-zinc-300 rounded-lg text-xs font-medium transition-colors"
+                    className="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium transition-colors"
                   >
                     Limpar
                   </button>
@@ -929,7 +929,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
               <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {multiSelectFilteredTools.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-zinc-500">
+                    <div className="col-span-full py-12 text-center text-slate-400 dark:text-slate-500">
                       Nenhuma ferramenta encontrada para &quot;{multiSelectSearch}&quot;
                     </div>
                   ) : (
@@ -940,7 +940,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                         className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
                           tempSelectedToolIds.includes(t.id)
                             ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-300'
-                            : 'bg-zinc-900/30 border-white/5 text-zinc-400 hover:bg-zinc-900'
+                            : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:bg-slate-800'
                         }`}
                       >
                         <div className="shrink-0">
@@ -951,10 +951,10 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                           )}
                         </div>
                         <div className="overflow-hidden">
-                          <div className={`font-medium truncate ${tempSelectedToolIds.includes(t.id) ? 'text-white' : ''}`}>
+                          <div className={`font-medium truncate ${tempSelectedToolIds.includes(t.id) ? 'text-slate-900 dark:text-white' : ''}`}>
                             {t.name}
                           </div>
-                          <div className="text-xs text-zinc-500 truncate">{t.brand}</div>
+                          <div className="text-xs text-slate-400 dark:text-slate-500 truncate">{t.brand}</div>
                         </div>
                       </div>
                     ))
@@ -962,21 +962,21 @@ export default function Inventory({ tools, departments, collectiveLines, collect
                 </div>
               </div>
 
-              <div className="p-6 border-t border-white/5 bg-zinc-900/80 flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex-1 text-sm text-zinc-400">
+              <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex-1 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
                   As ferramentas selecionadas serão adicionadas com a quantidade e destino definidos no formulário principal.
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => setIsMultiSelectModalOpen(false)}
-                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-slate-800 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleAddMultipleStock}
                     disabled={tempSelectedToolIds.length === 0 || !selectedLineId || !quantity}
-                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium text-slate-900 dark:text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]"
                   >
                     Adicionar {tempSelectedToolIds.length} Itens
                   </button>

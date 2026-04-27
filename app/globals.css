@@ -1,12 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@theme {
-  --font-sans: var(--font-sans, "Space Grotesk", sans-serif);
-  --font-body: var(--font-body, "Inter", sans-serif);
-  --font-mono: var(--font-mono, "JetBrains Mono", monospace);
-}
-
 @variant dark (&:where(.dark, .dark *));
 
 /* Clean base scrollbar */
@@ -18,13 +12,24 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(148, 163, 184, 0.3);
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
 body {
+  color-scheme: light;
+}
+
+.dark {
   color-scheme: dark;
 }

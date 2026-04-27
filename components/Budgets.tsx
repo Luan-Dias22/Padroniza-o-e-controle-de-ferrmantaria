@@ -650,16 +650,16 @@ export default function Budgets({
     >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.2)]">
             <Calculator className="w-5 h-5 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold font-sans tracking-tight text-white tracking-tight">Orçamentos</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Orçamentos</h1>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <select
             value={toolCategoryFilter}
             onChange={(e) => setToolCategoryFilter(e.target.value as any)}
-            className="w-full sm:w-auto p-2.5 bg-zinc-900/50 border border-white/105 rounded-xl text-sm text-zinc-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
+            className="w-full sm:w-auto p-2.5 bg-white/50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all appearance-none"
           >
             <option value="all">Todas as Ferramentas</option>
             <option value="collective">Apenas Coletivas</option>
@@ -668,14 +668,14 @@ export default function Budgets({
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={() => handleExportExcel(budgetData)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all shadow-sm whitespace-nowrap"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-slate-900 dark:text-white px-5 py-2.5 rounded-xl hover:from-green-500 hover:to-emerald-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
             >
               <Download className="w-4 h-4" />
               Excel
             </button>
             <button
               onClick={() => generatePDF(budgetData, toolCategoryFilter)}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-sm whitespace-nowrap"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-900 dark:text-white px-5 py-2.5 rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap"
             >
               <Download className="w-4 h-4" />
               PDF
@@ -684,17 +684,17 @@ export default function Budgets({
         </div>
       </div>
 
-      <motion.div variants={itemVariants} className="bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 overflow-hidden">
-        <div className="p-5 border-b border-white/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-zinc-900/80">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto pt-4 lg:pt-0 border-t lg:border-t-0 border-white/5">
+      <motion.div variants={itemVariants} className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white/80 dark:bg-slate-900/80">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-200 dark:border-slate-800">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
               <input
                 type="text"
                 placeholder="Buscar ferramentas..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-white/105 bg-zinc-900/30 text-zinc-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
               />
             </div>
             {!isGuest && (
@@ -711,12 +711,12 @@ export default function Budgets({
 
         <div className="overflow-x-auto custom-scrollbar max-h-96">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-transparent/90 backdrop-blur-sm z-10">
-              <tr className="border-b border-white/5">
-                <th className="p-4 text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">Ferramenta</th>
-                <th className="p-4 text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">Marca</th>
-                <th className="p-4 text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold">Categoria</th>
-                <th className="p-4 text-xs font-mono uppercase tracking-wider text-zinc-400 font-semibold w-48">Valor Unitário (R$)</th>
+            <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm z-10">
+              <tr className="border-b border-slate-200 dark:border-slate-800">
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 font-semibold">Ferramenta</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 font-semibold">Marca</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 font-semibold">Categoria</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 dark:text-slate-400 font-semibold w-48">Valor Unitário (R$)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -726,18 +726,18 @@ export default function Budgets({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
                   key={tool.id} 
-                  className="hover:bg-zinc-900/30 transition-colors"
+                  className="hover:bg-slate-100/30 dark:bg-slate-800/30 transition-colors"
                 >
-                  <td className="p-4 text-sm text-zinc-200 font-medium">{tool.name}</td>
-                  <td className="p-4 text-xs font-mono text-zinc-400 uppercase tracking-wider">{tool.brand}</td>
-                  <td className="p-4 text-sm text-zinc-400">
-                    <span className="px-2.5 py-1 bg-zinc-900/50 border border-white/105 text-zinc-300 rounded-lg text-[10px] font-mono uppercase tracking-wider">
+                  <td className="p-4 text-sm text-slate-800 dark:text-slate-200 font-medium">{tool.name}</td>
+                  <td className="p-4 text-xs font-mono text-slate-400 dark:text-slate-500 dark:text-slate-400 uppercase tracking-wider">{tool.brand}</td>
+                  <td className="p-4 text-sm text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                    <span className="px-2.5 py-1 bg-slate-100/50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-mono uppercase tracking-wider">
                       {tool.category}
                     </span>
                   </td>
                   <td className="p-4">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm font-mono">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm font-mono">R$</span>
                       <input
                         type="number"
                         min="0"
@@ -745,7 +745,7 @@ export default function Budgets({
                         disabled={isGuest}
                         value={editingPrices[tool.id] ?? ''}
                         onChange={(e) => handlePriceChange(tool.id, e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-white/105 bg-zinc-900/30 text-zinc-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                         placeholder="0.00"
                       />
                     </div>
@@ -754,7 +754,7 @@ export default function Budgets({
               ))}
               {filteredTools.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-zinc-500 font-mono text-sm">
+                  <td colSpan={4} className="p-8 text-center text-slate-400 dark:text-slate-500 font-mono text-sm">
                     Nenhuma ferramenta encontrada.
                   </td>
                 </tr>
@@ -774,10 +774,10 @@ export default function Budgets({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
               key={line.name} 
-              className="bg-[#0a0a0a] rounded-xl shadow-xl border border-white/105 p-6 relative overflow-hidden"
+              className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-6 relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/50 to-teal-500/50" />
-              <h3 className="text-lg font-bold text-white mb-5 border-b border-white/5 pb-3 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5 border-b border-slate-200 dark:border-slate-800 pb-3 flex items-center justify-between">
                 <span>{line.name}</span>
                 {line.expectedNewcomers > 0 && (
                   <span className="text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg uppercase tracking-wider">
@@ -789,30 +789,30 @@ export default function Budgets({
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-blue-500/5 p-4 rounded-xl border border-blue-500/10">
                   <p className="text-[10px] font-mono text-blue-400/70 uppercase tracking-widest mb-1">Custo Necessário</p>
-                  <p className="text-2xl font-bold font-sans tracking-tight text-blue-400 font-mono">
+                  <p className="text-2xl font-bold text-blue-400 font-mono">
                     {formatCurrency(line.requiredCost)}
                   </p>
                 </div>
                 <div className="bg-red-500/5 p-4 rounded-xl border border-red-500/10">
                   <p className="text-[10px] font-mono text-red-400/70 uppercase tracking-widest mb-1">Custo Faltante</p>
-                  <p className="text-2xl font-bold font-sans tracking-tight text-red-400 font-mono">
+                  <p className="text-2xl font-bold text-red-400 font-mono">
                     {formatCurrency(line.missingCost)}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h4 className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest">Detalhamento Ferramentas</h4>
+                <h4 className="text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detalhamento Ferramentas</h4>
                 <div className="max-h-40 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                   {line.tools.map((t, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm p-3 bg-transparent/30 border border-white/105/50 hover:border-white/5 rounded-xl transition-colors">
+                    <div key={idx} className="flex justify-between items-center text-sm p-3 bg-slate-50/30 dark:bg-slate-950/30 border border-slate-200/50 dark:border-slate-800/50 hover:border-slate-300 dark:border-slate-700 rounded-xl transition-colors">
                       <div className="flex-1">
-                        <p className="font-medium text-zinc-200">{t.tool.name}</p>
-                        <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mt-0.5">{t.tool.brand} • {formatCurrency(t.tool.price || 0)}</p>
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{t.tool.name}</p>
+                        <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">{t.tool.brand} • {formatCurrency(t.tool.price || 0)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-zinc-400 text-xs">
-                          <span className="font-bold text-zinc-200">{t.missing}</span> faltam de {t.required}
+                        <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 text-xs">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{t.missing}</span> faltam de {t.required}
                         </p>
                         <p className="text-xs font-mono font-bold text-red-400 mt-0.5">
                           {formatCurrency(t.costMissing)}
@@ -824,12 +824,12 @@ export default function Budgets({
               </div>
 
               {line.name.toLowerCase().includes('linha 1') && line.name.toLowerCase().includes('fine comb') && (
-                <div className="mt-6 pt-6 border-t border-white/5">
-                  <h4 className="text-[10px] font-mono font-semibold text-zinc-500 uppercase tracking-widest mb-3">Investimento da Linha 1</h4>
-                  <div className="bg-transparent/30 rounded-xl border border-white/105 overflow-hidden">
+                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                  <h4 className="text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Investimento da Linha 1</h4>
+                  <div className="bg-slate-50/30 dark:bg-slate-950/30 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="bg-zinc-900/50 text-zinc-500 font-mono uppercase tracking-tighter">
+                        <tr className="bg-white/50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 font-mono uppercase tracking-tighter">
                           <th className="p-2 text-left">Item</th>
                           <th className="p-2 text-right">Custo Necessário</th>
                           <th className="p-2 text-right">Custo Faltante</th>
@@ -871,16 +871,16 @@ export default function Budgets({
                           const missCost = matches.reduce((acc: number, l: any) => acc + l.missingCost, 0);
                           return (
                             <tr key={item}>
-                              <td className="p-2 text-zinc-400">Linha 1 {item}</td>
-                              <td className="p-2 text-right text-zinc-300 font-mono">{formatCurrency(reqCost)}</td>
+                              <td className="p-2 text-slate-400 dark:text-slate-500 dark:text-slate-400">Linha 1 {item}</td>
+                              <td className="p-2 text-right text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(reqCost)}</td>
                               <td className="p-2 text-right text-red-400 font-mono">{formatCurrency(missCost)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
-                      <tfoot className="bg-zinc-900/50 border-t border-white/5">
+                      <tfoot className="bg-white/50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
                         <tr>
-                          <th className="p-2 text-zinc-200 text-left">Total</th>
+                          <th className="p-2 text-slate-800 dark:text-slate-200 text-left">Total</th>
                           <th className="p-2 text-right text-emerald-400 font-mono">
                             {formatCurrency([
                               'Bancada Principal Nova',
