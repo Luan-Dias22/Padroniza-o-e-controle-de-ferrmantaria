@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
+  experimental: {
+    parallelServerCompiles: false,
+    parallelServerBuildTraces: false,
+  },
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.

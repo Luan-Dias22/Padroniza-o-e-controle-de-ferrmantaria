@@ -414,7 +414,16 @@ export default function Cases({
                 <label className="block text-xs font-mono text-slate-400 mb-2 uppercase tracking-widest">Responsável Atual *</label>
                 <select 
                   value={caseForm.responsibleId}
-                  onChange={e => setCaseForm({...caseForm, responsibleId: e.target.value})}
+                  onChange={e => {
+                    const empId = e.target.value;
+                    const emp = employees.find(emp => emp.id === empId);
+                    const dept = departments.find(d => d.id === emp?.departmentId);
+                    setCaseForm({
+                      ...caseForm, 
+                      responsibleId: empId,
+                      sector: dept ? dept.name : caseForm.sector
+                    });
+                  }}
                   className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-cyan-500/50"
                   required
                 >

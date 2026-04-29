@@ -2,7 +2,7 @@ export type Tool = { id: string, brand: string, name: string, category: string, 
 export type StandardToolList = { id: string, name: string, tools: { toolId: string, quantity: number }[], isLocked?: boolean };
 export type Department = { id: string, name: string, standardListId?: string, expectedNewcomers?: number, requiredHeadcount?: number };
 export type Employee = { id: string, employeeId: string, name: string, departmentId: string };
-export type Assignment = { id: string, employeeId: string, departmentId: string, assignedTools: { toolId: string, quantity: number }[], dateAssigned: string };
+export type Assignment = { id: string, employeeId: string, departmentId: string, assignedTools: { toolId: string, itemTag: string }[], dateAssigned: string };
 
 export type CollectiveStation = {
   id: string;
@@ -82,5 +82,5 @@ export const mockEmployees: Employee[] = [
 ];
 
 export const mockAssignments: Assignment[] = [
-  { id: 'a1', employeeId: 'e1', departmentId: 'd1', assignedTools: [{ toolId: 't1', quantity: 1 }, { toolId: 't2', quantity: 1 }, { toolId: 't3', quantity: 1 }], dateAssigned: new Date().toISOString() },
+  { id: 'a1', employeeId: 'e1', departmentId: 'd1', assignedTools: [{ toolId: 't1', itemTag: 'EMP-101-A' }, { toolId: 't2', itemTag: 'EMP-101-B' }, { toolId: 't3', itemTag: 'EMP-101-C' }], dateAssigned: new Date().toISOString() },
 ];
