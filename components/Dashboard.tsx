@@ -1,13 +1,14 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation } from '@/lib/data';
-import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package, Activity, LayoutGrid, Sun, Moon } from 'lucide-react';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, Case, CaseInspection, StockEntry } from '@/lib/data';
+import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package, Activity, LayoutGrid, Sun, Moon, Briefcase, ClipboardSignature } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Dashboard({ 
-  tools, departments, assignments, employees, standardLists, collectiveStations, onNavigate, isDarkMode, toggleDarkMode,
+  tools, departments, assignments, employees, standardLists, collectiveStations, stockEntries = [], cases = [], caseInspections = [], onNavigate, isDarkMode, toggleDarkMode,
   isGuest = false
 }: { 
-  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], onNavigate: (tab: string) => void,
+  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], stockEntries?: StockEntry[],
+  cases?: Case[], caseInspections?: CaseInspection[], onNavigate: (tab: string) => void,
   isDarkMode: boolean, toggleDarkMode: () => void,
   isGuest?: boolean
 }) {
@@ -33,17 +34,41 @@ export default function Dashboard({
 
   const pendingAssignments = (assignments || []).filter(a => getMissingToolsCount(a) > 0);
   const totalToolsAssigned = (assignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
-  const totalCollectiveTools = (collectiveStations || []).reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+  
+  // Use stock entries (General Balance) as the source of truth for collective tool counts to avoid duplication
+  const totalCollectiveTools = (stockEntries || [])
+    .filter(se => se.type === 'collective')
+    .reduce((acc, curr) => acc + curr.quantity, 0);
+
+  // Case Stats
+  const activeCases = cases.filter(c => c.status === 'Ativa').length;
+  
+  // Calculate missing/damaged tools from latest inspection of each case
+  let missingToolsInCases = 0;
+  let damagedToolsInCases = 0;
+  
+  cases.forEach(c => {
+    const caseLastInspection = [...caseInspections]
+      .filter(i => i.caseId === c.id)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    
+    if (caseLastInspection) {
+      caseLastInspection.items.forEach(item => {
+        if (item.status === 'Faltando') missingToolsInCases += 1;
+        if (item.status === 'Danificada') damagedToolsInCases += 1;
+      });
+    }
+  });
 
   const chartData = (departments || []).map(dept => {
     const individualCount = (assignments || [])
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
     
-    // For collective tools, we'll match by line name if it matches department name
-    const collectiveCount = (collectiveStations || [])
-      .filter(s => s.line === dept.name)
-      .reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
+    // For collective tools, use stock entries for this line (matches department name)
+    const collectiveCount = (stockEntries || [])
+      .filter(se => se.type === 'collective' && se.lineId === dept.id)
+      .reduce((acc, curr) => acc + curr.quantity, 0);
 
     return {
       name: dept.name,
@@ -58,6 +83,13 @@ export default function Dashboard({
     { label: 'Uso Coletivo (Postos)', value: (collectiveStations || []).length, icon: Package, color: 'text-purple-400', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/20', tab: 'collective' },
     { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'assignments' },
     { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', tab: 'assignments' },
+  ];
+
+  const caseStats = [
+    { label: 'Total de Maletas', value: cases.length, icon: Briefcase, color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20', tab: 'cases' },
+    { label: 'Maletas Ativas', value: activeCases, icon: ClipboardSignature, color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20', tab: 'cases' },
+    { label: 'Ferramentas Faltando', value: missingToolsInCases, icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20', tab: 'cases' },
+    { label: 'Ferramentas Danificadas', value: damagedToolsInCases, icon: AlertTriangle, color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', tab: 'cases' },
   ];
 
   const recentAssignments = [...(assignments || [])]
@@ -136,6 +168,36 @@ export default function Dashboard({
             </motion.div>
           );
         })}
+      </div>
+
+      {/* Case Management Stats */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
+          <Briefcase className="w-3 h-3" /> Módulo de Maletas & TAGs
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {caseStats.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div 
+                key={i} 
+                variants={itemVariants}
+                onClick={() => onNavigate(stat.tab)}
+                className={`bg-white/30 dark:bg-slate-900/30 backdrop-blur-md rounded-2xl p-5 border ${stat.borderColor} cursor-pointer hover:bg-slate-100/50 dark:bg-slate-800/50 transition-all group relative overflow-hidden`}
+              >
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className={`${stat.bgColor} ${stat.color} p-2.5 rounded-lg border ${stat.borderColor} group-hover:rotate-6 transition-transform`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">{stat.label}</p>
+                    <p className={`text-2xl font-bold ${stat.color} font-mono`}>{stat.value}</p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

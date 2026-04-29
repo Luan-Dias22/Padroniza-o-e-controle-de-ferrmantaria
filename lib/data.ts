@@ -27,6 +27,36 @@ export type StockEntry = {
   employeeId?: string;
 };
 
+export type Case = {
+  id: string;
+  tag: string;
+  name: string;
+  sector: string;
+  status: 'Ativa' | 'Inativa' | 'Manutenção';
+  responsibleId: string;
+  tools: { toolId: string, itemTag: string }[];
+  notes?: string;
+};
+
+export type CaseInspection = {
+  id: string;
+  caseId: string;
+  date: string;
+  inspectorId: string;
+  inspectorName?: string;
+  items: { itemTag: string, toolId: string, status: 'OK' | 'Faltando' | 'Danificada' }[];
+  notes?: string;
+};
+
+export type CaseLog = {
+  id: string;
+  caseId: string;
+  date: string;
+  type: string;
+  description: string;
+  details?: any;
+};
+
 export const mockTools: Tool[] = [
   { id: 't1', brand: 'Bosch', name: 'Furadeira Elétrica', category: 'ferramenta elétrica', description: 'Furadeira sem fio 20V' },
   { id: 't2', brand: 'Gedore', name: 'Chave de Torque', category: 'ferramenta manual', description: 'Encaixe de 1/2 polegada' },

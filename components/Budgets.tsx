@@ -87,16 +87,28 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
     doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont('helvetica', 'bold');
     const lineText = `LINHA/DEPARTAMENTO: ${line.name.toUpperCase()}`;
-    doc.text(lineText, 14, yPos);
+    const splitLineText = doc.splitTextToSize(lineText, 182);
+    doc.text(splitLineText, 14, yPos);
+    
+    let lastLineWidth = doc.getTextWidth(splitLineText[splitLineText.length - 1]);
+    let badgeY = yPos + ((splitLineText.length - 1) * 6);
     
     if (line.expectedNewcomers > 0) {
-      const textWidth = doc.getTextWidth(lineText);
       doc.setFontSize(10);
-      doc.setTextColor(16, 185, 129); // emerald-500
       doc.setFont('courier', 'bold');
-      doc.text(`[+${line.expectedNewcomers} NOVATOS PREVISTOS]`, 14 + textWidth + 4, yPos);
+      const badgeText = `[+${line.expectedNewcomers} NOVATOS PREVISTOS]`;
+      const badgeWidth = doc.getTextWidth(badgeText);
+      
+      let badgeX = 14 + lastLineWidth + 4;
+      if (badgeX + badgeWidth > 196) {
+        badgeX = 14;
+        badgeY += 5;
+      }
+      
+      doc.setTextColor(16, 185, 129); // emerald-500
+      doc.text(badgeText, badgeX, badgeY);
     }
-    yPos += 8;
+    yPos = badgeY + 8;
 
     const tableData = line.tools.map((t: any) => [
       t.tool.name.toUpperCase(),

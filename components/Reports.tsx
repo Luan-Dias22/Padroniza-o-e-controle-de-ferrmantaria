@@ -17,9 +17,11 @@ interface ReportsProps {
   standardLists: StandardToolList[];
   collectiveLines: CollectiveLine[];
   stockEntries?: StockEntry[];
+  cases?: Case[];
+  caseInspections?: CaseInspection[];
 }
 
-export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries }: ReportsProps) {
+export default function Reports({ tools, departments, assignments, employees, collectiveStations, standardLists, collectiveLines, stockEntries, cases = [], caseInspections = [] }: ReportsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedToolType, setSelectedToolType] = useState<'all' | 'individual' | 'collective'>('all');
@@ -77,9 +79,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         .forEach(s => {
           (s.tools || []).forEach(tool => {
             if (tool.toolId) {
-              data[dept.id].collective[tool.toolId] = (data[dept.id].collective[tool.toolId] || 0) + tool.quantity;
               data[dept.id].requiredCollective[tool.toolId] = (data[dept.id].requiredCollective[tool.toolId] || 0) + (tool.requiredQuantity ?? tool.quantity);
-              data[dept.id].total[tool.toolId] = (data[dept.id].total[tool.toolId] || 0) + tool.quantity;
               
               if (!data[dept.id].stations[tool.toolId]) {
                 data[dept.id].stations[tool.toolId] = [];
@@ -88,7 +88,7 @@ export default function Reports({ tools, departments, assignments, employees, co
               if (!data[dept.id].stations[tool.toolId].includes(s.name)) {
                 data[dept.id].stations[tool.toolId].push(s.name);
                 const required = tool.requiredQuantity ?? tool.quantity;
-                const current = tool.quantity;
+                const current = 0;
                 const missing = Math.max(0, required - current);
                 data[dept.id].stationDetails[tool.toolId].push({ name: s.name, missing, required, current });
               }
@@ -131,9 +131,7 @@ export default function Reports({ tools, departments, assignments, employees, co
         .forEach(s => {
           (s.tools || []).forEach(tool => {
             if (tool.toolId) {
-              data[lineId].collective[tool.toolId] = (data[lineId].collective[tool.toolId] || 0) + tool.quantity;
               data[lineId].requiredCollective[tool.toolId] = (data[lineId].requiredCollective[tool.toolId] || 0) + (tool.requiredQuantity ?? tool.quantity);
-              data[lineId].total[tool.toolId] = (data[lineId].total[tool.toolId] || 0) + tool.quantity;
               
               if (!data[lineId].stations[tool.toolId]) {
                 data[lineId].stations[tool.toolId] = [];
@@ -142,7 +140,7 @@ export default function Reports({ tools, departments, assignments, employees, co
               if (!data[lineId].stations[tool.toolId].includes(s.name)) {
                 data[lineId].stations[tool.toolId].push(s.name);
                 const required = tool.requiredQuantity ?? tool.quantity;
-                const current = tool.quantity;
+                const current = 0;
                 const missing = Math.max(0, required - current);
                 data[lineId].stationDetails[tool.toolId].push({ name: s.name, missing, required, current });
               }
@@ -181,6 +179,34 @@ export default function Reports({ tools, departments, assignments, employees, co
       }
       
       data[se.lineId].total[se.toolId] = (data[se.lineId].total[se.toolId] || 0) + se.quantity;
+    });
+
+    // Aggregate tools from active cases (Maletas)
+    (cases || []).filter(c => c.status === 'Ativa').forEach(c => {
+      // Find matching department by name (sector)
+      const dept = departments.find(d => d.name === c.sector);
+      if (!dept) return;
+      
+      const deptId = dept.id;
+      if (!data[deptId]) return;
+
+      // Find last inspection
+      const lastInspection = [...caseInspections]
+        .filter(i => i.caseId === c.id)
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
+      
+      c.tools.forEach(caseTool => {
+        // Count tool as "Ativo" if it's OK in the last inspection
+        // or if there is no inspection yet (assume OK initially)
+        const inspectionItem = lastInspection?.items.find(i => i.itemTag === caseTool.itemTag);
+        const isOK = !inspectionItem || inspectionItem.status === 'OK';
+
+        if (isOK) {
+          // Case tools are treated as individual assignments for the department
+          data[deptId].individual[caseTool.toolId] = (data[deptId].individual[caseTool.toolId] || 0) + 1;
+          data[deptId].total[caseTool.toolId] = (data[deptId].total[caseTool.toolId] || 0) + 1;
+        }
+      });
     });
 
     // Update stationDetails with stock quantities
@@ -223,7 +249,7 @@ export default function Reports({ tools, departments, assignments, employees, co
     });
 
     return data;
-  }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines, stockEntries]);
+  }, [assignments, departments, collectiveStations, employees, standardLists, collectiveLines, stockEntries, cases, caseInspections]);
 
   // Aggregate global tool stats
   const globalToolStats = useMemo(() => {
@@ -237,16 +263,16 @@ export default function Reports({ tools, departments, assignments, employees, co
         if (!stats[toolId]) stats[toolId] = { required: 0, current: 0, missing: 0 };
         
         const individualQty = deptData.individual[toolId] || 0;
-        const collectiveQty = deptData.collective[toolId] || 0;
         const stockIndQty = deptData.stockIndividual[toolId] || 0;
-        const stockColQty = deptData.stockCollective[toolId] || 0;
-        const stockStationTotal = Object.values(deptData.stockStation[toolId] || {}).reduce((a, b) => a + b, 0);
+        
+        // collectiveQty already contains the sum of all collective stock entries for this line
+        const collectiveQty = deptData.collective[toolId] || 0;
         
         const reqInd = deptData.requiredIndividual[toolId] || 0;
         const reqCol = deptData.requiredCollective[toolId] || 0;
 
         stats[toolId].required += (reqInd + reqCol);
-        stats[toolId].current += (individualQty + stockIndQty + collectiveQty + stockColQty + stockStationTotal);
+        stats[toolId].current += (individualQty + stockIndQty + collectiveQty);
       });
     });
 
@@ -435,31 +461,44 @@ export default function Reports({ tools, departments, assignments, employees, co
       doc.setTextColor(15, 23, 42); // slate-900
       doc.setFont('helvetica', 'bold');
       const deptText = `LINHA/DEPARTAMENTO: ${dept.name.toUpperCase()}`;
-      doc.text(deptText, 14, currentY);
+      
+      const splitDeptText = doc.splitTextToSize(deptText, 182);
+      doc.text(splitDeptText, 14, currentY);
+      
+      let lastLineWidth = doc.getTextWidth(splitDeptText[splitDeptText.length - 1]);
+      let badgeY = currentY + ((splitDeptText.length - 1) * 6);
       
       // Find the original department to get expectedNewcomers and requiredHeadcount
       const originalDept = departments.find(d => d.id === dept.id);
-      let badgeX = 14 + doc.getTextWidth(deptText) + 4;
+      let badgeX = 14 + lastLineWidth + 4;
       
       if (originalDept) {
+        let badges: {text: string, color: number[]}[] = [];
         if (originalDept.expectedNewcomers && originalDept.expectedNewcomers > 0) {
-          doc.setFontSize(9);
-          doc.setTextColor(16, 185, 129); // emerald-500
-          doc.setFont('helvetica', 'bold');
-          const badgeText = `[+${originalDept.expectedNewcomers} NOVATOS]`;
-          doc.text(badgeText, badgeX, currentY);
-          badgeX += doc.getTextWidth(badgeText) + 3;
+          badges.push({ text: `[+${originalDept.expectedNewcomers} NOVATOS]`, color: [16, 185, 129] });
+        }
+        if (originalDept.requiredHeadcount && originalDept.requiredHeadcount > 0) {
+          badges.push({ text: `[META: ${originalDept.requiredHeadcount} FUNC.]`, color: [15, 118, 110] });
         }
         
-        if (originalDept.requiredHeadcount && originalDept.requiredHeadcount > 0) {
-          doc.setFontSize(9);
-          doc.setTextColor(15, 118, 110); // teal-700
-          doc.setFont('helvetica', 'bold');
-          doc.text(`[META: ${originalDept.requiredHeadcount} FUNC.]`, badgeX, currentY);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        
+        let totalBadgesWidth = badges.reduce((acc, b) => acc + doc.getTextWidth(b.text) + 3, 0);
+        
+        if (badgeX + totalBadgesWidth > 196) {
+          badgeX = 14;
+          badgeY += 5;
         }
+        
+        badges.forEach(b => {
+          doc.setTextColor(b.color[0], b.color[1], b.color[2]);
+          doc.text(b.text, badgeX, badgeY);
+          badgeX += doc.getTextWidth(b.text) + 3;
+        });
       }
       
-      currentY += 6;
+      currentY = badgeY + 6;
 
       const head = ['FERRAMENTA', 'MARCA', 'QTD/CAIXA', 'NEC.', 'ATU.', 'FAL.'];
       if (selectedToolType === 'all') head.push('POSTOS');
@@ -484,7 +523,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           let remainingStock = stockColQty;
           
           stations.forEach(s => {
-            let currentForStation = s.current + (stockStationData[s.name] || 0);
+            let currentForStation = stockStationData[s.name] || 0;
             let missingForStation = Math.max(0, s.required - currentForStation);
             
             if (remainingStock > 0 && missingForStation > 0) {
@@ -510,7 +549,7 @@ export default function Reports({ tools, departments, assignments, employees, co
             : '-';
           
           const individualQty = deptData.individual[toolId] || 0;
-          const collectiveQty = deptData.collective[toolId] || 0;
+          const stockColQtyTotal = (deptData.stockCollective[toolId] || 0) + Object.values(stockStationData).reduce((a,b)=>a+b,0);
           const requiredCollectiveQty = deptData.requiredCollective[toolId] || 0;
           const requiredIndividualQty = deptData.requiredIndividual[toolId] || 0;
           const standardQty = deptData.standardQtyPerBox[toolId] || 0;
@@ -520,8 +559,8 @@ export default function Reports({ tools, departments, assignments, employees, co
             : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
           const curQty = selectedToolType === 'all'
-            ? (individualQty + stockIndQty + collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0))
-            : (selectedToolType === 'individual' ? individualQty + stockIndQty : collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0));
+            ? (individualQty + stockIndQty + stockColQtyTotal)
+            : (selectedToolType === 'individual' ? individualQty + stockIndQty : stockColQtyTotal);
 
           const missingQty = Math.max(0, reqQty - curQty);
 
@@ -665,7 +704,7 @@ export default function Reports({ tools, departments, assignments, employees, co
           let remainingStock = stockColQty;
           
           stations.forEach(s => {
-            let currentForStation = s.current + (stockStationData[s.name] || 0);
+            let currentForStation = stockStationData[s.name] || 0;
             let missingForStation = Math.max(0, s.required - currentForStation);
             
             if (remainingStock > 0 && missingForStation > 0) {
@@ -692,8 +731,8 @@ export default function Reports({ tools, departments, assignments, employees, co
             : (selectedToolType === 'individual' ? requiredIndividualQty : requiredCollectiveQty);
 
           const curQty = selectedToolType === 'all'
-            ? (individualQty + stockIndQty + collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0))
-            : (selectedToolType === 'individual' ? individualQty + stockIndQty : collectiveQty + stockColQty + Object.values(stockStationData).reduce((a,b)=>a+b,0));
+            ? (individualQty + stockIndQty + stockColQtyTotal)
+            : (selectedToolType === 'individual' ? individualQty + stockIndQty : stockColQtyTotal);
 
           const missingQty = Math.max(0, reqQty - curQty);
           

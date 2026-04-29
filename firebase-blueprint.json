@@ -132,6 +132,71 @@
         "station": { "type": "string" }
       },
       "required": ["toolId", "lineId", "quantity", "date", "uid", "type"]
+    },
+    "Case": {
+      "title": "Case",
+      "description": "A tool case/kit with a unique TAG",
+      "type": "object",
+      "properties": {
+        "tag": { "type": "string" },
+        "name": { "type": "string" },
+        "sector": { "type": "string" },
+        "status": { "type": "string", "enum": ["Ativa", "Inativa", "Manutenção"] },
+        "responsibleId": { "type": "string" },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "toolId": { "type": "string" },
+              "itemTag": { "type": "string" }
+            },
+            "required": ["toolId", "itemTag"]
+          }
+        },
+        "notes": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["tag", "name", "sector", "status", "responsibleId", "tools", "uid"]
+    },
+    "CaseInspection": {
+      "title": "CaseInspection",
+      "description": "A check performed on a case",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "date": { "type": "string" },
+        "inspectorId": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemTag": { "type": "string" },
+              "toolId": { "type": "string" },
+              "status": { "type": "string", "enum": ["OK", "Faltando", "Danificada"] }
+            },
+            "required": ["itemTag", "toolId", "status"]
+          }
+        },
+        "notes": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["caseId", "date", "inspectorId", "items", "uid"]
+    },
+    "CaseLog": {
+      "title": "CaseLog",
+      "description": "Historical record of actions on a case",
+      "type": "object",
+      "properties": {
+        "caseId": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "details": { "type": "object" },
+        "uid": { "type": "string" }
+      },
+      "required": ["caseId", "date", "type", "description", "uid"]
     }
   },
   "firestore": {
@@ -166,6 +231,18 @@
     "users/{userId}/stockEntries/{entryId}": {
       "schema": { "$ref": "#/entities/StockEntry" },
       "description": "Stock entries owned by the user"
+    },
+    "users/{userId}/cases/{caseId}": {
+      "schema": { "$ref": "#/entities/Case" },
+      "description": "Tool cases owned by the user"
+    },
+    "users/{userId}/caseInspections/{inspectionId}": {
+      "schema": { "$ref": "#/entities/CaseInspection" },
+      "description": "Case inspections owned by the user"
+    },
+    "users/{userId}/caseLogs/{logId}": {
+      "schema": { "$ref": "#/entities/CaseLog" },
+      "description": "Case logs owned by the user"
     }
   }
 }

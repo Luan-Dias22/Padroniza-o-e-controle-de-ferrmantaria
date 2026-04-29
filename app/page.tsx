@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap, Package } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap, Package, Briefcase } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
@@ -14,8 +14,9 @@ import CollectiveTools from '@/components/CollectiveTools';
 import Settings from '@/components/Settings';
 import Budgets from '@/components/Budgets';
 import Inventory from '@/components/Inventory';
+import Cases from '@/components/Cases';
 import { useFirestore } from '@/lib/useFirestore';
-import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation, StockEntry } from '@/lib/data';
+import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation, StockEntry, Case, CaseInspection, CaseLog } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 
@@ -68,6 +69,9 @@ export default function App() {
   const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', [], user?.uid || (isGuest ? 'guest' : null));
   const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', [], user?.uid || (isGuest ? 'guest' : null));
   const [stockEntries, setStockEntries, stockInit, syncStock] = useFirestore<StockEntry>('stockEntries', [], user?.uid || (isGuest ? 'guest' : null));
+  const [cases, setCases, casesInit, syncCases] = useFirestore<Case>('cases', [], user?.uid || (isGuest ? 'guest' : null));
+  const [caseInspections, setCaseInspections, inspectionsInit, syncInspections] = useFirestore<CaseInspection>('caseInspections', [], user?.uid || (isGuest ? 'guest' : null));
+  const [caseLogs, setCaseLogs, logsInit, syncLogs] = useFirestore<CaseLog>('caseLogs', [], user?.uid || (isGuest ? 'guest' : null));
 
   const syncAllData = async (targetUserId?: string) => {
     try {
@@ -79,7 +83,10 @@ export default function App() {
         syncAssignments(targetUserId),
         syncLines(targetUserId),
         syncStations(targetUserId),
-        syncStock(targetUserId)
+        syncStock(targetUserId),
+        syncCases(targetUserId),
+        syncInspections(targetUserId),
+        syncLogs(targetUserId)
       ]);
       return true;
     } catch (error) {
@@ -97,6 +104,9 @@ export default function App() {
     setCollectiveLines([]);
     setCollectiveStations([]);
     setStockEntries([]);
+    setCases([]);
+    setCaseInspections([]);
+    setCaseLogs([]);
   };
 
   const getBackupData = () => {
@@ -109,8 +119,11 @@ export default function App() {
       collectiveLines,
       collectiveStations,
       stockEntries,
+      cases,
+      caseInspections,
+      caseLogs,
       timestamp: new Date().toISOString(),
-      version: '1.1'
+      version: '1.2'
     };
   };
 
@@ -123,10 +136,13 @@ export default function App() {
     if (data.collectiveLines) setCollectiveLines(data.collectiveLines || []);
     if (data.collectiveStations) setCollectiveStations(data.collectiveStations || []);
     if (data.stockEntries) setStockEntries(data.stockEntries || []);
+    if (data.cases) setCases(data.cases || []);
+    if (data.caseInspections) setCaseInspections(data.caseInspections || []);
+    if (data.caseLogs) setCaseLogs(data.caseLogs || []);
     return true;
   };
 
-  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit));
+  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit && casesInit && inspectionsInit && logsInit));
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -177,6 +193,7 @@ export default function App() {
     { id: 'assignments', label: 'Atribuições', icon: Users },
     { id: 'collective', label: 'Ferramentas Coletivas', icon: LayoutGrid },
     { id: 'inventory', label: 'Estoque', icon: Package },
+    { id: 'cases', label: 'Maletas / Tags', icon: Briefcase },
     { id: 'budgets', label: 'Orçamentos', icon: Calculator },
     { id: 'reports', label: 'Relatórios', icon: FileText },
     { id: 'settings', label: 'Configurações', icon: SettingsIcon },
@@ -432,6 +449,9 @@ export default function App() {
                 employees={employees}
                 standardLists={standardLists}
                 collectiveStations={collectiveStations}
+                stockEntries={stockEntries}
+                cases={cases}
+                caseInspections={caseInspections}
                 onNavigate={setActiveTab} 
                 isDarkMode={isDarkMode}
                 toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -496,6 +516,8 @@ export default function App() {
                 standardLists={standardLists}
                 collectiveLines={collectiveLines}
                 stockEntries={stockEntries}
+                cases={cases}
+                caseInspections={caseInspections}
               />
             )}
             {activeTab === 'collective' && (
@@ -519,6 +541,21 @@ export default function App() {
                 standardLists={standardLists}
                 employees={employees}
                 setStockEntries={setStockEntries}
+                isGuest={isGuest}
+              />
+            )}
+            {activeTab === 'cases' && (
+              <Cases 
+                cases={cases}
+                setCases={setCases}
+                inspections={caseInspections}
+                setInspections={setCaseInspections}
+                logs={caseLogs}
+                setLogs={setCaseLogs}
+                tools={tools}
+                employees={employees}
+                standardLists={standardLists}
+                currentUser={user}
                 isGuest={isGuest}
               />
             )}

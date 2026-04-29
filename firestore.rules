@@ -199,6 +199,37 @@ service cloud.firestore {
              (!('employeeId' in data) || (data.employeeId is string && data.employeeId.size() < 100));
     }
 
+    function isValidCase(data) {
+      return hasOnlyAllowedFields(['tag', 'name', 'sector', 'status', 'responsibleId', 'tools', 'uid'], ['notes', 'id']) &&
+             data.tag is string && data.tag.size() > 0 && data.tag.size() < 20 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.sector is string && data.sector.size() > 0 && data.sector.size() < 100 &&
+             data.status in ["Ativa", "Inativa", "Manutenção"] &&
+             data.responsibleId is string && data.responsibleId.size() < 100 &&
+             data.tools is list && data.tools.size() <= 100 &&
+             (!('notes' in data) || data.notes is string) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
+    function isValidCaseInspection(data) {
+      return hasOnlyAllowedFields(['caseId', 'date', 'inspectorId', 'items', 'uid'], ['notes', 'id']) &&
+             data.caseId is string && data.caseId.size() > 0 && data.caseId.size() < 100 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
+             data.inspectorId is string && data.inspectorId.size() > 0 && data.inspectorId.size() < 100 &&
+             data.items is list && data.items.size() <= 100 &&
+             (!('notes' in data) || data.notes is string) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
+    function isValidCaseLog(data) {
+      return hasOnlyAllowedFields(['caseId', 'date', 'type', 'description', 'uid'], ['details', 'id']) &&
+             data.caseId is string && data.caseId.size() > 0 && data.caseId.size() < 100 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 500 &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -263,6 +294,27 @@ service cloud.firestore {
         allow read: if canRead(userId);
         allow create: if canWrite(userId) && hasRequiredFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type']) && isValidStockEntry(request.resource.data) && uidUnchanged(userId);
         allow update: if canWrite(userId) && isDocOwner(userId) && isValidStockEntry(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /cases/{caseId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['tag', 'name', 'sector', 'status', 'responsibleId', 'tools', 'uid']) && isValidCase(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCase(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /caseInspections/{inspectionId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['caseId', 'date', 'inspectorId', 'items', 'uid']) && isValidCaseInspection(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCaseInspection(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /caseLogs/{logId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['caseId', 'date', 'type', 'description', 'uid']) && isValidCaseLog(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCaseLog(request.resource.data) && uidNotModified(userId);
         allow delete: if canWrite(userId) && isDocOwner(userId);
       }
     }

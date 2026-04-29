@@ -96,9 +96,10 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
       setIsInitialized(true);
       setHasMerged(true);
     }, (error) => {
+      setIsInitialized(true);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      if (errorMessage.includes('CANCELLED') || errorMessage.includes('unavailable')) {
-        console.warn(`Firestore transient error (${collectionName}):`, errorMessage);
+      if (errorMessage.includes('CANCELLED') || errorMessage.includes('unavailable') || errorMessage.includes('permission-denied')) {
+        console.warn(`Firestore error (${collectionName}):`, errorMessage);
         return;
       }
       handleFirestoreError(error, OperationType.LIST, path);

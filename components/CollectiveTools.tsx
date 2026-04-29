@@ -452,7 +452,7 @@ export default function CollectiveTools({
                               const stockQty = stockEntries
                                 .filter(se => se.type === 'collective' && se.station === station.name && se.toolId === t.toolId)
                                 .reduce((sum, se) => sum + se.quantity, 0);
-                              return acc + t.quantity + stockQty;
+                              return acc + stockQty;
                             }, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
                           </span>
                           <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider">{station.tools.length} tipos</span>
