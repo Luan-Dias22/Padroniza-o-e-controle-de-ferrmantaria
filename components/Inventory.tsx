@@ -247,7 +247,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
         tool?.brand || '-',
         line?.name || 'Desconhecido',
         item.station && item.station !== 'no-station' ? item.station : '-',
-        (item.quantity ?? 0).toString(),
+        item.quantity.toString(),
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price),
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)
       ];

@@ -511,9 +511,9 @@ export default function Reports({ tools, departments, assignments, employees, co
               tool?.name.toUpperCase() || 'DESCONHECIDA',
               s.name.toUpperCase(),
               tool?.brand.toUpperCase() || '-',
-              (s.required ?? 0).toString(),
-              (currentForStation ?? 0).toString(),
-              (missingForStation ?? 0).toString()
+              s.required.toString(),
+              currentForStation.toString(),
+              missingForStation.toString()
             ]);
           });
         } else {
@@ -541,10 +541,10 @@ export default function Reports({ tools, departments, assignments, employees, co
           const row: any[] = [
             tool?.name.toUpperCase() || 'DESCONHECIDA',
             tool?.brand.toUpperCase() || '-',
-            (standardQty ?? 0) > 0 ? standardQty.toString() : '-',
-            (reqQty ?? 0).toString(),
-            (curQty ?? 0).toString(),
-            (missingQty ?? 0).toString()
+            standardQty > 0 ? standardQty.toString() : '-',
+            reqQty.toString(),
+            curQty.toString(),
+            missingQty.toString()
           ];
           
           if (selectedToolType === 'all') {

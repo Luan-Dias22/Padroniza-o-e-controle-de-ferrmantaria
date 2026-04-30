@@ -375,7 +375,7 @@ export default function EmployeeAssignments({
         tool?.brand.toUpperCase() || 'N/A',
         tool?.name.toUpperCase() || 'N/A',
         tool?.category.toUpperCase() || 'N/A',
-        (at.quantity ?? 0).toString()
+        at.quantity.toString()
       ];
     });
 
@@ -421,7 +421,7 @@ export default function EmployeeAssignments({
       doc.setFont('helvetica', 'bold');
       doc.text('FERRAMENTAS PENDENTES (A ENTREGAR)', 14, currentY + 15);
       
-      const missingTableData = missingTools.map(mt => [mt.toolName.toUpperCase(), (mt.missingQty ?? 0).toString()]);
+      const missingTableData = missingTools.map(mt => [mt.toolName.toUpperCase(), mt.missingQty.toString()]);
       
       autoTable(doc, {
         startY: currentY + 20,
