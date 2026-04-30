@@ -34,6 +34,7 @@ export type MaletaTool = {
 
 export type MaletaCheckItem = {
   toolId: string;
+  maletaToolId: string; // Add this to uniquely map back to MaletaTool
   expectedQuantity: number;
   observedQuantity: number;
   status: 'OK' | 'Faltando' | 'Danificada';

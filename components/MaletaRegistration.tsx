@@ -228,32 +228,24 @@ export default function MaletaRegistration({
           currentUser={currentUser}
           onSave={(check) => {
             setMaletaChecks([...maletaChecks, check]);
-            
-            // Update tool statuses
-            const currentMaletaTools = maletaTools
-              .filter(mt => mt.maleta_id === maleta.id)
-              .sort((a, b) => {
-                const toolA = tools.find(t => t.id === a.ferramenta_id);
-                const toolB = tools.find(t => t.id === b.ferramenta_id);
-                return (toolA?.name || '').localeCompare(toolB?.name || '');
-              });
 
-            const updatedMaletaTools = maletaTools.map(mt => {
-              if (mt.maleta_id !== maleta.id) return mt;
-              
-              const mtIndex = currentMaletaTools.findIndex(x => x.id === mt.id);
-              if (mtIndex === -1) return mt;
-              
-              const checkItem = check.items[mtIndex];
-              if (!checkItem) return mt;
-              
-              const newEstado = checkItem.status === 'OK' ? 'Boa' : (checkItem.status === 'Faltando' ? 'Faltando' : 'Danificada');
-              
-              return { ...mt, estado: newEstado };
+            const updatedMaletaTools: MaletaTool[] = maletaTools.map((toolLink) => {
+              if (toolLink.maleta_id !== maleta.id) return toolLink;
+
+              const checkedItem = check.items.find(item => item.maletaToolId === toolLink.id);
+              if (!checkedItem) return toolLink;
+
+              const novoEstado: MaletaTool['estado'] =
+                checkedItem.status === 'OK' ? 'Boa' : (checkedItem.status as MaletaTool['estado']);
+
+              return {
+                ...toolLink,
+                quantidade: checkedItem.observedQuantity,
+                estado: novoEstado
+              };
             });
 
             setMaletaTools(updatedMaletaTools);
-
             addEvent(maleta.id, 'check', `Conferência realizada por ${check.user_name}. Observações: ${check.observacoes || 'Nenhuma'}`);
             setIsCheckingId(null);
           }}
@@ -1234,6 +1226,7 @@ function MaletaCheckSession({
   const [items, setItems] = useState<MaletaCheckItem[]>(
     linkedTools.map(mt => ({
       toolId: mt.ferramenta_id,
+      maletaToolId: mt.id,
       expectedQuantity: mt.quantidade,
       observedQuantity: mt.quantidade,
       status: 'OK' as const,
