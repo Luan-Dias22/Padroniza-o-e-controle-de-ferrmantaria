@@ -8,12 +8,14 @@ export default function ToolRegistration({
   tools, setTools,
   standardLists, setStandardLists,
   assignments, setAssignments,
-  isGuest = false
+  isGuest = false,
+  currentUser
 }: { 
   tools: Tool[], setTools: (tools: Tool[]) => void,
   standardLists: StandardToolList[], setStandardLists: (lists: StandardToolList[]) => void,
   assignments: Assignment[], setAssignments: (assignments: Assignment[]) => void,
-  isGuest?: boolean
+  isGuest?: boolean,
+  currentUser: any
 }) {
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [formData, setFormData] = useState({ brand: '', name: '', category: 'ferramenta manual', description: '' });
@@ -42,10 +44,10 @@ export default function ToolRegistration({
     }
 
     if (isEditing) {
-      setTools(tools.map(t => t.id === isEditing ? { ...t, ...formData } : t));
+      setTools(tools.map(t => t.id === isEditing ? { ...t, ...formData, uid: currentUser?.uid || 'guest' } : t));
       setIsEditing(null);
     } else {
-      setTools([...tools, { id: crypto.randomUUID(), ...formData }]);
+      setTools([...tools, { id: crypto.randomUUID(), ...formData, uid: currentUser?.uid || 'guest' }]);
     }
     setFormData({ brand: '', name: '', category: 'ferramenta manual', description: '' });
   };
@@ -81,7 +83,7 @@ export default function ToolRegistration({
   const filteredTools = tools.filter(t => 
     t.name.toLowerCase().includes(search.toLowerCase()) || 
     t.brand.toLowerCase().includes(search.toLowerCase())
-  );
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const containerVariants = {
     hidden: { opacity: 0 },

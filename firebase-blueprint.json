@@ -79,10 +79,53 @@
             "required": ["toolId", "quantity"]
           }
         },
+        "maleta_id": { "type": "string" },
         "dateAssigned": { "type": "string" },
         "uid": { "type": "string" }
       },
       "required": ["employeeId", "departmentId", "assignedTools", "dateAssigned", "uid"]
+    },
+    "Maleta": {
+      "title": "Maleta",
+      "description": "A maleta or TAG identification",
+      "type": "object",
+      "properties": {
+        "codigo_tag": { "type": "string" },
+        "nome": { "type": "string" },
+        "setor": { "type": "string" },
+        "status": { "type": "string", "enum": ["Ativa", "Inativa", "Manutenção"] },
+        "responsavel_id": { "type": "string" },
+        "observacoes": { "type": "string" },
+        "transfer_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_employee_id": { "type": "string" },
+              "to_employee_id": { "type": "string" },
+              "date": { "type": "string" }
+            }
+          }
+        },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["codigo_tag", "nome", "setor", "status", "created_at", "updated_at", "uid"]
+    },
+    "MaletaTool": {
+      "title": "MaletaTool",
+      "description": "A tool linked to a maleta",
+      "type": "object",
+      "properties": {
+        "maleta_id": { "type": "string" },
+        "ferramenta_id": { "type": "string" },
+        "quantidade": { "type": "number" },
+        "estado": { "type": "string", "enum": ["Boa", "Danificada", "Faltando"] },
+        "tag": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["maleta_id", "ferramenta_id", "quantidade", "estado", "uid"]
     },
     "CollectiveLine": {
       "title": "CollectiveLine",
@@ -133,70 +176,48 @@
       },
       "required": ["toolId", "lineId", "quantity", "date", "uid", "type"]
     },
-    "Case": {
-      "title": "Case",
-      "description": "A tool case/kit with a unique TAG",
+    "MaletaCheck": {
+      "title": "MaletaCheck",
+      "description": "A record of a maleta check/inspection",
       "type": "object",
       "properties": {
-        "tag": { "type": "string" },
-        "name": { "type": "string" },
-        "sector": { "type": "string" },
-        "status": { "type": "string", "enum": ["Ativa", "Inativa", "Manutenção"] },
-        "responsibleId": { "type": "string" },
-        "tools": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "toolId": { "type": "string" },
-              "itemTag": { "type": "string" }
-            },
-            "required": ["toolId", "itemTag"]
-          }
-        },
-        "notes": { "type": "string" },
-        "uid": { "type": "string" }
-      },
-      "required": ["tag", "name", "sector", "status", "responsibleId", "tools", "uid"]
-    },
-    "CaseInspection": {
-      "title": "CaseInspection",
-      "description": "A check performed on a case",
-      "type": "object",
-      "properties": {
-        "caseId": { "type": "string" },
+        "maleta_id": { "type": "string" },
+        "checked_by_id": { "type": "string" },
+        "user_name": { "type": "string" },
         "date": { "type": "string" },
-        "inspectorId": { "type": "string" },
         "items": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "itemTag": { "type": "string" },
               "toolId": { "type": "string" },
-              "status": { "type": "string", "enum": ["OK", "Faltando", "Danificada"] }
+              "expectedQuantity": { "type": "number" },
+              "observedQuantity": { "type": "number" },
+              "status": { "type": "string", "enum": ["OK", "Faltando", "Danificada"] },
+              "notes": { "type": "string" }
             },
-            "required": ["itemTag", "toolId", "status"]
+            "required": ["toolId", "expectedQuantity", "observedQuantity", "status"]
           }
         },
-        "notes": { "type": "string" },
+        "observacoes": { "type": "string" },
         "uid": { "type": "string" }
       },
-      "required": ["caseId", "date", "inspectorId", "items", "uid"]
+      "required": ["maleta_id", "checked_by_id", "user_name", "date", "items", "uid"]
     },
-    "CaseLog": {
-      "title": "CaseLog",
-      "description": "Historical record of actions on a case",
+    "MaletaEvent": {
+      "title": "MaletaEvent",
+      "description": "An event in the life cycle of a maleta",
       "type": "object",
       "properties": {
-        "caseId": { "type": "string" },
+        "maleta_id": { "type": "string" },
+        "type": { "type": "string", "enum": ["creation", "edition", "transfer", "tool_addition", "tool_removal", "check"] },
         "date": { "type": "string" },
-        "type": { "type": "string" },
+        "user_name": { "type": "string" },
+        "user_id": { "type": "string" },
         "description": { "type": "string" },
-        "details": { "type": "object" },
         "uid": { "type": "string" }
       },
-      "required": ["caseId", "date", "type", "description", "uid"]
+      "required": ["maleta_id", "type", "date", "user_name", "user_id", "description", "uid"]
     }
   },
   "firestore": {
@@ -220,6 +241,22 @@
       "schema": { "$ref": "#/entities/Assignment" },
       "description": "Assignments owned by the user"
     },
+    "users/{userId}/maletas/{maletaId}": {
+      "schema": { "$ref": "#/entities/Maleta" },
+      "description": "Maletas owned by the user"
+    },
+    "users/{userId}/maletaTools/{maletaToolId}": {
+      "schema": { "$ref": "#/entities/MaletaTool" },
+      "description": "Maleta rules linking tool and maletas owned by the user"
+    },
+    "users/{userId}/maletaChecks/{checkId}": {
+      "schema": { "$ref": "#/entities/MaletaCheck" },
+      "description": "History of maleta checks"
+    },
+    "users/{userId}/maletaEvents/{eventId}": {
+      "schema": { "$ref": "#/entities/MaletaEvent" },
+      "description": "History of events for maletas"
+    },
     "users/{userId}/collectiveLines/{lineId}": {
       "schema": { "$ref": "#/entities/CollectiveLine" },
       "description": "Collective lines owned by the user"
@@ -231,18 +268,6 @@
     "users/{userId}/stockEntries/{entryId}": {
       "schema": { "$ref": "#/entities/StockEntry" },
       "description": "Stock entries owned by the user"
-    },
-    "users/{userId}/cases/{caseId}": {
-      "schema": { "$ref": "#/entities/Case" },
-      "description": "Tool cases owned by the user"
-    },
-    "users/{userId}/caseInspections/{inspectionId}": {
-      "schema": { "$ref": "#/entities/CaseInspection" },
-      "description": "Case inspections owned by the user"
-    },
-    "users/{userId}/caseLogs/{logId}": {
-      "schema": { "$ref": "#/entities/CaseLog" },
-      "description": "Case logs owned by the user"
     }
   }
 }

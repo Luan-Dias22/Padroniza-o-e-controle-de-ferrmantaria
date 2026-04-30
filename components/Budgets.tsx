@@ -114,8 +114,8 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
       t.tool.name.toUpperCase(),
       t.tool.brand.toUpperCase(),
       formatCurrency(t.tool.price || 0),
-      t.required.toString(),
-      t.missing.toString(),
+      (t.required ?? 0).toString(),
+      (t.missing ?? 0).toString(),
       formatCurrency(t.costRequired),
       formatCurrency(t.costMissing)
     ]);
@@ -127,7 +127,7 @@ const generatePDF = (budgetData: any, toolCategoryFilter: string) => {
       startY: yPos,
       head: [['FERRAMENTA', 'MARCA', 'VALOR UNIT.', 'QTD. NEC.', 'QTD. FAL.', 'CUSTO NEC.', 'CUSTO FAL.']],
       body: tableData,
-      foot: [['TOTAL', '', '', totalReq.toString(), totalMissing.toString(), formatCurrency(line.requiredCost), formatCurrency(line.missingCost)]],
+      foot: [['TOTAL', '', '', (totalReq ?? 0).toString(), (totalMissing ?? 0).toString(), formatCurrency(line.requiredCost), formatCurrency(line.missingCost)]],
       theme: 'grid',
       styles: {
         font: 'helvetica',
@@ -473,7 +473,7 @@ export default function Budgets({
   React.useEffect(() => {
     const initialPrices: Record<string, string> = {};
     tools.forEach(tool => {
-      initialPrices[tool.id] = tool.price !== undefined ? tool.price.toString() : '';
+      initialPrices[tool.id] = (tool.price !== undefined && tool.price !== null) ? tool.price.toString() : '';
     });
     setEditingPrices(initialPrices);
   }, [tools]);

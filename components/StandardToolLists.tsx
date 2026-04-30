@@ -6,12 +6,13 @@ import ConfirmModal from './ConfirmModal';
 import { sortByName } from '@/lib/utils';
 
 export default function StandardToolLists({ 
-  departments, setDepartments, tools, standardLists, setStandardLists, isGuest = false 
+  departments, setDepartments, tools, standardLists, setStandardLists, isGuest = false, currentUser
 }: { 
   departments: Department[], setDepartments: (d: Department[]) => void, 
   tools: Tool[], 
   standardLists: StandardToolList[], setStandardLists: (s: StandardToolList[]) => void,
-  isGuest?: boolean
+  isGuest?: boolean,
+  currentUser: any
 }) {
   const [newKitName, setNewKitName] = useState('');
   const [selectedKitId, setSelectedKitId] = useState<string>(standardLists[0]?.id || '');
@@ -43,7 +44,7 @@ export default function StandardToolLists({
     e.preventDefault();
     if (!newKitName.trim()) return;
     const newId = crypto.randomUUID();
-    setStandardLists([...standardLists, { id: newId, name: newKitName, tools: [] }]);
+    setStandardLists([...standardLists, { id: newId, name: newKitName, tools: [], uid: currentUser?.uid || 'guest' }]);
     setNewKitName('');
     if (!selectedKitId) setSelectedKitId(newId);
   };
@@ -64,7 +65,7 @@ export default function StandardToolLists({
 
   const handleUpdateKit = () => {
     if (!editKitName.trim() || !editingKitId) return;
-    setStandardLists(standardLists.map(s => s.id === editingKitId ? { ...s, name: editKitName } : s));
+    setStandardLists(standardLists.map(s => s.id === editingKitId ? { ...s, name: editKitName, uid: currentUser?.uid || 'guest' } : s));
     setEditingKitId(null);
   };
 

@@ -1,18 +1,21 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
-import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, Case, CaseInspection, StockEntry } from '@/lib/data';
-import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package, Activity, LayoutGrid, Sun, Moon, Briefcase, ClipboardSignature } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend, PieChart, Pie } from 'recharts';
+import { Tool, Department, Assignment, Employee, StandardToolList, CollectiveStation, Maleta, MaletaTool, MaletaCheck } from '@/lib/data';
+import { Wrench, Users, ClipboardCheck, AlertTriangle, ArrowRight, Plus, ListChecks, Building2, Package, Activity, LayoutGrid, Sun, Moon, CheckCircle2, History, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Dashboard({ 
-  tools, departments, assignments, employees, standardLists, collectiveStations, stockEntries = [], cases = [], caseInspections = [], onNavigate, isDarkMode, toggleDarkMode,
+  tools, departments, assignments, employees, standardLists, collectiveStations, 
+  maletas = [], maletaTools = [], maletaChecks = [],
+  onNavigate, isDarkMode, toggleDarkMode,
   isGuest = false
 }: { 
-  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[], stockEntries?: StockEntry[],
-  cases?: Case[], caseInspections?: CaseInspection[], onNavigate: (tab: string) => void,
+  tools: Tool[], departments: Department[], assignments: Assignment[], employees: Employee[], standardLists: StandardToolList[], collectiveStations: CollectiveStation[],
+  maletas: Maleta[], maletaTools: MaletaTool[], maletaChecks: MaletaCheck[],
+  onNavigate: (tab: string) => void,
   isDarkMode: boolean, toggleDarkMode: () => void,
   isGuest?: boolean
 }) {
-  // Helper to check for missing tools
+  // Helper to check for missing tools in assignments
   const getMissingToolsCount = (assignment: Assignment) => {
     const dept = departments.find(d => d.id === assignment.departmentId);
     let missingCount = 0;
@@ -34,41 +37,23 @@ export default function Dashboard({
 
   const pendingAssignments = (assignments || []).filter(a => getMissingToolsCount(a) > 0);
   const totalToolsAssigned = (assignments || []).reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
-  
-  // Use stock entries (General Balance) as the source of truth for collective tool counts to avoid duplication
-  const totalCollectiveTools = (stockEntries || [])
-    .filter(se => se.type === 'collective')
-    .reduce((acc, curr) => acc + curr.quantity, 0);
+  const totalCollectiveTools = (collectiveStations || []).reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
-  // Case Stats
-  const activeCases = cases.filter(c => c.status === 'Ativa').length;
-  
-  // Calculate missing/damaged tools from latest inspection of each case
-  let missingToolsInCases = 0;
-  let damagedToolsInCases = 0;
-  
-  cases.forEach(c => {
-    const caseLastInspection = [...caseInspections]
-      .filter(i => i.caseId === c.id)
-      .sort((a, b) => b.date.localeCompare(a.date))[0];
-    
-    if (caseLastInspection) {
-      caseLastInspection.items.forEach(item => {
-        if (item.status === 'Faltando') missingToolsInCases += 1;
-        if (item.status === 'Danificada') damagedToolsInCases += 1;
-      });
-    }
-  });
+  // Maleta Metrics
+  const activeMaletas = maletas.filter(m => m.status === 'Ativa').length;
+  const missingMaletaTools = maletaTools.filter(mt => mt.estado === 'Faltando').length;
+  const damagedMaletaTools = maletaTools.filter(mt => mt.estado === 'Danificada').length;
+  const recentMaletaChecks = [...maletaChecks].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
   const chartData = (departments || []).map(dept => {
     const individualCount = (assignments || [])
       .filter(a => a.departmentId === dept.id)
       .reduce((acc, curr) => acc + (curr.assignedTools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
     
-    // For collective tools, use stock entries for this line (matches department name)
-    const collectiveCount = (stockEntries || [])
-      .filter(se => se.type === 'collective' && se.lineId === dept.id)
-      .reduce((acc, curr) => acc + curr.quantity, 0);
+    // For collective tools, we'll match by line name if it matches department name
+    const collectiveCount = (collectiveStations || [])
+      .filter(s => s.line === dept.name)
+      .reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
     return {
       name: dept.name,
@@ -80,17 +65,16 @@ export default function Dashboard({
 
   const stats = [
     { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20', tab: 'tools' },
-    { label: 'Uso Coletivo (Postos)', value: (collectiveStations || []).length, icon: Package, color: 'text-purple-400', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/20', tab: 'collective' },
-    { label: 'Atribuições Ativas', value: (assignments || []).length, icon: ClipboardCheck, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'assignments' },
-    { label: 'Pendências de Entrega', value: pendingAssignments.length, icon: AlertTriangle, color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', tab: 'assignments' },
+    { label: 'Total de Maletas', value: maletas.length, icon: Package, color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20', tab: 'maletas' },
+    { label: 'Maletas Ativas', value: activeMaletas, icon: CheckCircle2, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'maletas' },
+    { label: 'Ferramentas Pendentes', value: missingMaletaTools + damagedMaletaTools, icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20', tab: 'maletas' },
   ];
 
-  const caseStats = [
-    { label: 'Total de Maletas', value: cases.length, icon: Briefcase, color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20', tab: 'cases' },
-    { label: 'Maletas Ativas', value: activeCases, icon: ClipboardSignature, color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20', tab: 'cases' },
-    { label: 'Ferramentas Faltando', value: missingToolsInCases, icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20', tab: 'cases' },
-    { label: 'Ferramentas Danificadas', value: damagedToolsInCases, icon: AlertTriangle, color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', tab: 'cases' },
-  ];
+  const maletaHistoryData = [
+    { name: 'Boas', value: maletaTools.filter(mt => mt.estado === 'Boa').length, color: '#10b981' },
+    { name: 'Faltando', value: missingMaletaTools, color: '#f59e0b' },
+    { name: 'Danificadas', value: damagedMaletaTools, color: '#ef4444' },
+  ].filter(d => d.value > 0);
 
   const recentAssignments = [...(assignments || [])]
     .sort((a, b) => new Date(b.dateAssigned).getTime() - new Date(a.dateAssigned).getTime())
@@ -170,36 +154,6 @@ export default function Dashboard({
         })}
       </div>
 
-      {/* Case Management Stats */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          <Briefcase className="w-3 h-3" /> Módulo de Maletas & TAGs
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {caseStats.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div 
-                key={i} 
-                variants={itemVariants}
-                onClick={() => onNavigate(stat.tab)}
-                className={`bg-white/30 dark:bg-slate-900/30 backdrop-blur-md rounded-2xl p-5 border ${stat.borderColor} cursor-pointer hover:bg-slate-100/50 dark:bg-slate-800/50 transition-all group relative overflow-hidden`}
-              >
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className={`${stat.bgColor} ${stat.color} p-2.5 rounded-lg border ${stat.borderColor} group-hover:rotate-6 transition-transform`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">{stat.label}</p>
-                    <p className={`text-2xl font-bold ${stat.color} font-mono`}>{stat.value}</p>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Section */}
         <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
@@ -260,7 +214,7 @@ export default function Dashboard({
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <button 
               onClick={() => onNavigate('tools')}
               className="p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl hover:border-cyan-500/50 hover:bg-cyan-500/10 transition-all flex flex-col items-center text-center gap-3 group"
@@ -268,7 +222,16 @@ export default function Dashboard({
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-cyan-500/20 transition-colors">
                 <Wrench className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-cyan-400 transition-colors uppercase tracking-wider">Registrar Ferramenta</span>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-cyan-400 transition-colors uppercase tracking-wider">Mestre de Ferramentas</span>
+            </button>
+            <button 
+              onClick={() => onNavigate('maletas')}
+              className="p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all flex flex-col items-center text-center gap-3 group"
+            >
+              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <Package className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-blue-400 transition-colors uppercase tracking-wider">Gestão de Maletas</span>
             </button>
             <button 
               onClick={() => onNavigate('standard')}
@@ -277,16 +240,16 @@ export default function Dashboard({
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
                 <ListChecks className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-purple-400 transition-colors uppercase tracking-wider">Gerenciar Listas</span>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-purple-400 transition-colors uppercase tracking-wider">Kits Padronizados</span>
             </button>
             <button 
               onClick={() => onNavigate('collective')}
               className="p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all flex flex-col items-center text-center gap-3 group"
             >
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
-                <Package className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                <LayoutGrid className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-indigo-400 transition-colors uppercase tracking-wider">Uso Coletivo</span>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-400 transition-colors uppercase tracking-wider">Bancadas Coletivas</span>
             </button>
             <button 
               onClick={() => onNavigate('employees')}
@@ -295,7 +258,7 @@ export default function Dashboard({
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                 <Building2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-emerald-400 transition-colors uppercase tracking-wider">Departamentos</span>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-emerald-400 transition-colors uppercase tracking-wider">Estrutura Org.</span>
             </button>
           </div>
         </motion.div>
@@ -362,6 +325,111 @@ export default function Dashboard({
                 <p className="font-mono text-sm">Nenhum log registrado.</p>
               </div>
             )}
+          </div>
+        </motion.div>
+
+        {/* Maletas Dashboard Section */}
+        <motion.div variants={itemVariants} className="lg:col-span-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Maleta Tool Status Chart */}
+            <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-amber-400" />
+                  Estado das Ferramentas (Maletas)
+                </h2>
+              </div>
+              <div className="h-64 w-full">
+                {maletaHistoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={maletaHistoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {maletaHistoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                          borderRadius: '12px', 
+                          border: 'none',
+                          color: '#fff',
+                          fontFamily: 'monospace'
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontFamily: 'monospace', fontSize: '12px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-slate-500 italic font-mono text-sm">
+                    Nenhum dado disponível.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Maleta Checks */}
+            <div className="lg:col-span-2 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <History className="w-5 h-5 text-cyan-400" />
+                  Últimas Conferências de Maletas
+                </h2>
+                <button 
+                  onClick={() => onNavigate('maletas')}
+                  className="text-xs font-mono text-cyan-400 hover:text-cyan-300 uppercase tracking-widest"
+                >
+                  [Ver_Todas]
+                </button>
+              </div>
+              <div className="space-y-4">
+                {recentMaletaChecks.length > 0 ? (
+                  recentMaletaChecks.map((check, idx) => {
+                    const maleta = maletas.find(m => m.id === check.maleta_id);
+                    const missingItems = check.items.filter(i => i.status === 'Faltando').length;
+                    const damagedItems = check.items.filter(i => i.status === 'Danificada').length;
+                    
+                    return (
+                      <div key={check.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/30 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            (missingItems + damagedItems) > 0 ? 'bg-amber-500/10 text-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-emerald-500/10 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                          }`}>
+                            <ClipboardCheck className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-cyan-400 transition-colors">
+                              {maleta?.nome || 'Maleta Desconhecida'}
+                            </p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-mono">
+                              Por {check.user_name} • {new Date(check.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5 self-center">
+                          {missingItems > 0 && <span className="text-[9px] font-bold text-amber-500 uppercase bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 tracking-wider">{missingItems} Faltando</span>}
+                          {damagedItems > 0 && <span className="text-[9px] font-bold text-red-500 uppercase bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 tracking-wider">{damagedItems} Danificadas</span>}
+                          {missingItems === 0 && damagedItems === 0 && <span className="text-[9px] font-bold text-emerald-500 uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 tracking-wider">Completa</span>}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 flex flex-col items-center justify-center space-y-3 opacity-50 bg-slate-50 dark:bg-slate-800/20 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                    <History className="w-8 h-8 text-slate-400" />
+                    <p className="font-mono text-xs">Nenhuma conferência registrada.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

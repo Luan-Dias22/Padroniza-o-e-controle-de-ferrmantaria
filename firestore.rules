@@ -122,8 +122,9 @@ service cloud.firestore {
     }
 
     function hasOnlyAllowedFields(required, optional) {
+      let allowed = required.concat(optional);
       return request.resource.data.keys().hasAll(required) && 
-             request.resource.data.keys().hasOnly(required.concat(optional));
+             request.resource.data.keys().hasOnly(allowed);
     }
 
     // ===============================================================
@@ -136,7 +137,7 @@ service cloud.firestore {
              data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
              data.description is string && data.description.size() < 1000 &&
              (!('price' in data) || (data.price is number && data.price >= 0)) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidStandardToolList(data) {
@@ -144,7 +145,7 @@ service cloud.firestore {
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.tools is list && data.tools.size() <= 100 &&
              (!('isLocked' in data) || data.isLocked is bool) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidDepartment(data) {
@@ -153,7 +154,7 @@ service cloud.firestore {
              (!('standardListId' in data) || (data.standardListId is string && data.standardListId.size() < 100)) &&
              (!('expectedNewcomers' in data) || (data.expectedNewcomers is number && data.expectedNewcomers >= 0)) &&
              (!('requiredHeadcount' in data) || (data.requiredHeadcount is number && data.requiredHeadcount >= 0)) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidEmployee(data) {
@@ -161,30 +162,55 @@ service cloud.firestore {
              data.employeeId is string && data.employeeId.size() > 0 && data.employeeId.size() < 100 &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.departmentId is string && data.departmentId.size() < 100 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidAssignment(data) {
-      return hasOnlyAllowedFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid'], ['id']) &&
+      return hasOnlyAllowedFields(['employeeId', 'departmentId', 'assignedTools', 'dateAssigned', 'uid'], ['id', 'maleta_id']) &&
              data.employeeId is string && data.employeeId.size() > 0 && data.employeeId.size() < 100 &&
              data.departmentId is string && data.departmentId.size() < 100 &&
              data.assignedTools is list && data.assignedTools.size() <= 100 &&
-             data.dateAssigned is string && data.dateAssigned.size() > 0 && data.dateAssigned.size() < 50 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.dateAssigned is string && data.dateAssigned.size() > 0 && data.dateAssigned.size() < 100 &&
+             (!('maleta_id' in data) || (data.maleta_id is string && data.maleta_id.size() < 100)) &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
+    }
+
+    function isValidMaleta(data) {
+      return hasOnlyAllowedFields(['codigo_tag', 'nome', 'setor', 'status', 'created_at', 'updated_at', 'uid'], ['id', 'responsavel_id', 'observacoes', 'transfer_history']) &&
+             data.codigo_tag is string && data.codigo_tag.size() > 0 && data.codigo_tag.size() < 100 &&
+             data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.setor is string && data.setor.size() > 0 && data.setor.size() < 100 &&
+             data.status in ['Ativa', 'Inativa', 'Manutenção'] &&
+             data.created_at is string && data.created_at.size() > 0 && data.created_at.size() < 100 &&
+             data.updated_at is string && data.updated_at.size() > 0 && data.updated_at.size() < 100 &&
+             (!('responsavel_id' in data) || (data.responsavel_id == null || (data.responsavel_id is string && data.responsavel_id.size() < 100))) &&
+             (!('observacoes' in data) || (data.observacoes is string && data.observacoes.size() < 1000)) &&
+             (!('transfer_history' in data) || (data.transfer_history is list && data.transfer_history.size() < 100)) &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
+    }
+
+    function isValidMaletaTool(data) {
+      return hasOnlyAllowedFields(['maleta_id', 'ferramenta_id', 'quantidade', 'estado', 'uid'], ['id', 'tag']) &&
+             data.maleta_id is string && data.maleta_id.size() > 0 && data.maleta_id.size() < 100 &&
+             data.ferramenta_id is string && data.ferramenta_id.size() > 0 && data.ferramenta_id.size() < 100 &&
+             data.quantidade is number && data.quantidade >= 0 &&
+             data.estado in ['Boa', 'Danificada', 'Faltando'] &&
+             (!('tag' in data) || (data.tag is string && data.tag.size() < 100)) &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidCollectiveLine(data) {
       return hasOnlyAllowedFields(['name', 'uid'], ['id']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidCollectiveStation(data) {
       return hasOnlyAllowedFields(['name', 'line', 'tools', 'uid'], ['id']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.line is string && data.line.size() > 0 && data.line is string && data.line.size() < 100 &&
+             data.line is string && data.line.size() > 0 && data.line.size() < 100 &&
              data.tools is list && data.tools.size() <= 200 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     function isValidStockEntry(data) {
@@ -192,42 +218,33 @@ service cloud.firestore {
              data.toolId is string && data.toolId.size() > 0 && data.toolId.size() < 100 &&
              data.lineId is string && data.lineId.size() > 0 && data.lineId.size() < 100 &&
              data.quantity is number && data.quantity != 0 &&
-             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 100 &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128) &&
              data.type in ['individual', 'collective'] &&
              (!('station' in data) || (data.station is string && data.station.size() < 100)) &&
              (!('employeeId' in data) || (data.employeeId is string && data.employeeId.size() < 100));
     }
 
-    function isValidCase(data) {
-      return hasOnlyAllowedFields(['tag', 'name', 'sector', 'status', 'responsibleId', 'tools', 'uid'], ['notes', 'id']) &&
-             data.tag is string && data.tag.size() > 0 && data.tag.size() < 20 &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.sector is string && data.sector.size() > 0 && data.sector.size() < 100 &&
-             data.status in ["Ativa", "Inativa", "Manutenção"] &&
-             data.responsibleId is string && data.responsibleId.size() < 100 &&
-             data.tools is list && data.tools.size() <= 100 &&
-             (!('notes' in data) || data.notes is string) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    function isValidMaletaCheck(data) {
+      return hasOnlyAllowedFields(['maleta_id', 'checked_by_id', 'user_name', 'date', 'items', 'uid'], ['id', 'observacoes']) &&
+             data.maleta_id is string && data.maleta_id.size() > 0 && data.maleta_id.size() < 100 &&
+             data.checked_by_id is string && data.checked_by_id.size() > 0 && data.checked_by_id.size() < 100 &&
+             data.user_name is string && data.user_name.size() > 0 && data.user_name.size() < 100 &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 100 &&
+             data.items is list && data.items.size() <= 200 &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128) &&
+             (!('observacoes' in data) || (data.observacoes is string && data.observacoes.size() < 1000));
     }
 
-    function isValidCaseInspection(data) {
-      return hasOnlyAllowedFields(['caseId', 'date', 'inspectorId', 'items', 'uid'], ['notes', 'id']) &&
-             data.caseId is string && data.caseId.size() > 0 && data.caseId.size() < 100 &&
-             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
-             data.inspectorId is string && data.inspectorId.size() > 0 && data.inspectorId.size() < 100 &&
-             data.items is list && data.items.size() <= 100 &&
-             (!('notes' in data) || data.notes is string) &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
-    }
-
-    function isValidCaseLog(data) {
-      return hasOnlyAllowedFields(['caseId', 'date', 'type', 'description', 'uid'], ['details', 'id']) &&
-             data.caseId is string && data.caseId.size() > 0 && data.caseId.size() < 100 &&
-             data.date is string && data.date.size() > 0 && data.date.size() < 50 &&
-             data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
-             data.description is string && data.description.size() > 0 && data.description.size() < 500 &&
-             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    function isValidMaletaEvent(data) {
+      return hasOnlyAllowedFields(['maleta_id', 'type', 'date', 'user_name', 'user_id', 'description', 'uid'], ['id']) &&
+             data.maleta_id is string && data.maleta_id.size() > 0 && data.maleta_id.size() < 100 &&
+             data.type in ['creation', 'edition', 'transfer', 'tool_addition', 'tool_removal', 'check'] &&
+             data.date is string && data.date.size() > 0 && data.date.size() < 100 &&
+             data.user_name is string && data.user_name.size() > 0 && data.user_name.size() < 100 &&
+             data.user_id is string && data.user_id.size() > 0 && data.user_id.size() < 100 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 1000 &&
+             data.uid is string && (data.uid.size() > 0 && data.uid.size() < 128);
     }
 
     // ===============================================================
@@ -276,6 +293,34 @@ service cloud.firestore {
         allow delete: if canWrite(userId) && isDocOwner(userId);
       }
 
+      match /maletas/{maletaId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['codigo_tag', 'nome', 'setor', 'status', 'created_at', 'updated_at', 'uid']) && isValidMaleta(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidMaleta(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /maletaTools/{maletaToolId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['maleta_id', 'ferramenta_id', 'quantidade', 'estado', 'uid']) && isValidMaletaTool(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidMaletaTool(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /maletaChecks/{checkId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['maleta_id', 'checked_by_id', 'user_name', 'date', 'items', 'uid']) && isValidMaletaCheck(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidMaletaCheck(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
+      match /maletaEvents/{eventId} {
+        allow read: if canRead(userId);
+        allow create: if canWrite(userId) && hasRequiredFields(['maleta_id', 'type', 'date', 'user_name', 'user_id', 'description', 'uid']) && isValidMaletaEvent(request.resource.data) && uidUnchanged(userId);
+        allow update: if canWrite(userId) && isDocOwner(userId) && isValidMaletaEvent(request.resource.data) && uidNotModified(userId);
+        allow delete: if canWrite(userId) && isDocOwner(userId);
+      }
+
       match /collectiveLines/{lineId} {
         allow read: if canRead(userId);
         allow create: if canWrite(userId) && hasRequiredFields(['name', 'uid']) && isValidCollectiveLine(request.resource.data) && uidUnchanged(userId);
@@ -294,27 +339,6 @@ service cloud.firestore {
         allow read: if canRead(userId);
         allow create: if canWrite(userId) && hasRequiredFields(['toolId', 'lineId', 'quantity', 'date', 'uid', 'type']) && isValidStockEntry(request.resource.data) && uidUnchanged(userId);
         allow update: if canWrite(userId) && isDocOwner(userId) && isValidStockEntry(request.resource.data) && uidNotModified(userId);
-        allow delete: if canWrite(userId) && isDocOwner(userId);
-      }
-
-      match /cases/{caseId} {
-        allow read: if canRead(userId);
-        allow create: if canWrite(userId) && hasRequiredFields(['tag', 'name', 'sector', 'status', 'responsibleId', 'tools', 'uid']) && isValidCase(request.resource.data) && uidUnchanged(userId);
-        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCase(request.resource.data) && uidNotModified(userId);
-        allow delete: if canWrite(userId) && isDocOwner(userId);
-      }
-
-      match /caseInspections/{inspectionId} {
-        allow read: if canRead(userId);
-        allow create: if canWrite(userId) && hasRequiredFields(['caseId', 'date', 'inspectorId', 'items', 'uid']) && isValidCaseInspection(request.resource.data) && uidUnchanged(userId);
-        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCaseInspection(request.resource.data) && uidNotModified(userId);
-        allow delete: if canWrite(userId) && isDocOwner(userId);
-      }
-
-      match /caseLogs/{logId} {
-        allow read: if canRead(userId);
-        allow create: if canWrite(userId) && hasRequiredFields(['caseId', 'date', 'type', 'description', 'uid']) && isValidCaseLog(request.resource.data) && uidUnchanged(userId);
-        allow update: if canWrite(userId) && isDocOwner(userId) && isValidCaseLog(request.resource.data) && uidNotModified(userId);
         allow delete: if canWrite(userId) && isDocOwner(userId);
       }
     }

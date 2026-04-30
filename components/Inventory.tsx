@@ -16,9 +16,10 @@ interface InventoryProps {
   employees: Employee[];
   setStockEntries: React.Dispatch<React.SetStateAction<StockEntry[]>>;
   isGuest?: boolean;
+  currentUser: any;
 }
 
-export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, employees, setStockEntries, isGuest = false }: InventoryProps) {
+export default function Inventory({ tools, departments, collectiveLines, collectiveStations, stockEntries, standardLists, employees, setStockEntries, isGuest = false, currentUser }: InventoryProps) {
   const [activeInventoryTab, setActiveInventoryTab] = useState<'history' | 'balance' | 'pending'>('history');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedToolId, setSelectedToolId] = useState('');
@@ -77,7 +78,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       quantity: parseInt(quantity),
       date: new Date().toISOString(),
       type: stockType,
-      ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
+      ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {}),
+      uid: currentUser?.uid || 'guest'
     };
 
     setStockEntries((prev: StockEntry[]) => [...prev, newEntry]);
@@ -98,7 +100,8 @@ export default function Inventory({ tools, departments, collectiveLines, collect
       quantity: parseInt(quantity),
       date: new Date().toISOString(),
       type: stockType,
-      ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {})
+      ...(stockType === 'collective' && selectedStation ? { station: selectedStation } : {}),
+      uid: currentUser?.uid || 'guest'
     }));
 
     setStockEntries((prev: StockEntry[]) => [...prev, ...newEntries]);
@@ -244,7 +247,7 @@ export default function Inventory({ tools, departments, collectiveLines, collect
         tool?.brand || '-',
         line?.name || 'Desconhecido',
         item.station && item.station !== 'no-station' ? item.station : '-',
-        item.quantity.toString(),
+        (item.quantity ?? 0).toString(),
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price),
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)
       ];

@@ -14,6 +14,7 @@ export function formatCurrency(value: number): string {
 
 export function sortByName(a: string, b: string) {
   const getWeight = (name: string) => {
+    if (!name || typeof name !== 'string') return 999;
     const n = name.toLowerCase().trim();
     
     // Teste / Inspeção
@@ -73,5 +74,8 @@ export function sortByName(a: string, b: string) {
   const weightB = getWeight(b);
 
   if (weightA !== weightB) return weightA - weightB;
-  return a.localeCompare(b);
+  
+  const strA = String(a || '');
+  const strB = String(b || '');
+  return strA.localeCompare(strB);
 }

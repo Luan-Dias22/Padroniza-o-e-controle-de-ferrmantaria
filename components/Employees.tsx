@@ -10,13 +10,15 @@ export default function Employees({
   departments, setDepartments,
   assignments, setAssignments,
   tools, standardLists,
-  isGuest = false
+  isGuest = false,
+  currentUser
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], setDepartments: (d: Department[]) => void,
   assignments: Assignment[], setAssignments: (a: Assignment[]) => void,
   tools: Tool[], standardLists: StandardToolList[],
-  isGuest?: boolean
+  isGuest?: boolean,
+  currentUser: any
 }) {
   const [newEmpName, setNewEmpName] = useState('');
   const [newEmpId, setNewEmpId] = useState('');
@@ -57,7 +59,8 @@ export default function Employees({
         ...emp,
         employeeId: newEmpId.trim(),
         name: newEmpName.trim(),
-        departmentId: newEmpDept
+        departmentId: newEmpDept,
+        uid: currentUser?.uid || 'guest'
       } : emp));
       setEditingEmpId(null);
     } else {
@@ -65,7 +68,8 @@ export default function Employees({
         id: crypto.randomUUID(),
         employeeId: newEmpId.trim(),
         name: newEmpName.trim(),
-        departmentId: newEmpDept
+        departmentId: newEmpDept,
+        uid: currentUser?.uid || 'guest'
       }]);
     }
     
@@ -108,7 +112,8 @@ export default function Employees({
     setDepartments([...departments, {
       id: crypto.randomUUID(),
       name: newDeptName.trim(),
-      expectedNewcomers: 0
+      expectedNewcomers: 0,
+      uid: currentUser?.uid || 'guest'
     }]);
     
     setNewDeptName('');
@@ -120,7 +125,8 @@ export default function Employees({
       ...d, 
       name: editDeptName.trim(), 
       expectedNewcomers: editDeptNewcomers,
-      requiredHeadcount: editDeptRequiredHeadcount
+      requiredHeadcount: editDeptRequiredHeadcount,
+      uid: currentUser?.uid || 'guest'
     } : d));
     setEditingDeptId(null);
   };
@@ -377,7 +383,7 @@ export default function Employees({
                     if (sortByMatricula) {
                       return a.employeeId.localeCompare(b.employeeId);
                     }
-                    return 0; // Keep original order or sort by name if preferred
+                    return a.name.localeCompare(b.name);
                   })
                   .map((emp, idx) => {
                   const dept = departments.find(d => d.id === emp.departmentId);

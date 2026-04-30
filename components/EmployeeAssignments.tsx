@@ -10,13 +10,14 @@ import { getLogoBase64 } from '@/lib/pdfUtils';
 import { sortByName } from '@/lib/utils';
 
 export default function EmployeeAssignments({
-  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments, stockEntries, setStockEntries, isGuest = false
+  employees, setEmployees, departments, tools, standardLists, assignments, setAssignments, stockEntries, setStockEntries, isGuest = false, currentUser
 }: {
   employees: Employee[], setEmployees: (e: Employee[]) => void,
   departments: Department[], tools: Tool[], standardLists: StandardToolList[],
   assignments: Assignment[], setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>,
   stockEntries: StockEntry[], setStockEntries: React.Dispatch<React.SetStateAction<StockEntry[]>>,
-  isGuest?: boolean
+  isGuest?: boolean,
+  currentUser: any
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
@@ -26,14 +27,14 @@ export default function EmployeeAssignments({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [employeeSortByMatricula, setEmployeeSortByMatricula] = useState(false);
-  const [customTools, setCustomTools] = useState<{ toolId: string, itemTag: string }[]>([]);
+  const [customTools, setCustomTools] = useState<{ toolId: string, quantity: number }[]>([]);
   const [filterType, setFilterType] = useState<'all' | 'pending' | 'completed'>('all');
   const [assignmentSearch, setAssignmentSearch] = useState('');
   const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'selected' | 'unselected'>('all');
   const [assignmentEmployeeSearch, setAssignmentEmployeeSearch] = useState('');
   const [assignmentDepartmentFilter, setAssignmentDepartmentFilter] = useState('');
   const [sortByMatricula, setSortByMatricula] = useState(false);
-  const [shouldDeductFromStock, setShouldDeductFromStock] = useState(true);
+  const [shouldDeductFromStock, setShouldDeductFromStock] = useState(false);
   const [withdrawnToolIds, setWithdrawnToolIds] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -54,28 +55,6 @@ export default function EmployeeAssignments({
     onConfirm: () => {}
   });
 
-  const getNextTag = (employeeCode: string, currentTools: { itemTag: string }[]) => {
-    const getSuffix = (n: number): string => {
-      let suffix = '';
-      let num = n;
-      while (num >= 0) {
-        suffix = String.fromCharCode((num % 26) + 65) + suffix;
-        num = Math.floor(num / 26) - 1;
-      }
-      return suffix;
-    };
-
-    const existingTags = new Set(currentTools.map(t => t.itemTag));
-    let index = 0;
-    let newTag = `${employeeCode}-${getSuffix(index)}`;
-    
-    while (existingTags.has(newTag)) {
-      index++;
-      newTag = `${employeeCode}-${getSuffix(index)}`;
-    }
-    return newTag;
-  };
-
   const handleEmployeeSelect = (empId: string) => {
     setSelectedEmployeeId(empId);
     if (!empId) {
@@ -83,45 +62,22 @@ export default function EmployeeAssignments({
       return;
     }
     const emp = employees.find(e => e.id === empId);
-    if (!emp) return;
-    
     const dept = departments.find(d => d.id === emp?.departmentId);
     const standardList = standardLists.find(s => s.id === dept?.standardListId);
-    
-    if (standardList) {
-      let newCustomTools: { toolId: string, itemTag: string }[] = [];
-      standardList.tools.forEach(st => {
-        for (let i = 0; i < st.quantity; i++) {
-          const tag = getNextTag(emp.employeeId, newCustomTools);
-          newCustomTools.push({ toolId: st.toolId, itemTag: tag });
-        }
-      });
-      setCustomTools(newCustomTools);
-    } else {
-      setCustomTools([]);
-    }
+    setCustomTools(standardList ? [...standardList.tools] : []);
   };
 
   const toggleCustomTool = (toolId: string) => {
-    const existingEntry = customTools.find(t => t.toolId === toolId);
-    if (existingEntry) {
-      // Remove all entries of this tool (or just one? usually if you uncheck it removed all)
+    if (customTools.some(t => t.toolId === toolId)) {
       setCustomTools(customTools.filter(t => t.toolId !== toolId));
     } else {
-      const emp = employees.find(e => e.id === selectedEmployeeId);
-      const tag = getNextTag(emp?.employeeId || 'TMP', customTools);
-      setCustomTools([...customTools, { toolId, itemTag: tag }]);
+      setCustomTools([...customTools, { toolId, quantity: 1 }]);
     }
   };
 
-  const addAnotherEntry = (toolId: string) => {
-    const emp = employees.find(e => e.id === selectedEmployeeId);
-    const tag = getNextTag(emp?.employeeId || 'TMP', customTools);
-    setCustomTools([...customTools, { toolId, itemTag: tag }]);
-  };
-
-  const removeSpecificTag = (tag: string) => {
-    setCustomTools(customTools.filter(t => t.itemTag !== tag));
+  const updateCustomToolQuantity = (toolId: string, quantity: number) => {
+    if (quantity < 1) quantity = 1;
+    setCustomTools(customTools.map(t => t.toolId === toolId ? { ...t, quantity } : t));
   };
 
   const handleSaveAssignment = () => {
@@ -138,51 +94,47 @@ export default function EmployeeAssignments({
       assignedTools: customTools,
       dateAssigned: editingAssignmentId 
         ? assignments.find(a => a.id === editingAssignmentId)?.dateAssigned || new Date().toISOString()
-        : new Date().toISOString()
+        : new Date().toISOString(),
+      uid: currentUser?.uid || 'guest'
     };
 
     // Deduct from stock if requested
     if (shouldDeductFromStock && customTools.length > 0) {
-      const toolsToDeduct = customTools.filter(t => !withdrawnToolIds.includes(t.itemTag));
+      const toolsToDeduct = customTools.filter(t => !withdrawnToolIds.includes(t.toolId));
       const newStockEntries: StockEntry[] = [];
       const insufficientTools: string[] = [];
 
-      // Group by toolId to check total balance
-      const toolsCount: Record<string, number> = {};
-      toolsToDeduct.forEach(t => {
-        toolsCount[t.toolId] = (toolsCount[t.toolId] || 0) + 1;
-      });
-
-      Object.entries(toolsCount).forEach(([toolId, quantity], index) => {
-        const toolInfo = tools.find(t => t.id === toolId);
+      toolsToDeduct.forEach((tool, index) => {
+        const toolInfo = tools.find(t => t.id === tool.toolId);
         const lineBalance = stockEntries
-          .filter(e => e.toolId === toolId && e.lineId === emp.departmentId)
+          .filter(e => e.toolId === tool.toolId && e.lineId === emp.departmentId)
           .reduce((sum, e) => sum + e.quantity, 0);
         
         const generalBalance = stockEntries
-          .filter(e => e.toolId === toolId && e.lineId === 'general')
+          .filter(e => e.toolId === tool.toolId && e.lineId === 'general')
           .reduce((sum, e) => sum + e.quantity, 0);
 
         const totalAvailable = lineBalance + generalBalance;
 
-        if (totalAvailable < quantity) {
+        if (totalAvailable < tool.quantity) {
           insufficientTools.push(toolInfo?.name || 'Ferramenta desconhecida');
           return;
         }
 
-        let remainingToDeduct = quantity;
+        let remainingToDeduct = tool.quantity;
 
         // Prioritize line stock
         if (lineBalance > 0) {
           const fromLine = Math.min(lineBalance, remainingToDeduct);
           newStockEntries.push({
             id: `se_withdraw_line_${new Date().getTime()}_${index}`,
-            toolId: toolId,
+            toolId: tool.toolId,
             lineId: emp.departmentId,
             quantity: -fromLine,
             date: new Date().toISOString(),
             type: 'individual',
-            employeeId: selectedEmployeeId
+            employeeId: selectedEmployeeId,
+            uid: currentUser?.uid || 'guest'
           });
           remainingToDeduct -= fromLine;
         }
@@ -191,12 +143,13 @@ export default function EmployeeAssignments({
         if (remainingToDeduct > 0) {
           newStockEntries.push({
             id: `se_withdraw_gen_${new Date().getTime()}_${index}`,
-            toolId: toolId,
+            toolId: tool.toolId,
             lineId: 'general',
             quantity: -remainingToDeduct,
             date: new Date().toISOString(),
             type: 'individual',
-            employeeId: selectedEmployeeId
+            employeeId: selectedEmployeeId,
+            uid: currentUser?.uid || 'guest'
           });
         }
       });
@@ -240,21 +193,21 @@ export default function EmployeeAssignments({
 
     if (withdrawnToolIds.includes(toolId)) return; // Already withdrawn in this session
 
-    const assignedTool = customTools.find(t => t.itemTag === toolId); // Actually this toolId param is itemTag now
-    const quantity = 1;
+    const assignedTool = customTools.find(t => t.toolId === toolId);
+    const quantity = assignedTool ? assignedTool.quantity : 1;
 
     const lineBalance = stockEntries
-      .filter(e => e.toolId === assignedTool?.toolId && e.lineId === emp.departmentId)
+      .filter(e => e.toolId === toolId && e.lineId === emp.departmentId)
       .reduce((sum, e) => sum + e.quantity, 0);
     
     const generalBalance = stockEntries
-      .filter(e => e.toolId === assignedTool?.toolId && e.lineId === 'general')
+      .filter(e => e.toolId === toolId && e.lineId === 'general')
       .reduce((sum, e) => sum + e.quantity, 0);
 
     const totalAvailable = lineBalance + generalBalance;
 
     if (totalAvailable < quantity) {
-      const toolInfo = tools.find(t => t.id === assignedTool?.toolId);
+      const toolInfo = tools.find(t => t.id === toolId);
       alert(`Estoque insuficiente para a ferramenta: ${toolInfo?.name || 'Ferramenta'}\nSaldo total disponível: ${totalAvailable}\n\nOperação cancelada.`);
       return;
     }
@@ -267,12 +220,13 @@ export default function EmployeeAssignments({
       const fromLine = Math.min(lineBalance, remainingToDeduct);
       newStockEntries.push({
         id: `se_single_withdraw_line_${new Date().getTime()}_${toolId}`,
-        toolId: assignedTool?.toolId || '',
+        toolId: toolId,
         lineId: emp.departmentId,
         quantity: -fromLine,
         date: new Date().toISOString(),
         type: 'individual',
-        employeeId: selectedEmployeeId
+        employeeId: selectedEmployeeId,
+        uid: currentUser?.uid || 'guest'
       });
       remainingToDeduct -= fromLine;
     }
@@ -281,12 +235,13 @@ export default function EmployeeAssignments({
     if (remainingToDeduct > 0) {
       newStockEntries.push({
         id: `se_single_withdraw_gen_${new Date().getTime()}_${toolId}`,
-        toolId: assignedTool?.toolId || '',
+        toolId: toolId,
         lineId: 'general',
         quantity: -remainingToDeduct,
         date: new Date().toISOString(),
         type: 'individual',
-        employeeId: selectedEmployeeId
+        employeeId: selectedEmployeeId,
+        uid: currentUser?.uid || 'guest'
       });
     }
     
@@ -302,12 +257,13 @@ export default function EmployeeAssignments({
       const standardList = standardLists.find(s => s.id === dept.standardListId);
       if (standardList) {
         (standardList.tools || []).forEach(stdTool => {
-          const assignedCount = (assignment.assignedTools || []).filter(t => t.toolId === stdTool.toolId).length;
-          if (assignedCount < stdTool.quantity) {
+          const assignedTool = (assignment.assignedTools || []).find(t => t.toolId === stdTool.toolId);
+          const assignedQty = assignedTool ? assignedTool.quantity : 0;
+          if (assignedQty < stdTool.quantity) {
             const tool = tools.find(t => t.id === stdTool.toolId);
             missingTools.push({
               toolName: tool ? tool.name : 'Desconhecida',
-              missingQty: stdTool.quantity - assignedCount
+              missingQty: stdTool.quantity - assignedQty
             });
           }
         });
@@ -419,13 +375,13 @@ export default function EmployeeAssignments({
         tool?.brand.toUpperCase() || 'N/A',
         tool?.name.toUpperCase() || 'N/A',
         tool?.category.toUpperCase() || 'N/A',
-        at.itemTag
+        (at.quantity ?? 0).toString()
       ];
     });
 
     autoTable(doc, {
       startY: textY + (splitText.length * 5) + 10,
-      head: [['MARCA', 'FERRAMENTA', 'CATEGORIA', 'TAG/CÓDIGO']],
+      head: [['MARCA', 'FERRAMENTA', 'CATEGORIA', 'QTD.']],
       body: tableData,
       theme: 'grid',
       styles: {
@@ -465,7 +421,7 @@ export default function EmployeeAssignments({
       doc.setFont('helvetica', 'bold');
       doc.text('FERRAMENTAS PENDENTES (A ENTREGAR)', 14, currentY + 15);
       
-      const missingTableData = missingTools.map(mt => [mt.toolName.toUpperCase(), mt.missingQty.toString()]);
+      const missingTableData = missingTools.map(mt => [mt.toolName.toUpperCase(), (mt.missingQty ?? 0).toString()]);
       
       autoTable(doc, {
         startY: currentY + 20,
@@ -683,21 +639,11 @@ export default function EmployeeAssignments({
                       <option key={e.id} value={e.id}>{e.name} ({e.employeeId})</option>
                     ))}
                   </select>
-                  {selectedEmployeeId && (() => {
-                    const emp = employees.find(e => e.id === selectedEmployeeId);
-                    const dept = departments.find(d => d.id === emp?.departmentId);
-                    return (
-                      <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex flex-col gap-1">
-                        <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-blue-400">
-                          <span>Departamento vinculado</span>
-                          <span className="font-bold">{dept?.name || 'N/A'}</span>
-                        </div>
-                        <p className="text-[10px] text-blue-500/70 mt-1 leading-tight">
-                          Kit padrão carregado automaticamente com base no vínculo. Baixas de estoque habilitadas por padrão.
-                        </p>
-                      </div>
-                    );
-                  })()}
+                  {selectedEmployeeId && (
+                    <p className="text-xs text-blue-400 mt-2 bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                      As ferramentas padrão para o departamento deste funcionário foram carregadas. Você pode modificá-las abaixo.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -781,53 +727,58 @@ export default function EmployeeAssignments({
                               <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 break-words uppercase tracking-wider">{tool.brand}</p>
                             </div>
                             {isSelected && (
-                              <div className="flex flex-col items-end gap-2 pr-2">
-                                {customTools.filter(t => t.toolId === tool.id).map((entry, idx) => {
-                                  const lineStock = stockEntries
-                                    .filter(e => e.toolId === tool.id && e.lineId === dept?.id)
-                                    .reduce((sum, e) => sum + e.quantity, 0);
-                                  const generalStock = stockEntries
-                                    .filter(e => e.toolId === tool.id && e.lineId === 'general')
-                                    .reduce((sum, e) => sum + e.quantity, 0);
-                                  const totalStock = lineStock + generalStock;
-                                  
-                                  const isWithdrawn = withdrawnToolIds.includes(entry.itemTag);
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2">
+                                  {(() => {
+                                    const qty = customTools.find(t => t.toolId === tool.id)?.quantity || 1;
+                                    const lineStock = stockEntries
+                                      .filter(e => e.toolId === tool.id && e.lineId === dept?.id)
+                                      .reduce((sum, e) => sum + e.quantity, 0);
+                                    const generalStock = stockEntries
+                                      .filter(e => e.toolId === tool.id && e.lineId === 'general')
+                                      .reduce((sum, e) => sum + e.quantity, 0);
+                                    const totalStock = lineStock + generalStock;
+                                    const isInsufficient = shouldDeductFromStock && qty > totalStock;
 
-                                  return (
-                                    <div key={entry.itemTag} className="flex items-center gap-2 bg-slate-900/40 p-1.5 rounded-lg border border-slate-800/50">
-                                      <div className="flex flex-col">
-                                        <span className="text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-tight">{entry.itemTag}</span>
-                                        <span className="text-[8px] text-slate-500 uppercase font-mono tracking-widest">Estoque: {totalStock}</span>
-                                      </div>
-                                      
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          type="button"
-                                          onClick={(e) => handleSingleWithdrawal(e, entry.itemTag)}
-                                          disabled={isWithdrawn || isGuest}
-                                          className={`p-1 rounded border transition-colors ${isWithdrawn ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10'} disabled:opacity-50 disabled:cursor-not-allowed`}
-                                          title={isWithdrawn ? 'Já retirado do estoque' : 'Fazer retirada única deste item do estoque agora'}
-                                        >
-                                          {isWithdrawn ? <Check className="w-3.5 h-3.5" /> : <PackageMinus className="w-3.5 h-3.5" />}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => { e.stopPropagation(); removeSpecificTag(entry.itemTag); }}
-                                          className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); addAnotherEntry(tool.id); }}
-                                  className="text-[9px] font-bold text-blue-400 hover:text-blue-300 uppercase tracking-widest flex items-center gap-1 mt-1 px-2 py-1 bg-blue-400/5 rounded hover:bg-blue-400/10 transition-all border border-blue-400/10"
-                                >
-                                  <Plus className="w-3 h-3" /> Adicionar Outra Unid.
-                                </button>
+                                    return (
+                                      <>
+                                        <div className="flex flex-col items-end mr-1">
+                                          <span className={`text-[9px] font-mono uppercase tracking-widest ${isInsufficient ? 'text-red-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                                            Estoque: {totalStock}
+                                          </span>
+                                          {isInsufficient && (
+                                            <span className="text-[8px] text-red-500 font-bold uppercase flex items-center gap-0.5 animate-pulse">
+                                              <AlertTriangle className="w-2 h-2" /> Insuficiente
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <label className={`text-[10px] font-mono uppercase ${isInsufficient ? 'text-red-400' : 'text-slate-400 dark:text-slate-500 dark:text-slate-400'}`}>Qtd:</label>
+                                          <input 
+                                            type="number" 
+                                            min="1"
+                                            value={qty}
+                                            onChange={(e) => updateCustomToolQuantity(tool.id, parseInt(e.target.value) || 1)}
+                                            className={`w-16 p-1.5 bg-slate-50 dark:bg-slate-950 border rounded-lg text-sm transition-all outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                                              isInsufficient 
+                                                ? 'border-red-500 text-red-200 bg-red-500/5 ring-1 ring-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]' 
+                                                : 'border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-blue-500'
+                                            }`}
+                                          />
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleSingleWithdrawal(e, tool.id)}
+                                    disabled={withdrawnToolIds.includes(tool.id) || isGuest}
+                                    className={`p-1.5 rounded-lg border transition-colors ${withdrawnToolIds.includes(tool.id) ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 dark:text-slate-400 hover:text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    title={withdrawnToolIds.includes(tool.id) ? 'Já retirado do estoque' : 'Fazer retirada única deste item do estoque agora'}
+                                  >
+                                    {withdrawnToolIds.includes(tool.id) ? <Check className="w-4 h-4" /> : <PackageMinus className="w-4 h-4" />}
+                                  </button>
+                                </div>
                               </div>
                             )}
                             {isStandard && <span className="text-[9px] font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded uppercase tracking-widest">Padrão</span>}
@@ -861,20 +812,16 @@ export default function EmployeeAssignments({
               
               <div className="flex gap-3 w-full sm:w-auto items-center">
                 {shouldDeductFromStock && (() => {
-                  const toolsCount: Record<string, number> = {};
-                  customTools.filter(t => !withdrawnToolIds.includes(t.itemTag)).forEach(t => {
-                    toolsCount[t.toolId] = (toolsCount[t.toolId] || 0) + 1;
-                  });
-
-                  const hasInsufficient = Object.entries(toolsCount).some(([toolId, count]) => {
+                  const hasInsufficient = customTools.some(tool => {
+                    if (withdrawnToolIds.includes(tool.toolId)) return false;
                     const emp = employees.find(e => e.id === selectedEmployeeId);
                     const lineStock = stockEntries
-                      .filter(e => e.toolId === toolId && e.lineId === emp?.departmentId)
+                      .filter(e => e.toolId === tool.toolId && e.lineId === emp?.departmentId)
                       .reduce((sum, e) => sum + e.quantity, 0);
                     const generalStock = stockEntries
-                      .filter(e => e.toolId === toolId && e.lineId === 'general')
+                      .filter(e => e.toolId === tool.toolId && e.lineId === 'general')
                       .reduce((sum, e) => sum + e.quantity, 0);
-                    return count > (lineStock + generalStock);
+                    return tool.quantity > (lineStock + generalStock);
                   });
                   
                   return hasInsufficient ? (
@@ -1003,7 +950,7 @@ export default function EmployeeAssignments({
                         <td className="p-4">
                           <div className="flex flex-col items-start gap-2">
                             <span className="inline-flex items-center justify-center bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold px-2.5 py-1 rounded-lg">
-                              {(assignment.assignedTools || []).length} itens
+                              {(assignment.assignedTools || []).reduce((acc, t) => acc + t.quantity, 0)} itens ({(assignment.assignedTools || []).length} tipos)
                             </span>
                             {missingToolsCount > 0 && (
                               <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-500/20 uppercase tracking-wider">
@@ -1121,8 +1068,8 @@ export default function EmployeeAssignments({
                                 <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">{tool?.category}</p>
                               </td>
                               <td className="p-4 text-center">
-                                <span className="inline-flex items-center justify-center bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-bold px-3 py-1 rounded-lg font-mono text-[10px]">
-                                  {at.itemTag}
+                                <span className="inline-flex items-center justify-center bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold px-3 py-1 rounded-lg text-sm">
+                                  {at.quantity}
                                 </span>
                               </td>
                             </tr>

@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // Allow access to remote image placeholder.
   images: {
@@ -26,12 +26,6 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
-  productionBrowserSourceMaps: false,
-  poweredByHeader: false,
-  experimental: {
-    parallelServerCompiles: false,
-    parallelServerBuildTraces: false,
-  },
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.

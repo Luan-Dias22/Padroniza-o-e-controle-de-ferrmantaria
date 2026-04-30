@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap, Package, Briefcase } from 'lucide-react';
+import { Wrench, LayoutDashboard, ListChecks, Users, Menu, X, Building2, LogOut, LogIn, FileText, LayoutGrid, Settings as SettingsIcon, Calculator, Zap, Package } from 'lucide-react';
 import Dashboard from '@/components/Dashboard';
 import ToolRegistration from '@/components/ToolRegistration';
 import StandardToolLists from '@/components/StandardToolLists';
@@ -14,9 +14,9 @@ import CollectiveTools from '@/components/CollectiveTools';
 import Settings from '@/components/Settings';
 import Budgets from '@/components/Budgets';
 import Inventory from '@/components/Inventory';
-import Cases from '@/components/Cases';
+import MaletaRegistration from '@/components/MaletaRegistration';
 import { useFirestore } from '@/lib/useFirestore';
-import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation, StockEntry, Case, CaseInspection, CaseLog } from '@/lib/data';
+import { mockTools, mockStandardLists, mockEmployees, mockAssignments, mockDepartments, mockMaletas, mockMaletaTools, Tool, StandardToolList, Employee, Assignment, Department, CollectiveLine, CollectiveStation, StockEntry, Maleta, MaletaTool, MaletaCheck, MaletaEvent } from '@/lib/data';
 import { auth, signInWithGoogle, logOut } from '@/lib/firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 
@@ -69,9 +69,10 @@ export default function App() {
   const [collectiveLines, setCollectiveLines, linesInit, syncLines] = useFirestore<CollectiveLine>('collectiveLines', [], user?.uid || (isGuest ? 'guest' : null));
   const [collectiveStations, setCollectiveStations, stationsInit, syncStations] = useFirestore<CollectiveStation>('collectiveStations', [], user?.uid || (isGuest ? 'guest' : null));
   const [stockEntries, setStockEntries, stockInit, syncStock] = useFirestore<StockEntry>('stockEntries', [], user?.uid || (isGuest ? 'guest' : null));
-  const [cases, setCases, casesInit, syncCases] = useFirestore<Case>('cases', [], user?.uid || (isGuest ? 'guest' : null));
-  const [caseInspections, setCaseInspections, inspectionsInit, syncInspections] = useFirestore<CaseInspection>('caseInspections', [], user?.uid || (isGuest ? 'guest' : null));
-  const [caseLogs, setCaseLogs, logsInit, syncLogs] = useFirestore<CaseLog>('caseLogs', [], user?.uid || (isGuest ? 'guest' : null));
+  const [maletas, setMaletas, maletasInit, syncMaletas] = useFirestore<Maleta>('maletas', mockMaletas, user?.uid || (isGuest ? 'guest' : null));
+  const [maletaTools, setMaletaTools, maletaToolsInit, syncMaletaTools] = useFirestore<MaletaTool>('maletaTools', mockMaletaTools, user?.uid || (isGuest ? 'guest' : null));
+  const [maletaChecks, setMaletaChecks, maletaChecksInit, syncMaletaChecks] = useFirestore<MaletaCheck>('maletaChecks', [], user?.uid || (isGuest ? 'guest' : null));
+  const [maletaEvents, setMaletaEvents, maletaEventsInit, syncMaletaEvents] = useFirestore<MaletaEvent>('maletaEvents', [], user?.uid || (isGuest ? 'guest' : null));
 
   const syncAllData = async (targetUserId?: string) => {
     try {
@@ -84,9 +85,10 @@ export default function App() {
         syncLines(targetUserId),
         syncStations(targetUserId),
         syncStock(targetUserId),
-        syncCases(targetUserId),
-        syncInspections(targetUserId),
-        syncLogs(targetUserId)
+        syncMaletas(targetUserId),
+        syncMaletaTools(targetUserId),
+        syncMaletaChecks(targetUserId),
+        syncMaletaEvents(targetUserId)
       ]);
       return true;
     } catch (error) {
@@ -104,9 +106,10 @@ export default function App() {
     setCollectiveLines([]);
     setCollectiveStations([]);
     setStockEntries([]);
-    setCases([]);
-    setCaseInspections([]);
-    setCaseLogs([]);
+    setMaletas(mockMaletas);
+    setMaletaTools(mockMaletaTools);
+    setMaletaChecks([]);
+    setMaletaEvents([]);
   };
 
   const getBackupData = () => {
@@ -119,9 +122,10 @@ export default function App() {
       collectiveLines,
       collectiveStations,
       stockEntries,
-      cases,
-      caseInspections,
-      caseLogs,
+      maletas,
+      maletaTools,
+      maletaChecks,
+      maletaEvents,
       timestamp: new Date().toISOString(),
       version: '1.2'
     };
@@ -136,13 +140,14 @@ export default function App() {
     if (data.collectiveLines) setCollectiveLines(data.collectiveLines || []);
     if (data.collectiveStations) setCollectiveStations(data.collectiveStations || []);
     if (data.stockEntries) setStockEntries(data.stockEntries || []);
-    if (data.cases) setCases(data.cases || []);
-    if (data.caseInspections) setCaseInspections(data.caseInspections || []);
-    if (data.caseLogs) setCaseLogs(data.caseLogs || []);
+    if (data.maletas) setMaletas(data.maletas || []);
+    if (data.maletaTools) setMaletaTools(data.maletaTools || []);
+    if (data.maletaChecks) setMaletaChecks(data.maletaChecks || []);
+    if (data.maletaEvents) setMaletaEvents(data.maletaEvents || []);
     return true;
   };
 
-  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit && casesInit && inspectionsInit && logsInit));
+  const isReady = authInitialized && (!user || (toolsInit && listsInit && empInit && assignInit && deptInit && linesInit && stationsInit && stockInit && maletasInit && maletaToolsInit && maletaChecksInit && maletaEventsInit));
 
   const handleLogin = async () => {
     setLoginError(null);
@@ -190,10 +195,10 @@ export default function App() {
     { id: 'tools', label: 'Registro de Ferramentas', icon: Wrench },
     { id: 'standard', label: 'Listas Padrão', icon: ListChecks },
     { id: 'employees', label: 'Colaboradores', icon: Building2 },
+    { id: 'maletas', label: 'Maletas/TAGs', icon: Package },
     { id: 'assignments', label: 'Atribuições', icon: Users },
     { id: 'collective', label: 'Ferramentas Coletivas', icon: LayoutGrid },
     { id: 'inventory', label: 'Estoque', icon: Package },
-    { id: 'cases', label: 'Maletas / Tags', icon: Briefcase },
     { id: 'budgets', label: 'Orçamentos', icon: Calculator },
     { id: 'reports', label: 'Relatórios', icon: FileText },
     { id: 'settings', label: 'Configurações', icon: SettingsIcon },
@@ -449,9 +454,9 @@ export default function App() {
                 employees={employees}
                 standardLists={standardLists}
                 collectiveStations={collectiveStations}
-                stockEntries={stockEntries}
-                cases={cases}
-                caseInspections={caseInspections}
+                maletas={maletas}
+                maletaTools={maletaTools}
+                maletaChecks={maletaChecks}
                 onNavigate={setActiveTab} 
                 isDarkMode={isDarkMode}
                 toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -467,6 +472,7 @@ export default function App() {
                 assignments={assignments}
                 setAssignments={setAssignments}
                 isGuest={isGuest}
+                currentUser={user}
               />
             )}
             {activeTab === 'standard' && (
@@ -477,6 +483,7 @@ export default function App() {
                 standardLists={standardLists}
                 setStandardLists={setStandardLists}
                 isGuest={isGuest}
+                currentUser={user}
               />
             )}
             {activeTab === 'employees' && (
@@ -490,6 +497,7 @@ export default function App() {
                 tools={tools}
                 standardLists={standardLists}
                 isGuest={isGuest}
+                currentUser={user}
               />
             )}
             {activeTab === 'assignments' && (
@@ -504,6 +512,26 @@ export default function App() {
                 stockEntries={stockEntries}
                 setStockEntries={setStockEntries}
                 isGuest={isGuest}
+                currentUser={user}
+              />
+            )}
+            {activeTab === 'maletas' && (
+              <MaletaRegistration 
+                maletas={maletas}
+                setMaletas={setMaletas}
+                employees={employees}
+                tools={tools}
+                maletaTools={maletaTools}
+                setMaletaTools={setMaletaTools}
+                maletaChecks={maletaChecks}
+                setMaletaChecks={setMaletaChecks}
+                maletaEvents={maletaEvents}
+                setMaletaEvents={setMaletaEvents}
+                assignments={assignments}
+                departments={departments}
+                standardLists={standardLists}
+                isGuest={isGuest}
+                currentUser={user}
               />
             )}
             {activeTab === 'reports' && (
@@ -516,8 +544,6 @@ export default function App() {
                 standardLists={standardLists}
                 collectiveLines={collectiveLines}
                 stockEntries={stockEntries}
-                cases={cases}
-                caseInspections={caseInspections}
               />
             )}
             {activeTab === 'collective' && (
@@ -529,6 +555,7 @@ export default function App() {
                 tools={tools}
                 stockEntries={stockEntries}
                 isGuest={isGuest}
+                currentUser={user}
               />
             )}
             {activeTab === 'inventory' && (
@@ -542,21 +569,7 @@ export default function App() {
                 employees={employees}
                 setStockEntries={setStockEntries}
                 isGuest={isGuest}
-              />
-            )}
-            {activeTab === 'cases' && (
-              <Cases 
-                cases={cases}
-                setCases={setCases}
-                inspections={caseInspections}
-                setInspections={setCaseInspections}
-                logs={caseLogs}
-                setLogs={setCaseLogs}
-                tools={tools}
-                employees={employees}
-                standardLists={standardLists}
                 currentUser={user}
-                isGuest={isGuest}
               />
             )}
             {activeTab === 'settings' && (

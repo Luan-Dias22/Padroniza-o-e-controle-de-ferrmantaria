@@ -14,13 +14,15 @@ export default function CollectiveTools({
   stations, setStations,
   tools,
   stockEntries = [],
-  isGuest = false
+  isGuest = false,
+  currentUser
 }: {
   lines: CollectiveLine[], setLines: (lines: CollectiveLine[]) => void,
   stations: CollectiveStation[], setStations: (stations: CollectiveStation[]) => void,
   tools: Tool[],
   stockEntries?: StockEntry[],
-  isGuest?: boolean
+  isGuest?: boolean,
+  currentUser: any
 }) {
   const [selectedLineId, setSelectedLineId] = useState<string>('all');
   const [isStationModalOpen, setIsStationModalOpen] = useState(false);
@@ -64,11 +66,11 @@ export default function CollectiveTools({
 
     if (editingLine) {
       const oldName = editingLine.name;
-      setLines(lines.map(l => l.id === editingLine.id ? { ...l, name: lineFormData.name } : l));
+      setLines(lines.map(l => l.id === editingLine.id ? { ...l, name: lineFormData.name, uid: currentUser?.uid || 'guest' } : l));
       // Update stations that use this line
       setStations(stations.map(s => s.line === oldName ? { ...s, line: lineFormData.name } : s));
     } else {
-      setLines([...lines, { id: crypto.randomUUID(), name: lineFormData.name }]);
+      setLines([...lines, { id: crypto.randomUUID(), name: lineFormData.name, uid: currentUser?.uid || 'guest' }]);
     }
     setIsLineModalOpen(false);
     setEditingLine(null);
@@ -98,14 +100,16 @@ export default function CollectiveTools({
       setStations(stations.map(s => s.id === editingStation.id ? { 
         ...s, 
         name: stationFormData.name, 
-        line: line.name 
+        line: line.name,
+        uid: currentUser?.uid || 'guest'
       } : s));
     } else {
       setStations([...stations, { 
         id: crypto.randomUUID(), 
         name: stationFormData.name, 
         line: line.name, 
-        tools: [] 
+        tools: [],
+        uid: currentUser?.uid || 'guest'
       }]);
     }
     setIsStationModalOpen(false);
@@ -452,7 +456,7 @@ export default function CollectiveTools({
                               const stockQty = stockEntries
                                 .filter(se => se.type === 'collective' && se.station === station.name && se.toolId === t.toolId)
                                 .reduce((sum, se) => sum + se.quantity, 0);
-                              return acc + stockQty;
+                              return acc + t.quantity + stockQty;
                             }, 0)} / {station.tools.reduce((acc, t) => acc + (t.requiredQuantity ?? t.quantity), 0)} itens
                           </span>
                           <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 uppercase tracking-wider">{station.tools.length} tipos</span>
