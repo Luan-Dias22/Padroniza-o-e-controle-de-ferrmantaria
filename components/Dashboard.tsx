@@ -40,9 +40,10 @@ export default function Dashboard({
   const totalCollectiveTools = (collectiveStations || []).reduce((acc, curr) => acc + (curr.tools || []).reduce((sum, t) => sum + t.quantity, 0), 0);
 
   // Maleta Metrics
-  const activeMaletas = maletas.filter(m => m.status === 'Ativa').length;
-  const missingMaletaTools = maletaTools.filter(mt => mt.estado === 'Faltando').length;
-  const damagedMaletaTools = maletaTools.filter(mt => mt.estado === 'Danificada').length;
+  const activeMaletas = maletas.filter(m => m.status === 'Ativa');
+  const activeMaletaIds = new Set(activeMaletas.map(m => m.id));
+  const missingMaletaTools = maletaTools.filter(mt => mt.estado === 'Faltando' && activeMaletaIds.has(mt.maleta_id)).length;
+  const damagedMaletaTools = maletaTools.filter(mt => mt.estado === 'Danificada' && activeMaletaIds.has(mt.maleta_id)).length;
   const recentMaletaChecks = [...maletaChecks].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
   const chartData = (departments || []).map(dept => {
@@ -66,7 +67,7 @@ export default function Dashboard({
   const stats = [
     { label: 'Total de Ferramentas', value: (tools || []).length, icon: Wrench, color: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20', tab: 'tools' },
     { label: 'Total de Maletas', value: maletas.length, icon: Package, color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20', tab: 'maletas' },
-    { label: 'Maletas Ativas', value: activeMaletas, icon: CheckCircle2, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'maletas' },
+    { label: 'Maletas Ativas', value: activeMaletas.length, icon: CheckCircle2, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', tab: 'maletas' },
     { label: 'Ferramentas Pendentes', value: missingMaletaTools + damagedMaletaTools, icon: AlertTriangle, color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20', tab: 'maletas' },
   ];
 
