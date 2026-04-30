@@ -228,6 +228,32 @@ export default function MaletaRegistration({
           currentUser={currentUser}
           onSave={(check) => {
             setMaletaChecks([...maletaChecks, check]);
+            
+            // Update tool statuses
+            const currentMaletaTools = maletaTools
+              .filter(mt => mt.maleta_id === maleta.id)
+              .sort((a, b) => {
+                const toolA = tools.find(t => t.id === a.ferramenta_id);
+                const toolB = tools.find(t => t.id === b.ferramenta_id);
+                return (toolA?.name || '').localeCompare(toolB?.name || '');
+              });
+
+            const updatedMaletaTools = maletaTools.map(mt => {
+              if (mt.maleta_id !== maleta.id) return mt;
+              
+              const mtIndex = currentMaletaTools.findIndex(x => x.id === mt.id);
+              if (mtIndex === -1) return mt;
+              
+              const checkItem = check.items[mtIndex];
+              if (!checkItem) return mt;
+              
+              const newEstado = checkItem.status === 'OK' ? 'Boa' : (checkItem.status === 'Faltando' ? 'Faltando' : 'Danificada');
+              
+              return { ...mt, estado: newEstado };
+            });
+
+            setMaletaTools(updatedMaletaTools);
+
             addEvent(maleta.id, 'check', `Conferência realizada por ${check.user_name}. Observações: ${check.observacoes || 'Nenhuma'}`);
             setIsCheckingId(null);
           }}
