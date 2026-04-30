@@ -156,7 +156,7 @@ export function useFirestore<T extends { id: string }>(collectionName: string, i
         try {
           await setDoc(docRef, dataToSave);
         } catch (error) {
-          console.error(`Error saving document ${id} to ${path}:`, error);
+          console.error(`Error saving document ${item.id} to ${path}:`, error);
           throw error;
         }
       }
