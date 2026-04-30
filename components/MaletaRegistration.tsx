@@ -258,6 +258,9 @@ export default function MaletaRegistration({
           onStartCheck={() => setIsCheckingId(selectedMaletaId)}
           isGuest={isGuest}
           currentUser={currentUser}
+          assignments={assignments}
+          departments={departments}
+          standardLists={standardLists}
         />
       );
     }
@@ -648,7 +651,10 @@ function MaletaDetails({
   onBack,
   onStartCheck,
   isGuest,
-  currentUser
+  currentUser,
+  assignments,
+  departments,
+  standardLists
 }: {
   maleta: Maleta;
   tools: Tool[];
@@ -664,6 +670,9 @@ function MaletaDetails({
   onStartCheck: () => void;
   isGuest?: boolean;
   currentUser: FirebaseUser | null;
+  assignments: Assignment[];
+  departments: Department[];
+  standardLists: StandardToolList[];
 }) {
   const [selectedToolId, setSelectedToolId] = useState('');
   const [quantity, setQuantity] = useState(1);
